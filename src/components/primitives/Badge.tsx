@@ -35,10 +35,9 @@ export interface BadgeProps
 }
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
-    primary: "bg-primary-100 text-primary-700",
-    neutral: "bg-neutral-100 text-text-secondary",
-    primaryGradient:
-        "bg-gradient-to-r from-primary-400 to-primary-600 text-white shadow-sm",
+    primary: "bg-primary-50 text-primary-700",
+    neutral: "bg-surface-muted text-text-secondary border border-border",
+    primaryGradient: "bg-text-primary text-white",
 };
 
 /**

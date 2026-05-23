@@ -61,9 +61,9 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 /**
  * Cada combinação variant × padding tem suas próprias classes.
- * Mantido como matriz fechada para garantir que cada par seja
- * inspecionável e classes do Tailwind apareçam literalmente
- * (necessário para o JIT capturar).
+ *
+ * Tema editorial: cards leves com hairline border + sem sombra. A
+ * "elevação" vem da hierarquia tipográfica, não de drop shadows.
  */
 const VARIANT_CLASSES: Record<
     CardVariant,
@@ -71,21 +71,21 @@ const VARIANT_CLASSES: Record<
 > = {
     default: {
         default:
-            "rounded-lg bg-neutral-50 p-5 transition-colors duration-150",
+            "rounded-3xl border border-border bg-surface p-5 transition-colors duration-200",
         none:
-            "rounded-lg bg-neutral-50 transition-colors duration-150",
+            "rounded-3xl border border-border bg-surface transition-colors duration-200",
     },
     glass: {
         default:
-            "rounded-2xl border border-white/60 bg-white/55 p-6 shadow-glass backdrop-blur-md transition-all duration-300 ease-spring",
+            "rounded-3xl border border-border bg-surface p-6 transition-colors duration-200",
         none:
-            "rounded-2xl border border-white/60 bg-white/55 shadow-glass backdrop-blur-md transition-all duration-300 ease-spring",
+            "rounded-3xl border border-border bg-surface transition-colors duration-200",
     },
     elevated: {
         default:
-            "rounded-2xl border border-white/60 bg-white/55 p-6 shadow-glass backdrop-blur-md transition-all duration-300 ease-spring hover:-translate-y-1 hover:shadow-glassLg",
+            "rounded-3xl border border-border bg-surface p-6 transition-all duration-200 hover:-translate-y-0.5",
         none:
-            "rounded-2xl border border-white/60 bg-white/55 shadow-glass backdrop-blur-md transition-all duration-300 ease-spring hover:-translate-y-1 hover:shadow-glassLg",
+            "rounded-3xl border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5",
     },
 };
 

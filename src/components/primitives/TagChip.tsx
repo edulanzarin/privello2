@@ -49,9 +49,9 @@ export interface TagChipProps {
 
 const TONE_CLASSES: Record<TagChipTone, string> = {
     soft: "bg-primary-50 text-primary-700",
-    neutral: "bg-neutral-100 text-text-secondary",
-    outline: "border border-neutral-200 bg-surface text-text-primary",
-    primary: "bg-primary-600 text-white shadow-sm",
+    neutral: "bg-surface-muted text-text-secondary border border-border",
+    outline: "border border-border bg-transparent text-text-primary",
+    primary: "bg-text-primary text-white",
 };
 
 const SIZE_CLASSES: Record<TagChipSize, string> = {

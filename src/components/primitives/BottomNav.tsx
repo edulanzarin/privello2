@@ -56,7 +56,7 @@ export function BottomNav({ items }: BottomNavProps): React.ReactElement {
     return (
         <nav
             aria-label="Navegação principal"
-            className="sticky bottom-0 z-30 border-t border-neutral-200 bg-surface/95 backdrop-blur-sm"
+            className="sticky bottom-0 z-30 border-t border-border bg-background"
         >
             <ul className="mx-auto flex max-w-3xl items-stretch">
                 {items.map((item) => {
@@ -67,12 +67,20 @@ export function BottomNav({ items }: BottomNavProps): React.ReactElement {
                                 href={item.href}
                                 aria-current={isActive ? "page" : undefined}
                                 className={[
-                                    "flex h-16 flex-col items-center justify-center gap-1 text-[0.65rem] font-medium tracking-tight transition-colors duration-150",
+                                    "relative flex h-16 flex-col items-center justify-center gap-1 text-[0.65rem] font-medium tracking-tight transition-colors duration-200",
                                     isActive
-                                        ? "text-primary-700"
-                                        : "text-text-secondary hover:text-text-primary",
+                                        ? "text-primary-600"
+                                        : "text-text-disabled hover:text-text-primary",
                                 ].join(" ")}
                             >
+                                {/* Accent dot acima do ícone, só
+                                    quando ativo. */}
+                                {isActive ? (
+                                    <span
+                                        aria-hidden="true"
+                                        className="absolute top-2 h-1 w-1 rounded-full bg-primary-600"
+                                    />
+                                ) : null}
                                 <span aria-hidden="true">
                                     {isActive
                                         ? item.activeIcon ?? item.icon

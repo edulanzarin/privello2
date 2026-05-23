@@ -68,7 +68,7 @@ export function StatCard({
     className,
 }: StatCardProps): React.ReactElement {
     const composed = [
-        "flex flex-col rounded-xl border border-neutral-200 bg-surface",
+        "flex flex-col rounded-3xl border border-neutral-200 bg-surface",
         className ?? "",
     ]
         .filter(Boolean)

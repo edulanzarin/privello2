@@ -3,13 +3,44 @@
 @tailwind utilities;
 
 /* ---------------------------------------------------------------------------
- * Tema base — Notion-like: superfícies sólidas, neutras, sem efeitos de
- * vidro. A paleta de cores tonais (primary/secondary) só aparece em
- * elementos de ação.
+ * Tema "Editorial 2026" — Privello.
+ *
+ * Inspiração: revistas digitais modernas (Apple Music biografias,
+ * Highsnobiety, The Drift). Imagem manda, tipografia suporta.
+ *
+ * Princípios:
+ *   1. Background neutro quente quase imperceptível — luz natural.
+ *   2. Cards leves, separadores em vez de bordas marcadas.
+ *   3. Tipografia com peso variável: títulos display grandes em
+ *      semibold, body em regular, microcopy em medium uppercase
+ *      letterspaced. Numerais tabulares em métricas.
+ *   4. Acent salmão warm para destaques pontuais (CTAs, números,
+ *      links). Saturação alta nos lugares certos pra ressoar.
+ *   5. Movimento suave nas micro-interações (hover, fade-ins).
+ *
+ * Sem efeitos vidro. Sem sombras pesadas. A profundidade vem da
+ * tipografia e da hierarquia de tamanhos.
  * ------------------------------------------------------------------------- */
 
 :root {
     color-scheme: light;
+    /* Paleta editorial */
+    --canvas: #fbf9f6;
+    /* warm white near-paper */
+    --surface: #ffffff;
+    --ink-1: #1a1410;
+    /* near-black quente */
+    --ink-2: #5a4f47;
+    /* secondary dark warm */
+    --ink-3: #968a82;
+    /* tertiary */
+    --hairline: rgba(26, 20, 16, 0.08);
+    /* divider sutil */
+    --hairline-strong: rgba(26, 20, 16, 0.14);
+    --accent: #ec7b5b;
+    /* salmão warm accent */
+    --accent-deep: #c5523a;
+    --accent-soft: #fff0eb;
 }
 
 html,
@@ -18,11 +49,18 @@ body {
 }
 
 body {
-    @apply bg-neutral-50 text-text-primary antialiased;
-    font-feature-settings: "ss01", "cv11";
+    background: var(--canvas);
+    color: var(--ink-1);
+    font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI",
+        sans-serif;
+    font-feature-settings: "ss01", "cv11", "tnum";
+    font-variant-ligatures: contextual;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100dvh;
 }
 
-/* Reduz movimento para usuários que preferem. */
 @media (prefers-reduced-motion: reduce) {
 
     *,
@@ -36,78 +74,132 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
- * Utility: esconder a barra de rolagem mantendo o scroll funcional.
- *
- * Útil em listas roláveis horizontais (TabList, FilterChips, carrosséis de
- * mídia) onde o Windows desenha uma scrollbar com setinhas que polui o
- * layout. O scroll continua funcional via wheel/swipe — só a barra some.
+ * Esconder scrollbar mantendo scroll funcional.
  * ------------------------------------------------------------------------- */
 
 .scrollbar-none {
     -ms-overflow-style: none;
-    /* IE/legacy Edge */
     scrollbar-width: none;
-    /* Firefox */
 }
 
 .scrollbar-none::-webkit-scrollbar {
     display: none;
-    /* Chromium / WebKit */
 }
 
 /* ---------------------------------------------------------------------------
- * Utility: textura sutil de "papel" (granulado fino + leve tom warm).
+ * Tipografia editorial — classes utilitárias usadas em destaques.
  *
- * Aplicada em superfícies grandes (PageSurface, AuthCard) para dar
- * personalidade sem competir com o conteúdo. A camada combina:
- *   - Ruído SVG inline (turbulência fractal) com opacidade ~3-5%.
- *   - Vinheta radial sutil em primary-50 para "esquentar" o branco.
- *
- * Visual: lembra papel envelhecido / linho fino. Performance OK porque
- * o SVG é pequeno (data-URI) e a vinheta é um único gradient.
- *
- * Como ligar: adicione `class="texture-paper"` em qualquer container.
+ * .display: grande, tracking apertado, pra nome/headline.
+ * .eyebrow: pequena, uppercase letterspaced, pra "labels" ou
+ *   categorias acima de blocos.
+ * .stat-number: numerais grandes em tabular-nums.
  * ------------------------------------------------------------------------- */
 
-.texture-paper {
-    position: relative;
-    isolation: isolate;
+.display {
+    font-family: var(--font-display, var(--font-inter), serif);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1;
 }
 
-.texture-paper::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    border-radius: inherit;
-    /* Vinheta warm: aquece o branco em tom salmão muito leve */
-    background:
-        radial-gradient(ellipse at top, rgba(255, 170, 138, 0.06) 0%, transparent 60%),
-        radial-gradient(ellipse at bottom right, rgba(236, 123, 91, 0.04) 0%, transparent 70%);
+.eyebrow {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-3);
 }
 
-.texture-paper::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    border-radius: inherit;
-    /* Granulado fino via turbulência fractal SVG */
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.4  0 0 0 0 0.35  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.9'/></svg>");
-    background-size: 220px 220px;
-    opacity: 0.045;
-    mix-blend-mode: multiply;
+.stat-number {
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: -0.02em;
 }
 
-/* Variante mais discreta para superfícies pequenas/cards */
-.texture-paper-soft::before,
-.texture-paper-soft::after {
-    opacity: 0;
+/* ---------------------------------------------------------------------------
+ * Hairline divider — separador horizontal muito fino, usado entre
+ * blocos da página. Substitui borders grossas de cards.
+ * ------------------------------------------------------------------------- */
+
+.hairline {
+    border-color: var(--hairline);
 }
 
-.texture-paper-soft {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0.4 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.7'/></svg>");
-    background-size: 160px 160px;
+.hairline-strong {
+    border-color: var(--hairline-strong);
+}
+
+/* ---------------------------------------------------------------------------
+ * Surface canônico — cartão simples, fundo branco, borda hairline.
+ * Sem sombra. Cantos discretos.
+ * ------------------------------------------------------------------------- */
+
+.surface {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 1.25rem;
+    /* 20px */
+}
+
+.surface-flat {
+    background: var(--surface);
+    border-radius: 1.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Accent helpers.
+ * ------------------------------------------------------------------------- */
+
+.accent-soft {
+    background-color: var(--accent-soft);
+    color: var(--accent-deep);
+}
+
+/* CTA accent: solid warm, sem brilho excessivo. Hover escurece. */
+.cta-accent {
+    background: var(--accent);
+    color: white;
+    border-radius: 9999px;
+    transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.cta-accent:hover:not(:disabled) {
+    background: var(--accent-deep);
+}
+
+.cta-accent:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.cta-accent:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------------
+ * Hover lift sutil — usado em tiles clicáveis (mídias, perfis).
+ * ------------------------------------------------------------------------- */
+
+.lift {
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.lift:hover {
+    transform: translateY(-2px);
+}
+
+/* ---------------------------------------------------------------------------
+ * Compat: classes do tema antigo viram no-op pra não quebrar nada.
+ * ------------------------------------------------------------------------- */
+
+.texture-paper,
+.texture-paper-soft,
+.glass-surface,
+.glass-surface-strong,
+.glass-bar,
+.glass-pill,
+.glass-pill-tinted,
+.glass-cta {
+    /* No-op — temas antigos. Componentes são migrados gradualmente. */
 }

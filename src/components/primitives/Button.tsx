@@ -19,24 +19,25 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
 /**
- * Direção visual: Notion-like. Cantos pequenos, fundo sólido, sem
- * gradiente, sombra tênue, hover discreto, animação curta.
+ * Direção visual: editorial 2026. Pílulas (`rounded-full`), primary
+ * em accent salmão sólido, secondary é card branco com hairline,
+ * ghost só revela no hover.
  */
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     primary:
-        "text-white bg-primary-600 hover:bg-primary-700 shadow-sm focus-visible:ring-primary-500/40 disabled:bg-primary-300 disabled:shadow-none",
+        "text-white bg-primary-600 hover:bg-primary-700 focus-visible:ring-primary-500/40 disabled:opacity-40 disabled:cursor-not-allowed",
     secondary:
-        "text-white bg-secondary-600 hover:bg-secondary-700 shadow-sm focus-visible:ring-secondary-500/40 disabled:bg-secondary-300 disabled:shadow-none",
+        "text-text-primary bg-surface border border-border hover:bg-surface-muted focus-visible:ring-text-primary/20 disabled:opacity-40",
     ghost:
-        "text-text-primary bg-transparent hover:bg-neutral-100 focus-visible:ring-neutral-300 disabled:text-text-disabled",
+        "text-text-secondary bg-transparent hover:bg-surface-muted focus-visible:ring-text-primary/15 disabled:text-text-disabled",
     danger:
-        "text-white bg-danger-600 hover:bg-danger-700 shadow-sm focus-visible:ring-danger-500/40 disabled:bg-danger-300 disabled:shadow-none",
+        "text-white bg-danger-600 hover:bg-danger-700 focus-visible:ring-danger-500/40 disabled:opacity-40",
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-    sm: "h-8 px-3 text-sm rounded-md",
-    md: "h-9 px-4 text-sm rounded-md",
-    lg: "h-10 px-5 text-[0.95rem] rounded-md",
+    sm: "h-8 px-4 text-[0.8rem] rounded-full",
+    md: "h-10 px-5 text-sm rounded-full",
+    lg: "h-12 px-6 text-[0.95rem] rounded-full",
 };
 
 /**

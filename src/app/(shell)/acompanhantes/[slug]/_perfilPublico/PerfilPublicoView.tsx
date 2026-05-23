@@ -470,7 +470,7 @@ export function PerfilPublicoView({
                 idiomasLabels.length > 0 ||
                 characteristics.length > 0) ? (
                 <section className="flex flex-col gap-2">
-                    <SectionHeader title="Quem atendo" />
+                    <SectionHeader title="Características" />
                     <Card>
                         <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
                             {atendeLabels.length > 0 ? (

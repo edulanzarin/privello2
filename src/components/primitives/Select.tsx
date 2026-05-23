@@ -227,10 +227,10 @@ export function Select<TValue extends string = string>({
     // texto da opção quando o `<button>` é renderizado por engine
     // que centraliza por padrão.
     const triggerBase =
-        "block w-full rounded-md border bg-surface py-2 text-sm text-text-primary text-left shadow-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-text-disabled";
+        "block w-full rounded-2xl border bg-surface py-2.5 text-sm text-text-primary text-left transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-disabled";
     const triggerTone = error
         ? "border-danger-400 focus-visible:ring-danger-500/30 focus-visible:border-danger-500"
-        : "border-neutral-200 focus-visible:ring-primary-500/30 focus-visible:border-primary-400";
+        : "border-border focus-visible:ring-primary-500/30 focus-visible:border-primary-500";
     // `padding-left` igual ao do Input: `pl-3` sem leading icon,
     // `pl-9` com leading icon. `padding-right` sempre `pr-9` para
     // dar espaço ao chevron.

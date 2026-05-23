@@ -139,11 +139,15 @@ const glass = {
 /**
  * Paleta semântica completa.
  *
- * - `surface`/`surfaceMuted`: superfícies sólidas (caso o glass não caiba).
- * - `background`: cor de fundo padrão (combinada com gradient em `globals.css`).
- * - `text`: tons de texto (primary/secondary/disabled/inverse).
- * - `border`: cor padrão de bordas e divisores sólidos.
- * - `glass`: tokens de vidro (ver acima).
+ * Mapeada para o tema editorial 2026:
+ *   - `surface` é o branco puro (cards, modais, inputs).
+ *   - `surfaceMuted` é o canvas warm-white de fundo ("paper").
+ *   - `background` espelha o canvas pra evitar leak de tokens antigos.
+ *   - `border` é o hairline warm sutil.
+ *   - `text.primary/secondary/disabled` reproduzem `--ink-1/2/3`.
+ *
+ * As escalas tonais (primary 100..900 etc.) ficam intactas pra não
+ * quebrar componentes que escolheram um tom específico.
  */
 export const colors = {
     primary,
@@ -154,13 +158,13 @@ export const colors = {
     danger,
     info,
     surface: "#ffffff",
-    surfaceMuted: neutral[50],
-    background: "#f5f3ff",
-    border: neutral[200],
+    surfaceMuted: "#fbf9f6",
+    background: "#fbf9f6",
+    border: "rgba(26, 20, 16, 0.08)",
     text: {
-        primary: neutral[900],
-        secondary: neutral[600],
-        disabled: neutral[400],
+        primary: "#1a1410",
+        secondary: "#5a4f47",
+        disabled: "#968a82",
         inverse: "#ffffff",
     },
     glass,
@@ -250,18 +254,19 @@ export const spacing = {
 } as const;
 
 // -----------------------------------------------------------------------------
-// Raios — escala Notion: cantos discretos, sem arredondamento exagerado.
+// Raios — escala editorial: cantos arredondados generosos. `2xl/3xl`
+// são o sweet spot pra cards grandes.
 // -----------------------------------------------------------------------------
 
 export const radius = {
     none: "0rem",
-    sm: "0.1875rem", // 3px
-    md: "0.25rem",   // 4px
-    lg: "0.375rem",  // 6px
-    xl: "0.5rem",    // 8px
-    "2xl": "0.625rem", // 10px
-    "3xl": "0.75rem",  // 12px
-    "4xl": "1rem",     // 16px
+    sm: "0.25rem",   // 4px
+    md: "0.5rem",    // 8px
+    lg: "0.75rem",   // 12px
+    xl: "1rem",      // 16px
+    "2xl": "1.25rem", // 20px
+    "3xl": "1.5rem",  // 24px
+    "4xl": "2rem",   // 32px
     full: "9999px",
 } as const;
 

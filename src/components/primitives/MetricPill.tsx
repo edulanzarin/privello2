@@ -39,20 +39,16 @@ export interface MetricPillProps {
 }
 
 const TONE_CLASSES: Record<NonNullable<MetricPillProps["tone"]>, string> = {
-    neutral:
-        "border-neutral-200 bg-surface",
-    primary:
-        "border-primary-200 bg-primary-50",
+    neutral: "border-border bg-surface",
+    primary: "border-primary-200 bg-primary-50",
 };
 
 const ICON_TONE_CLASSES: Record<
     NonNullable<MetricPillProps["tone"]>,
     string
 > = {
-    neutral:
-        "bg-primary-100 text-primary-700",
-    primary:
-        "bg-primary-200/70 text-primary-700",
+    neutral: "bg-surface-muted text-primary-600",
+    primary: "bg-surface text-primary-600",
 };
 
 /**
@@ -69,7 +65,7 @@ export function MetricPill({
     className,
 }: MetricPillProps): React.ReactElement {
     const composed = [
-        "flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 shadow-sm min-w-0",
+        "flex items-center gap-1.5 rounded-full border px-3 py-1.5 min-w-0",
         TONE_CLASSES[tone],
         className ?? "",
     ]

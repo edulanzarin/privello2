@@ -56,7 +56,7 @@ export function StatTile({
     className,
 }: StatTileProps): React.ReactElement {
     const composed = [
-        "flex flex-col gap-2 rounded-lg border border-neutral-200 bg-surface p-4 shadow-sm",
+        "flex flex-col gap-2 rounded-3xl border border-neutral-200 bg-surface p-5",
         className ?? "",
     ]
         .filter(Boolean)

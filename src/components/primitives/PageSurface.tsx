@@ -128,9 +128,9 @@ export function PageSurface({
         >
             <div
                 className={[
-                    "mx-auto flex w-full flex-col rounded-xl border border-neutral-200 bg-surface shadow-sm sm:rounded-2xl",
+                    "mx-auto flex w-full flex-col bg-surface",
                     banner != null ? "overflow-hidden" : "",
-                    texture ? "texture-paper" : "",
+                    "rounded-none sm:rounded-3xl sm:border sm:border-border",
                     WIDTH_CLASSES[width],
                     className ?? "",
                 ]

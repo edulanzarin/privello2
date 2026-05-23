@@ -188,7 +188,7 @@ export function Modal({
             {/* Card principal */}
             <div
                 className={[
-                    "relative z-0 flex w-full flex-col overflow-hidden rounded-2xl bg-surface shadow-glassLg",
+                    "relative z-0 flex w-full flex-col overflow-hidden rounded-3xl bg-surface shadow-xl shadow-text-primary/10",
                     isFull
                         ? "h-full"
                         // Desconta o espaço da TopBar (h-14 = 56px) +

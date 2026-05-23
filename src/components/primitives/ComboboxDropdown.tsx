@@ -74,7 +74,7 @@ export const ComboboxDropdown = React.forwardRef<
     ref,
 ): React.ReactElement {
     const baseClass =
-        "z-50 max-h-60 overflow-y-auto rounded-md border border-neutral-200 bg-surface py-1 shadow-md";
+        "z-50 max-h-60 overflow-y-auto rounded-2xl border border-border bg-surface py-1 shadow-lg shadow-text-primary/5";
 
     if (anchor === undefined) {
         // Modo legado: absoluto dentro do wrapper relativo.

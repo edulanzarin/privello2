@@ -78,7 +78,7 @@ export function IconSegmented({
             role="radiogroup"
             aria-label={ariaLabel}
             className={[
-                "inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-100 p-1",
+                "inline-flex items-center gap-0.5 rounded-full border border-border bg-surface-muted p-1",
                 className ?? "",
             ]
                 .filter(Boolean)
@@ -99,10 +99,10 @@ export function IconSegmented({
                         title={opt.label}
                         onClick={() => onChange(opt.value)}
                         className={[
-                            "inline-flex flex-none items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium tracking-tight transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40",
+                            "inline-flex flex-none items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium tracking-tight transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40",
                             isActive
-                                ? "bg-surface text-primary-700 shadow-sm"
-                                : "text-text-secondary hover:text-text-primary",
+                                ? "bg-text-primary text-white"
+                                : "text-text-disabled hover:text-text-primary",
                         ].join(" ")}
                     >
                         <span aria-hidden="true">{opt.icon}</span>
