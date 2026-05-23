@@ -114,6 +114,12 @@ export type { EmptyStateProps } from "./primitives/EmptyState";
 export { SectionHeader } from "./primitives/SectionHeader";
 export type { SectionHeaderProps } from "./primitives/SectionHeader";
 
+export { SectionTitle } from "./primitives/SectionTitle";
+export type { SectionTitleProps } from "./primitives/SectionTitle";
+
+export { StatList } from "./primitives/StatList";
+export type { StatListProps, StatListItem } from "./primitives/StatList";
+
 export {
     ActivityFeed,
     ActivityFeedItem,
@@ -163,7 +169,10 @@ export type {
 } from "./primitives/CityCombobox";
 
 export { ProfileFeedCard } from "./primitives/ProfileFeedCard";
-export type { ProfileFeedCardProps } from "./primitives/ProfileFeedCard";
+export type {
+    ProfileFeedCardProps,
+    ProfileFeedCardVariant,
+} from "./primitives/ProfileFeedCard";
 
 export { FeatureCard } from "./primitives/FeatureCard";
 export type {
