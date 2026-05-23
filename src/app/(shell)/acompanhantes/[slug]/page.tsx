@@ -107,11 +107,17 @@ export default async function PerfilPublicoPage({
     //   - galeria pública (com agregados de likes/comments)
     //   - sessão atual (pra pré-popular form de avaliação do Cliente)
     //   - lista de reviews públicas
-    const [galeria, session, reviews] = await Promise.all([
+    const [galeria, session, reviewsAll] = await Promise.all([
         listarGaleria(result.userId),
         getCurrentSession(),
         listarReviewsPublicos(result.userId),
     ]);
+
+    // Anônimo não vê detalhes de reviews — recebe lista vazia. A
+    // contagem agregada (`reviewsCount`) e a média ficam ocultas
+    // visualmente pelo `LockedContent` no client. O `reviews: []`
+    // garante que nenhum dado real chegue ao payload RSC.
+    const reviews = session !== null ? reviewsAll : [];
 
     // Cliente autenticado vê o estado da própria avaliação para
     // pré-popular o formulário "Sua avaliação". Acompanhantes e

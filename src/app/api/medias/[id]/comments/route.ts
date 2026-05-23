@@ -8,7 +8,11 @@ import {
 
 /**
  * `GET /api/medias/[id]/comments` — lista os comentários de uma
- * mídia. Aberto a qualquer visitante (anônimo, Cliente, Acompanhante).
+ * mídia. Requer sessão autenticada (Cliente ou Acompanhante).
+ *
+ * Anônimos recebem 401 — a UI do perfil público mostra um gate
+ * visual ({@link LockedContent}) e não chama este endpoint para
+ * viewers sem sessão.
  *
  * Quando há sessão, marca `isMine` no comentário do próprio viewer
  * para que o front mostre botão de excluir.
@@ -25,13 +29,10 @@ export async function GET(
         );
     }
 
-    // Tenta resolver sessão (best-effort) só pra marcar `isMine`.
-    // Sem sessão também funciona — todos os comentários vêm com
-    // `isMine: false`.
     const auth = await requireSession();
-    const viewerUserId = auth.ok ? auth.userId : null;
+    if (!auth.ok) return auth.response;
 
-    const comments = await listarComentarios(mediaId, viewerUserId);
+    const comments = await listarComentarios(mediaId, auth.userId);
     return NextResponse.json({ ok: true, comments });
 }
 

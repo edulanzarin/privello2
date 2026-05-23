@@ -178,6 +178,9 @@ export type { MediaGridProps } from "./primitives/MediaGrid";
 export { Paginator } from "./primitives/Paginator";
 export type { PaginatorProps } from "./primitives/Paginator";
 
+export { LockedContent } from "./primitives/LockedContent";
+export type { LockedContentProps } from "./primitives/LockedContent";
+
 export {
     MediaCarousel,
     useMediaCarousel,

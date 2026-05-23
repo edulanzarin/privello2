@@ -188,9 +188,11 @@ export function PerfilPublicoView({
     /**
      * Carrega comentários da mídia ativa quando o carrossel abre
      * ou troca de item. Cache simples por id — não recarrega se
-     * já tem.
+     * já tem. Pula completamente para viewers anônimos (eles veem
+     * o gate visual, sem dados reais).
      */
     React.useEffect(() => {
+        if (viewerKind === "anonimo") return;
         if (!carousel.open || carousel.activeId === null) return;
         const id = carousel.activeId;
         if (commentsByMedia[id] !== undefined) return;
@@ -209,7 +211,7 @@ export function PerfilPublicoView({
         return () => {
             cancelled = true;
         };
-    }, [carousel.open, carousel.activeId, commentsByMedia]);
+    }, [carousel.open, carousel.activeId, commentsByMedia, viewerKind]);
 
     /**
      * Toggle de curtida com atualização otimista. Cliente Grátis e
@@ -423,7 +425,7 @@ export function PerfilPublicoView({
                         visualizações
                     </span>
                 </span>
-                {perfil.reviewsCount > 0 ? (
+                {perfil.reviewsCount > 0 && viewerKind !== "anonimo" ? (
                     <>
                         <span aria-hidden="true" className="text-text-disabled">
                             ·
@@ -740,7 +742,9 @@ export function PerfilPublicoView({
                 onActiveChange={carousel.openAt}
                 open={carousel.open}
                 onClose={carousel.close}
-                comments={commentsByMedia}
+                comments={
+                    viewerKind === "anonimo" ? undefined : commentsByMedia
+                }
                 onToggleLike={handleToggleLike}
                 onAddComment={
                     viewerKind === "cliente" && viewerIsFan
@@ -749,6 +753,20 @@ export function PerfilPublicoView({
                 }
                 currentUserPhotoUrl={viewerFotoUrl}
                 currentUserName={viewerNome ?? undefined}
+                commentsLocked={
+                    viewerKind === "anonimo"
+                        ? {
+                            title: "Comentários exclusivos",
+                            description:
+                                "Faça login pra ver o que outros Clientes estão dizendo.",
+                            action: (
+                                <Button href="/login" size="sm">
+                                    Entrar
+                                </Button>
+                            ),
+                        }
+                        : undefined
+                }
             />
         </div>
     );

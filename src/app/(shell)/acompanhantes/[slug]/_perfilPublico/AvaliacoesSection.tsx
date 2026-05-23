@@ -8,6 +8,7 @@ import {
     Button,
     Card,
     InlineAlert,
+    LockedContent,
     Paginator,
     RatingStars,
     SectionHeader,
@@ -52,6 +53,31 @@ export function AvaliacoesSection({
     viewerIsOwner,
     minhaReview,
 }: AvaliacoesSectionProps): React.ReactElement {
+    // Anônimo: bloqueia tudo (resumo, lista, formulário) com
+    // `LockedContent`. O conteúdo blurado é puramente fake — os
+    // dados reais não chegam ao payload RSC para anônimos
+    // (filtrado server-side em `page.tsx`). Aqui só renderizamos
+    // placeholders convincentes.
+    if (viewerKind === "anonimo") {
+        return (
+            <section className="flex flex-col gap-3">
+                <SectionHeader title="Avaliações" />
+                <LockedContent
+                    blurAmount={10}
+                    title="Avaliações exclusivas para Clientes"
+                    description="Faça login pra ler o que outros Clientes acharam deste perfil."
+                    action={
+                        <Button href="/login" size="sm">
+                            Entrar
+                        </Button>
+                    }
+                >
+                    <FakeAvaliacoesPreview />
+                </LockedContent>
+            </section>
+        );
+    }
+
     return (
         <section className="flex flex-col gap-3">
             <SectionHeader
@@ -105,10 +131,6 @@ export function AvaliacoesSection({
             {/* Formulário de avaliação (Cliente autenticado, não-dono) */}
             {viewerKind === "cliente" && !viewerIsOwner ? (
                 <ReviewForm slug={slug} initial={minhaReview} />
-            ) : viewerKind === "anonimo" ? (
-                <InlineAlert tone="info">
-                    Faça login como Cliente para deixar sua avaliação.
-                </InlineAlert>
             ) : null}
 
             {/* Lista de avaliações */}
@@ -366,6 +388,55 @@ function ReviewCard({ review }: { review: ReviewPublico }): React.ReactElement {
                 ) : null}
             </div>
         </Card>
+    );
+}
+
+/**
+ * Placeholder visual usado dentro do {@link LockedContent} para
+ * anônimos. Renderiza um resumo agregado falso + 3 reviews fake
+ * com texto curto. Quando o `LockedContent` borra, o que aparece
+ * dá a sensação de "tem conteúdo aqui" sem vazar nada real.
+ *
+ * Mantido local por ser específico desta seção. Se mais de um
+ * caller precisar de fake reviews, promove a primitivo.
+ */
+function FakeAvaliacoesPreview(): React.ReactElement {
+    return (
+        <div className="flex flex-col gap-3">
+            <Card>
+                <div className="flex flex-col items-center gap-1.5 text-center">
+                    <RatingStars value={4.5} size="lg" />
+                    <span className="text-3xl font-semibold tracking-tight text-text-primary">
+                        4.5
+                    </span>
+                    <span className="text-xs text-text-secondary">
+                        de muitas avaliações
+                    </span>
+                </div>
+            </Card>
+            {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-start gap-3">
+                            <Avatar src={null} name="•••" size="sm" />
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="truncate text-sm font-medium text-text-primary">
+                                    ••••••• ••••
+                                </span>
+                                <span className="text-xs text-text-secondary">
+                                    @•••• · há ••• dias
+                                </span>
+                            </div>
+                            <RatingStars value={4 + (i % 2)} size="sm" />
+                        </div>
+                        <p className="text-sm leading-relaxed text-text-primary">
+                            ••••••• ••• ••••••• •••• ••••••••• ••• •••••• •••••.
+                            ••••••• ••• •••• ••••••• •••.
+                        </p>
+                    </div>
+                </Card>
+            ))}
+        </div>
     );
 }
 

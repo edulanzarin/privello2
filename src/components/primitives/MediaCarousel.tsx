@@ -14,6 +14,7 @@ import { EmptyState } from "./EmptyState";
 import { formatRelativeTime } from "./formatRelativeTime";
 import { IconButton } from "./IconButton";
 import { LikeButton } from "./LikeButton";
+import { LockedContent } from "./LockedContent";
 import { Modal } from "./Modal";
 import type { MediaComment, MediaItem } from "./MediaTypes";
 
@@ -86,6 +87,19 @@ export interface MediaCarouselProps {
      * Acompanhante (dona da galeria); omita no perfil público.
      */
     onDelete?: (itemId: string) => void | Promise<void>;
+    /**
+     * Quando presente, substitui a área de comentários por um
+     * gate visual ({@link LockedContent}) — usado pra anônimos
+     * que não podem ver comentários, ou pra Cliente Grátis quando
+     * o recurso é exclusivo Fan.
+     *
+     * Quando definido, `comments` e `onAddComment` são ignorados.
+     */
+    commentsLocked?: {
+        title: React.ReactNode;
+        description?: React.ReactNode;
+        action?: React.ReactNode;
+    };
 }
 
 /**
@@ -109,6 +123,7 @@ export function MediaCarousel({
     currentUserPhotoUrl,
     currentUserName,
     onDelete,
+    commentsLocked,
 }: MediaCarouselProps): React.ReactElement | null {
     const [draft, setDraft] = React.useState("");
 
@@ -268,31 +283,62 @@ export function MediaCarousel({
                         </div>
                     ) : null}
 
-                    {/* Lista de comentários */}
-                    <div className="flex-1 overflow-y-auto px-4 py-3">
-                        {itemComments.length === 0 ? (
-                            <EmptyState
-                                size="sm"
-                                title="Nenhum comentário ainda"
-                                description={
-                                    canComment
-                                        ? "Seja o primeiro a comentar."
-                                        : undefined
-                                }
-                            />
-                        ) : (
-                            <ul className="flex flex-col gap-4">
-                                {itemComments.map((c) => (
-                                    <li key={c.id}>
-                                        <Comment comment={c} />
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
+                    {/* Lista de comentários — quando há gate, exibe
+                        LockedContent com placeholders fake. O caller
+                        (anônimo / Cliente Grátis) não deve ver
+                        comentários reais. */}
+                    {commentsLocked ? (
+                        <div className="flex-1 overflow-hidden p-4">
+                            <LockedContent
+                                blurAmount={8}
+                                title={commentsLocked.title}
+                                description={commentsLocked.description}
+                                action={commentsLocked.action}
+                                className="h-full min-h-[260px]"
+                            >
+                                <div className="flex flex-col gap-4 p-4">
+                                    {[1, 2, 3].map((i) => (
+                                        <div
+                                            key={i}
+                                            className="flex items-start gap-3"
+                                        >
+                                            <div className="h-8 w-8 flex-none rounded-full bg-neutral-200" />
+                                            <div className="flex flex-1 flex-col gap-1.5">
+                                                <div className="h-3 w-24 rounded bg-neutral-200" />
+                                                <div className="h-3 w-full rounded bg-neutral-200" />
+                                                <div className="h-3 w-3/4 rounded bg-neutral-200" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </LockedContent>
+                        </div>
+                    ) : (
+                        <div className="flex-1 overflow-y-auto px-4 py-3">
+                            {itemComments.length === 0 ? (
+                                <EmptyState
+                                    size="sm"
+                                    title="Nenhum comentário ainda"
+                                    description={
+                                        canComment
+                                            ? "Seja o primeiro a comentar."
+                                            : undefined
+                                    }
+                                />
+                            ) : (
+                                <ul className="flex flex-col gap-4">
+                                    {itemComments.map((c) => (
+                                        <li key={c.id}>
+                                            <Comment comment={c} />
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
 
-                    {/* Input de comentário (quando habilitado) */}
-                    {canComment ? (
+                    {/* Input de comentário (quando habilitado e sem gate) */}
+                    {canComment && !commentsLocked ? (
                         <div className="border-t border-neutral-200 px-4 py-3">
                             <CommentInput
                                 value={draft}
