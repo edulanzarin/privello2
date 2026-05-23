@@ -1,0 +1,61 @@
+# Local development stack for Privello.
+#
+# Brings up:
+#   * `app` - the Next.js application built from docker/Dockerfile.
+#   * `db`  - PostgreSQL 16 with persistent volume `privello_pgdata`.
+#
+# The same Dockerfile is used by Railway in production (Requirement 7.6);
+# only env var values differ between environments.
+#
+# Usage:
+#   docker compose -f docker/docker-compose.yml up --build
+#
+# Notes:
+#   * Copy `.env.example` to `.env.local` at the repository root before
+#     running compose; values from `.env.local` override the defaults below.
+#   * The `app` service waits for the `db` healthcheck before starting so
+#     `prisma migrate deploy` doesn't race the database.
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: privello-app:dev
+    container_name: privello-app
+    env_file:
+      - ../.env.local
+    environment:
+      # Defaults for local dev; values in .env.local override these.
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      DATABASE_URL: "postgresql://privello:privello@db:5432/privello"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: privello-db
+    environment:
+      POSTGRES_USER: privello
+      POSTGRES_PASSWORD: privello
+      POSTGRES_DB: privello
+    volumes:
+      - privello_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U privello -d privello"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  privello_pgdata:
+    name: privello_pgdata

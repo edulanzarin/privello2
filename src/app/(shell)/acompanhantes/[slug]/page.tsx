@@ -1,0 +1,186 @@
+import type { Metadata } from "next";
+
+import {
+    Button,
+    Card,
+    EmptyState,
+    EyeOffIcon,
+    PageSurface,
+    ProfileBanner,
+    UsersIcon,
+} from "@/components";
+import { obterPerfilPublico } from "@/server/acompanhante-profile";
+import { getCurrentSession } from "@/server/auth/currentSession";
+import {
+    listarGaleria,
+    toMediaItem,
+} from "@/server/storage/galleryMedia";
+import {
+    listarReviewsPublicos,
+    obterMinhaReview,
+} from "@/server/reviews";
+
+import { PerfilPublicoView } from "./_perfilPublico/PerfilPublicoView";
+import { ViewTracker } from "./_perfilPublico/ViewTracker";
+
+/**
+ * Página pública do perfil de uma Acompanhante (`/acompanhantes/[slug]`).
+ *
+ * O `slug` é o `User.identificador` (parte após o `@`). A função
+ * {@link obterPerfilPublico} resolve o estado discriminado:
+ *
+ * - `NOT_FOUND` — não existe Acompanhante com esse identificador.
+ *   Tela "perfil não encontrado" com link de volta para a busca.
+ * - `HIDDEN` — perfil existe mas está oculto. Engloba dois cenários
+ *   indistinguíveis para o visitante:
+ *     1. A Acompanhante desligou a visibilidade no painel.
+ *     2. O plano vigente é nulo (expirado ou nunca selecionado).
+ *   Em ambos, mostramos a mesma tela "perfil indisponível".
+ * - `OK` — perfil disponível com a página completa renderizada por
+ *   {@link PerfilPublicoView}.
+ *
+ * # PII
+ *
+ * O `obterPerfilPublico` retorna um {@link PerfilAcompanhantePublico}
+ * sem PII (sem email, sem telefone, sem userId interno). O telefone
+ * só vira `whatsappUrl` derivada server-side. O `userId` vem em
+ * campo separado da resposta `OK` para usos internos da page (galeria
+ * e contador de views) e não é repassado ao componente cliente.
+ *
+ * # Métricas
+ *
+ * Cada acesso ao perfil dispara o {@link ViewTracker} (client) que
+ * faz `POST /api/acompanhantes/[slug]/view` no mount, com cooldown
+ * de 6h por viewer via cookie HTTP-only. O próprio dono não conta
+ * na métrica. Não fazemos isso no RSC porque o Next 15 proíbe
+ * `cookies().set()` durante o render.
+ */
+export default async function PerfilPublicoPage({
+    params,
+}: {
+    params: Promise<{ slug: string }>;
+}) {
+    const { slug } = await params;
+    const result = await obterPerfilPublico(slug);
+
+    if (result.state === "NOT_FOUND") {
+        return (
+            <PageSurface verticalAlign="center">
+                <Card padding="none">
+                    <EmptyState
+                        icon={<UsersIcon size={20} />}
+                        title="Perfil não encontrado"
+                        description="O link que você abriu não corresponde a nenhum perfil ativo. Confira se o nome de usuário está certo."
+                        action={
+                            <Button href="/acompanhantes" size="sm">
+                                Ver todas
+                            </Button>
+                        }
+                    />
+                </Card>
+            </PageSurface>
+        );
+    }
+
+    if (result.state === "HIDDEN") {
+        return (
+            <PageSurface verticalAlign="center">
+                <Card padding="none">
+                    <EmptyState
+                        icon={<EyeOffIcon size={20} />}
+                        title="Este perfil está oculto ou desativado"
+                        description="No momento, este perfil não está disponível para visualização."
+                        action={
+                            <Button href="/acompanhantes" size="sm">
+                                Ver outros perfis
+                            </Button>
+                        }
+                    />
+                </Card>
+            </PageSurface>
+        );
+    }
+
+    // result.state === "OK". Resolvemos em paralelo:
+    //   - galeria pública (mesmo helper do painel)
+    //   - sessão atual (pra pré-popular form de avaliação do Cliente)
+    //   - lista de reviews públicas
+    const [galeria, session, reviews] = await Promise.all([
+        listarGaleria(result.userId),
+        getCurrentSession(),
+        listarReviewsPublicos(result.userId),
+    ]);
+
+    // Cliente autenticado vê o estado da própria avaliação para
+    // pré-popular o formulário "Sua avaliação". Acompanhantes e
+    // anônimos não acessam este caminho.
+    const minhaReview =
+        session?.userType === "CLIENTE"
+            ? await obterMinhaReview(result.userId, session.userId)
+            : null;
+
+    const galeriaItems = galeria.map(toMediaItem);
+
+    return (
+        <PageSurface
+            banner={<ProfileBanner photoUrl={result.perfil.coverUrl} />}
+        >
+            <ViewTracker slug={slug} />
+            <PerfilPublicoView
+                slug={slug}
+                perfil={result.perfil}
+                galeriaItems={galeriaItems}
+                reviews={reviews}
+                viewerKind={
+                    session === null
+                        ? "anonimo"
+                        : session.userType === "CLIENTE"
+                            ? "cliente"
+                            : "acompanhante"
+                }
+                viewerIsOwner={
+                    session?.userType === "ACOMPANHANTE" &&
+                    session.userId === result.userId
+                }
+                minhaReview={minhaReview}
+            />
+        </PageSurface>
+    );
+}
+
+/**
+ * Metadata dinâmica baseada no perfil. Quando o perfil está oculto
+ * ou não existe, devolvemos um título genérico para evitar leak de
+ * conteúdo via OG tags.
+ */
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+    const { slug } = await params;
+    const result = await obterPerfilPublico(slug);
+
+    if (result.state !== "OK") {
+        return {
+            title: "Perfil indisponível",
+        };
+    }
+
+    const { perfil } = result;
+    const localizacao = `${perfil.cidadeNome}, ${perfil.estadoSigla}`;
+    const description = perfil.descricao
+        ? perfil.descricao.slice(0, 160)
+        : `Perfil de ${perfil.nome} em ${localizacao}.`;
+
+    return {
+        title: `${perfil.nome} (@${perfil.identificador})`,
+        description,
+        openGraph: {
+            title: `${perfil.nome} · ${localizacao}`,
+            description,
+            images: perfil.fotoUrl ? [{ url: perfil.fotoUrl }] : undefined,
+            type: "profile",
+        },
+    };
+}

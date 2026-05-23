@@ -1,0 +1,36 @@
+# Build artifacts and local state we never want shipped into the image.
+node_modules
+.next
+out
+build
+dist
+coverage
+
+# Local env files. Secrets must come from runtime env vars (Requirement 7.3).
+.env
+.env.local
+.env.*.local
+
+# VCS, editors, OS
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Tooling caches
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Tests are not needed at runtime; they run in CI separately.
+tests
+
+# Spec / docs scaffolding (kept out of runtime image to reduce surface).
+.kiro
+
+# Docker artifacts themselves
+docker/docker-compose.yml

@@ -1,0 +1,421 @@
+// Prisma schema for the Privello platform.
+//
+// Reflects the data models documented in
+// .kiro/specs/privello-platform/design.md (section "Data Models").
+// Snake_case is used for the underlying PostgreSQL tables/columns; the
+// PascalCase model names are exposed to the application via Prisma Client.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserType {
+  CLIENTE
+  ACOMPANHANTE
+}
+
+enum PlanoTipo {
+  BASICO
+  PREMIUM
+}
+
+enum PlanoClienteTipo {
+  GRATIS
+  FAN
+}
+
+enum MediaStatus {
+  COMMITTED
+  PENDING_REPAIR
+  DELETED
+}
+
+enum MediaKind {
+  PHOTO
+  VIDEO
+  AUDIO
+}
+
+enum MediaRole {
+  PROFILE
+  COVER
+  AUDIO
+  GALLERY
+}
+
+enum BoostPaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+}
+
+enum Etnia {
+  BRANCA
+  NEGRA
+  PARDA
+  AMARELA
+  INDIGENA
+}
+
+enum CorOlhos {
+  CASTANHO
+  PRETO
+  AZUL
+  VERDE
+  MEL
+  CINZA
+}
+
+enum EstiloCabelo {
+  LISO
+  ONDULADO
+  CACHEADO
+  CRESPO
+}
+
+enum TamanhoCabelo {
+  CURTO
+  MEDIO
+  LONGO
+}
+
+enum Idioma {
+  PORTUGUES
+  INGLES
+  ESPANHOL
+  FRANCES
+  ITALIANO
+  ALEMAO
+  OUTRO
+}
+
+enum Genero {
+  MULHER
+  HOMEM
+  TRANS
+}
+
+enum Atende {
+  MULHER
+  HOMEM
+  CASAL
+  TRANS
+}
+
+enum Pratica {
+  ORAL
+  VAGINAL
+  ANAL
+  BEIJO_NA_BOCA
+  MASSAGEM
+  FETICHE
+}
+
+enum FormaPagamento {
+  DINHEIRO
+  PIX
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  TRANSFERENCIA
+}
+
+enum DiaSemana {
+  SEG
+  TER
+  QUA
+  QUI
+  SEX
+  SAB
+  DOM
+}
+
+// ---------------------------------------------------------------------------
+// Core identity
+// ---------------------------------------------------------------------------
+
+/// Conta de Cliente ou Acompanhante. `email` e `identificador` são sempre
+/// armazenados em caixa baixa para garantir a unicidade case-insensitive
+/// exigida pelos requisitos 2.3 e 2.4.
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  identificador String   @unique
+  nome          String
+  passwordHash  String   @map("password_hash")
+  type          UserType
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  acompanhante  AcompanhanteProfile?
+  client        ClientProfile?
+  sessions      Session[]
+  medias        Media[]
+  loginAttempts LoginAttempt[]
+  boostPayments BoostPayment[]
+  reviewsReceived AcompanhanteReview[] @relation("ReviewTarget")
+  reviewsAuthored AcompanhanteReview[] @relation("ReviewAuthor")
+
+  @@map("users")
+}
+
+model ClientProfile {
+  userId             String            @id @map("user_id") @db.Uuid
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fotoPerfilId       String?           @unique @map("foto_perfil_id") @db.Uuid
+  fotoPerfil         Media?            @relation("ClientFotoDePerfil", fields: [fotoPerfilId], references: [id])
+  planoVigente       PlanoClienteTipo? @map("plano_vigente")
+  planoSelecionadoEm DateTime?         @map("plano_selecionado_em")
+
+  @@map("client_profiles")
+}
+
+/// Perfil de Acompanhante criado ao final do onboarding. `planoVigente` é
+/// `NULL` enquanto a Acompanhante ainda não confirmou um plano em
+/// `/selecao-plano` (Requirements 5.4, 5.5 e 5.10).
+model AcompanhanteProfile {
+  userId             String     @id @map("user_id") @db.Uuid
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  telefone           String
+  estadoSigla        String     @map("estado_sigla") @db.VarChar(2)
+  cidadeNome         String     @map("cidade_nome")
+  bairroNome         String?    @map("bairro_nome")
+  descricao          String     @db.VarChar(1000)
+  fotoPerfilId       String?    @unique @map("foto_perfil_id") @db.Uuid
+  fotoPerfil         Media?     @relation("FotoDePerfil", fields: [fotoPerfilId], references: [id])
+  capaPerfilId       String?    @unique @map("capa_perfil_id") @db.Uuid
+  capaPerfil         Media?     @relation("CapaDePerfil", fields: [capaPerfilId], references: [id])
+  audioApresentacaoId String?   @unique @map("audio_apresentacao_id") @db.Uuid
+  audioApresentacao  Media?     @relation("AudioDeApresentacao", fields: [audioApresentacaoId], references: [id])
+  planoVigente       PlanoTipo? @map("plano_vigente")
+  planoSelecionadoEm DateTime?  @map("plano_selecionado_em")
+
+  // Características físicas e perfil — todos opcionais. Coletados de
+  // forma enxuta no Onboarding_Acompanhante (step "Aparência") e
+  // editáveis a qualquer momento no painel.
+  genero             Genero?
+  pesoKg             Int?           @map("peso_kg")
+  alturaCm           Int?           @map("altura_cm")
+  tamanhoPe          Int?           @map("tamanho_pe")
+  etnia              Etnia?
+  corOlhos           CorOlhos?      @map("cor_olhos")
+  estiloCabelo       EstiloCabelo?  @map("estilo_cabelo")
+  tamanhoCabelo      TamanhoCabelo? @map("tamanho_cabelo")
+  temSilicone        Boolean?       @map("tem_silicone")
+  temTatuagens       Boolean?       @map("tem_tatuagens")
+  temPiercing        Boolean?       @map("tem_piercing")
+  fumante            Boolean?
+  idiomas            Idioma[]       @default([])
+  atendePublicos     Atende[]       @default([]) @map("atende_publicos")
+  realizaPraticas    Pratica[]      @default([]) @map("realiza_praticas")
+
+  // Atendimento comercial: valor da hora (em centavos), formas de
+  // pagamento aceitas e dias da semana em que atende. Coletados de
+  // forma enxuta no Onboarding e editáveis no painel.
+  valorHoraCents     Int?              @map("valor_hora_cents")
+  formasPagamento    FormaPagamento[]  @default([]) @map("formas_pagamento")
+  diasAtende         DiaSemana[]       @default([]) @map("dias_atende")
+
+  // Toggle de visibilidade pública. `true` (default) faz o perfil
+  // aparecer nas buscas e o `/acompanhantes/[slug]` mostrar tudo.
+  // `false` faz a busca ignorá-la e o slug renderizar a tela
+  // genérica de "perfil oculto ou desativado". Mesmo estado
+  // visual usado quando `planoVigente` é nulo (plano expirado).
+  perfilVisivel      Boolean        @default(true) @map("perfil_visivel")
+
+  // Janela ativa do Boost (promoção paga de 24h que dá prioridade
+  // total em buscas e destaque na home). `NULL` ou no passado =
+  // sem boost. Setado pelo webhook do Mercado Pago via
+  // `processarWebhookBoost`.
+  boostUntil         DateTime?      @map("boost_until")
+
+  // Contador agregado de visualizações públicas. Incrementado por
+  // `incrementarVisualizacao` no acesso ao perfil público, com
+  // cooldown via cookie por viewer. Substituível por agregação
+  // baseada em eventos quando o `Sistema_de_Estatisticas` existir.
+  viewsCount         Int            @default(0) @map("views_count")
+
+  // Agregado de avaliações. Materializados pela trigger
+  // `trg_reviews_agregado` sempre que `acompanhante_reviews` muda.
+  // O valor médio fica como Decimal(3,2) para evitar imprecisão de
+  // float (ex.: 4.67). `reviews_count` é número de avaliações.
+  reviewsCount       Int            @default(0) @map("reviews_count")
+  reviewsAverage     Decimal        @default(0) @map("reviews_average") @db.Decimal(3, 2)
+
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  @@index([perfilVisivel, planoVigente])
+  @@index([boostUntil])
+  @@map("acompanhante_profiles")
+}
+
+// ---------------------------------------------------------------------------
+// Mídia (R2)
+// ---------------------------------------------------------------------------
+
+model Media {
+  id             String      @id @default(uuid()) @db.Uuid
+  ownerId        String      @map("owner_id") @db.Uuid
+  owner          User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  storageKey     String      @unique @map("storage_key")
+  mimeType       String      @map("mime_type")
+  sizeBytes      Int         @map("size_bytes")
+  status         MediaStatus
+  kind           MediaKind   @default(PHOTO)
+  role           MediaRole   @default(GALLERY)
+  description    String?
+  /// @deprecated — use `role` em vez disso. Mantido por compat até
+  /// uma migration de cleanup remover.
+  isProfilePhoto Boolean     @default(false) @map("is_profile_photo")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  acompanhanteAsProfile AcompanhanteProfile? @relation("FotoDePerfil")
+  acompanhanteAsCover   AcompanhanteProfile? @relation("CapaDePerfil")
+  acompanhanteAsAudio   AcompanhanteProfile? @relation("AudioDeApresentacao")
+  clientAsProfile       ClientProfile?       @relation("ClientFotoDePerfil")
+
+  @@index([ownerId])
+  @@index([ownerId, role, status, createdAt(sort: Desc)])
+  @@map("medias")
+}
+
+// ---------------------------------------------------------------------------
+// Sessões e tentativas de login
+// ---------------------------------------------------------------------------
+
+/// Sessão autenticada. `expiresAt` é estritamente menor ou igual a
+/// `createdAt + 30 dias` (Requirement 1.1) e `revokedAt` registra o
+/// instante do logout (Requirement 1.5).
+model Session {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at")
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+/// Histórico de tentativas de login utilizado para o rate limit por email
+/// (Requirement 1.8). Mantido mesmo após a sessão ser criada para manter a
+/// janela deslizante de 15 minutos.
+model LoginAttempt {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String
+  success   Boolean
+  userId    String?  @map("user_id") @db.Uuid
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, createdAt])
+  @@map("login_attempts")
+}
+
+// ---------------------------------------------------------------------------
+// Onboarding draft
+// ---------------------------------------------------------------------------
+
+/// Estado parcial do Onboarding_Acompanhante mantido entre etapas. O cookie
+/// `onboardingId` aponta para esta linha. `expiresAt` é igual a
+/// `updatedAt + 60 minutos` e drafts expirados são apagados junto com o
+/// objeto staged em R2 (Requirements 3.3 e 3.4).
+model OnboardingDraft {
+  id        String   @id @default(uuid()) @db.Uuid
+  payload   Json
+  stagedKey String?  @map("staged_key")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("onboarding_drafts")
+}
+
+// ---------------------------------------------------------------------------
+// Cache do IBGE
+// ---------------------------------------------------------------------------
+
+/// Cache local dos resultados da API do IBGE. `expiresAt - fetchedAt` está
+/// sempre em `[24h, 7 dias]` (Requirement 4.5).
+model IbgeCacheEntry {
+  key       String   @id
+  payload   Json
+  fetchedAt DateTime @default(now()) @map("fetched_at")
+  expiresAt DateTime @map("expires_at")
+
+  @@map("ibge_cache")
+}
+
+// ---------------------------------------------------------------------------
+// Boost (promoção paga de 24h)
+// ---------------------------------------------------------------------------
+
+/// Registro de uma compra de Boost da Acompanhante.
+///
+/// Boost é uma promoção de 24h que dá prioridade total em buscas e
+/// destaque na home. Cada compra cria um `BoostPayment` em `PENDING`
+/// e uma `Preference` correspondente no Mercado Pago. O webhook do
+/// MP confirma a aprovação via `processarWebhookBoost`, que atualiza
+/// `status` para `APPROVED` e estende `AcompanhanteProfile.boostUntil`
+/// em +24h.
+///
+/// Idempotência: `externalReference` é único e enviado ao MP como
+/// `external_reference` da preference. Webhooks duplicados são
+/// detectados comparando `mp_payment_id` antes de aplicar a janela.
+model BoostPayment {
+  id                 String             @id @default(uuid()) @db.Uuid
+  userId             String             @map("user_id") @db.Uuid
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountCents        Int                @map("amount_cents")
+  currency           String             @default("BRL") @db.VarChar(3)
+  status             BoostPaymentStatus @default(PENDING)
+  externalReference  String             @unique @map("external_reference") @db.VarChar(80)
+  mpPreferenceId     String?            @unique @map("mp_preference_id") @db.VarChar(120)
+  mpPaymentId        String?            @map("mp_payment_id") @db.VarChar(120)
+  activatesAt        DateTime?          @map("activates_at")
+  expiresAt          DateTime?          @map("expires_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  @@index([userId, status, createdAt(sort: Desc)])
+  @@map("boost_payments")
+}
+
+/// Avaliação pública deixada por um Cliente em um perfil de
+/// Acompanhante. Cada par `(targetUserId, authorUserId)` é único —
+/// um Cliente só avalia uma Acompanhante uma vez. Reedição vira
+/// UPSERT.
+///
+/// Os agregados (`reviews_count` / `reviews_average`) ficam em
+/// `acompanhante_profiles` e são atualizados via trigger
+/// `trg_reviews_agregado` no banco para garantir consistência sem
+/// depender de aplicação.
+model AcompanhanteReview {
+  id           String   @id @default(uuid()) @db.Uuid
+  targetUserId String   @map("target_user_id") @db.Uuid
+  target       User     @relation("ReviewTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  authorUserId String   @map("author_user_id") @db.Uuid
+  author       User     @relation("ReviewAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+  rating       Int      @db.SmallInt
+  comment      String?  @db.VarChar(2000)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([targetUserId, authorUserId])
+  @@index([targetUserId, createdAt(sort: Desc)])
+  @@map("acompanhante_reviews")
+}

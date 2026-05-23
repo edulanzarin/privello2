@@ -1,0 +1,81 @@
+import * as React from "react";
+
+/**
+ * Props do {@link UpgradeBanner}.
+ *
+ * Banner horizontal compacto de upgrade/CTA. Usado quando uma página
+ * exibe um misto de seções liberadas e bloqueadas: em vez de poluir
+ * cada seção com um botão "Virar tier X", colocamos um único banner
+ * acima do conteúdo principal.
+ *
+ * Nenhuma prop carrega nomes de entidades de domínio (Property 29).
+ */
+export interface UpgradeBannerProps {
+    /** Ícone tonal exibido à esquerda. Opcional. */
+    icon?: React.ReactNode;
+    /** Título do banner. */
+    title: React.ReactNode;
+    /** Descrição auxiliar abaixo do título. Opcional. */
+    description?: React.ReactNode;
+    /** URL de destino do CTA principal. */
+    ctaHref: string;
+    /** Texto do CTA principal. */
+    ctaLabel: React.ReactNode;
+    /** Classes extras aplicadas ao container. */
+    className?: string;
+}
+
+/**
+ * UpgradeBanner — chamada de upgrade compacta e horizontal.
+ *
+ * Visual: card sólido com fundo `primary-50` translúcido, borda
+ * `primary-200`, ícone em pill e CTA sólido `primary-600`. Cabe em
+ * uma linha em desktop; em mobile vira coluna preservando a
+ * hierarquia.
+ */
+export function UpgradeBanner({
+    icon,
+    title,
+    description,
+    ctaHref,
+    ctaLabel,
+    className,
+}: UpgradeBannerProps): React.ReactElement {
+    const composed = [
+        "flex flex-col items-stretch gap-3 rounded-lg border border-primary-200 bg-primary-50/60 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-3",
+        className ?? "",
+    ]
+        .filter(Boolean)
+        .join(" ");
+
+    return (
+        <div className={composed}>
+            <div className="flex flex-1 items-center gap-3">
+                {icon != null ? (
+                    <span
+                        aria-hidden="true"
+                        className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-primary-100 text-primary-700"
+                    >
+                        {icon}
+                    </span>
+                ) : null}
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-sm font-semibold tracking-tight text-text-primary">
+                        {title}
+                    </span>
+                    {description != null ? (
+                        <span className="text-xs text-text-secondary">
+                            {description}
+                        </span>
+                    ) : null}
+                </div>
+            </div>
+            <a
+                href={ctaHref}
+                className="inline-flex flex-none items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+            >
+                {ctaLabel}
+            </a>
+        </div>
+    );
+}
