@@ -49,6 +49,25 @@ export interface AudioWavePlayerProps {
     durationOverride?: number;
     /** Quantidade de barras renderizadas. Padrão: 56. */
     barCount?: number;
+    /**
+     * Variante visual do player. Padrão: `"full"`.
+     *
+     * - `"full"`: pílula completa com botão grande (h-10 w-10), 56
+     *   barras, contador de tempo. Usado em painéis e perfil
+     *   público onde o áudio é destaque.
+     * - `"mini"`: pílula compacta com botão menor (h-8 w-8), barras
+     *   reduzidas e contador discreto. Usado em listagens densas
+     *   (cards do feed da home/busca) onde o áudio é apenas um
+     *   "recheio" do card.
+     */
+    variant?: "full" | "mini";
+    /**
+     * Quando `true`, o player engole `click` events para evitar
+     * que cliques no botão de play disparem navegação no `<a>`
+     * pai (caso o player esteja dentro de um card linkado).
+     * Padrão: `false`.
+     */
+    stopPropagation?: boolean;
     /** Classes extras aplicadas ao card. */
     className?: string;
     /**
@@ -61,10 +80,14 @@ export function AudioWavePlayer({
     src,
     mimeType,
     durationOverride,
-    barCount = 56,
+    barCount,
+    variant = "full",
+    stopPropagation = false,
     className,
     "aria-label": ariaLabel = "Reproduzir áudio",
 }: AudioWavePlayerProps): React.ReactElement {
+    const isMini = variant === "mini";
+    const effectiveBarCount = barCount ?? (isMini ? 32 : 56);
     const audioRef = React.useRef<HTMLAudioElement>(null);
     const [playing, setPlaying] = React.useState(false);
     const [currentTime, setCurrentTime] = React.useState(0);
@@ -74,10 +97,10 @@ export function AudioWavePlayer({
     const waveform = React.useMemo(
         () =>
             fallbackWaveform(
-                barCount,
+                effectiveBarCount,
                 typeof src === "string" ? src : "blob",
             ),
-        [src, barCount],
+        [src, effectiveBarCount],
     );
 
     // Resolve a URL utilizável pelo `<audio>`. Para Blob criamos um
@@ -136,7 +159,11 @@ export function AudioWavePlayer({
             ? durationOverride
             : intrinsicDuration;
 
-    function toggle(): void {
+    function toggle(e?: React.MouseEvent<HTMLButtonElement>): void {
+        if (stopPropagation && e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         const el = audioRef.current;
         if (!el) return;
         if (el.paused) {
@@ -147,6 +174,10 @@ export function AudioWavePlayer({
     }
 
     function seekFromEvent(e: React.MouseEvent<HTMLDivElement>): void {
+        if (stopPropagation) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         const el = audioRef.current;
         if (!el) return;
         if (!Number.isFinite(duration) || duration <= 0) return;
@@ -166,12 +197,23 @@ export function AudioWavePlayer({
 
     const progress = duration > 0 ? currentTime / duration : 0;
 
+    const containerCls = isMini
+        ? "flex items-center gap-2 rounded-full border border-border bg-surface px-2 py-1.5"
+        : "flex items-center gap-3 rounded-full border border-border bg-surface px-3 py-2 shadow-sm";
+    const buttonCls = isMini
+        ? "inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-primary-600 text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+        : "inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-primary-600 text-white shadow-sm transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40";
+    const trackCls = isMini
+        ? "flex h-7 min-w-0 flex-1 cursor-pointer items-center gap-[2px] focus:outline-none"
+        : "flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-[2px] focus:outline-none";
+    const clockCls = isMini
+        ? "flex-none font-mono text-[0.65rem] tabular-nums text-text-secondary"
+        : "flex-none font-mono text-xs tabular-nums text-text-secondary";
+    const iconSize = isMini ? 12 : 16;
+
     return (
         <div
-            className={[
-                "flex items-center gap-3 rounded-full border border-neutral-200 bg-surface px-3 py-2 shadow-sm",
-                className ?? "",
-            ]
+            className={[containerCls, className ?? ""]
                 .filter(Boolean)
                 .join(" ")}
         >
@@ -179,9 +221,13 @@ export function AudioWavePlayer({
                 type="button"
                 onClick={toggle}
                 aria-label={playing ? "Pausar áudio" : ariaLabel}
-                className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-primary-600 text-white shadow-sm transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                className={buttonCls}
             >
-                {playing ? <PauseIcon size={16} /> : <PlayIcon size={16} />}
+                {playing ? (
+                    <PauseIcon size={iconSize} />
+                ) : (
+                    <PlayIcon size={iconSize} />
+                )}
             </button>
 
             <div
@@ -215,10 +261,10 @@ export function AudioWavePlayer({
                         }
                     }
                 }}
-                className="flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-[2px] focus:outline-none"
+                className={trackCls}
             >
                 {waveform.map((mag, i) => {
-                    const filled = i / barCount <= progress;
+                    const filled = i / effectiveBarCount <= progress;
                     // Arredonda para 2 casas — server e client
                     // precisam produzir EXATAMENTE a mesma string
                     // pra evitar hydration mismatch. Float "puro"
@@ -242,7 +288,7 @@ export function AudioWavePlayer({
                 })}
             </div>
 
-            <span className="flex-none font-mono text-xs tabular-nums text-text-secondary">
+            <span className={clockCls}>
                 {formatClock(currentTime)} /{" "}
                 {duration > 0 ? formatClock(duration) : "--:--"}
             </span>

@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import {
+    AudioWavePlayer,
     Badge,
     Button,
     CameraIcon,
@@ -146,10 +147,6 @@ export function HomeView({
                         onSubmit={handleSubmit}
                         placeholder="Em qual cidade você está?"
                     />
-                    <p className="text-xs text-text-secondary">
-                        Digite a cidade e tecle enter pra ver quem está
-                        disponível.
-                    </p>
                 </div>
 
                 {isAnonimo ? (
@@ -352,6 +349,7 @@ function FeedGrid({
                     cityName={item.cidadeNome}
                     stateSigla={item.estadoSigla}
                     neighborhood={item.bairroNome}
+                    description={item.descricao}
                     rating={item.reviewsAverage}
                     ratingCount={item.reviewsCount}
                     priceLabel={
@@ -360,7 +358,18 @@ function FeedGrid({
                             : undefined
                     }
                     priceCaption="a partir de"
-                    hasAudio={item.temAudio}
+                    mediaCount={item.mediasCount}
+                    hasAudio={item.audioUrl !== null}
+                    audio={
+                        item.audioUrl !== null ? (
+                            <AudioWavePlayer
+                                src={item.audioUrl}
+                                mimeType={item.audioMimeType ?? undefined}
+                                variant="mini"
+                                stopPropagation
+                            />
+                        ) : null
+                    }
                     badge={renderRankBadge(item.planoExibicao)}
                 />
             ))}

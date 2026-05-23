@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { MapPinIcon, MicIcon, StarIcon } from "../icons";
+import { ImageIcon, MapPinIcon, MicIcon, StarIcon } from "../icons";
 
 /**
  * Variante visual do {@link ProfileFeedCard}.
@@ -11,9 +11,8 @@ import { MapPinIcon, MicIcon, StarIcon } from "../icons";
  *   com nome/identificador/local sobrepostos. Bom pra fileiras
  *   horizontais densas onde a leitura precisa ser rápida.
  * - `"split"` (padrão): foto 3:4 no topo + área branca embaixo com
- *   nome, idade-like (placeholder), localização, áudio inline (se
- *   houver) e preço destacado. Mais "completinho", inspirado em
- *   listagens de produto.
+ *   nome, localização, descrição preview, áudio inline (slot) e
+ *   rodapé com chips de meta + preço destacado.
  */
 export type ProfileFeedCardVariant = "overlay" | "split";
 
@@ -21,9 +20,11 @@ export type ProfileFeedCardVariant = "overlay" | "split";
  * Props do {@link ProfileFeedCard}.
  *
  * Card de listagem clicável. Inteiramente coberto por um `<a>`
- * (sem botões internos pra evitar conflito de hit-area). Suporta
- * duas variantes visuais (`split`/`overlay`) que partilham o mesmo
- * contrato.
+ * (sem botões internos competindo pelo hit-area, exceto pelo slot
+ * `audio` que é o único elemento interativo aceito — o consumidor
+ * é responsável por chamar `stopPropagation` no `onClick` do
+ * player). Suporta duas variantes visuais (`split`/`overlay`) que
+ * partilham o mesmo contrato.
  *
  * Nenhuma prop carrega nomes de entidades de domínio (Property 29).
  */
@@ -42,6 +43,11 @@ export interface ProfileFeedCardProps {
     stateSigla: string;
     /** Bairro opcional. */
     neighborhood?: string | null;
+    /**
+     * Texto livre da bio. Renderizado em variant `"split"` com
+     * truncamento de 2 linhas. Quando ausente/vazio, omite.
+     */
+    description?: string | null;
     /**
      * Badge renderizado no topo-esquerdo (sobre a foto). Tipicamente
      * um {@link RankBadge}. Decisão de label/ícone fica com o
@@ -64,8 +70,24 @@ export interface ProfileFeedCardProps {
     /** Texto pequeno acima do preço, ex.: "a partir de". */
     priceCaption?: string;
     /**
-     * Quando `true`, exibe um chip "Áudio" perto do nome em variant
-     * `"split"` indicando que o perfil tem áudio publicado.
+     * Quantidade de mídias publicadas pra a chip "N mídias". Quando
+     * `0`/ausente, omite.
+     */
+    mediaCount?: number;
+    /**
+     * Slot opcional para player de áudio inline. Renderizado em
+     * variant `"split"` logo após a descrição. Tipicamente um
+     * {@link import("./AudioWavePlayer").AudioWavePlayer} com
+     * `variant="mini"` e `stopPropagation`. Quando ausente, o
+     * primitivo cai num chip estático "Tem áudio" se
+     * {@link hasAudio} for `true`.
+     */
+    audio?: React.ReactNode;
+    /**
+     * Quando `true`, exibe um chip "Áudio" no rodapé indicando que
+     * o perfil tem áudio publicado (mesmo sem `audio` slot
+     * passado). Em variant `"split"`, se `audio` slot estiver
+     * presente, este chip é suprimido pra evitar redundância.
      */
     hasAudio?: boolean;
     /** Variante visual. Padrão: `"split"`. */
@@ -93,11 +115,19 @@ const ASPECT_CLASSES: Record<
  * Visual:
  *
  * - **`split`**: container `rounded-3xl border` com foto no topo
- *   (cantos superiores arredondados) + área branca com info densa.
- *   Hover faz a imagem dar zoom suave (`scale-[1.03]`).
+ *   (cantos superiores arredondados) + área branca densa embaixo.
+ *   Hover faz a imagem dar zoom suave (`scale-[1.03]`). Bloco
+ *   branco organizado em colunas:
+ *
+ *     1. **Header**: nome + `@id` à esquerda; rating à direita.
+ *     2. **Localização**: linha "bairro · cidade · UF".
+ *     3. **Descrição**: bio em 2 linhas com `line-clamp-2`.
+ *     4. **Áudio**: slot full-width quando consumidor passa.
+ *     5. **Footer**: chips de meta (mídias, áudio) à esquerda;
+ *        preço à direita, separados por hairline.
+ *
  * - **`overlay`**: foto fullbleed com gradiente na base e meta
- *   sobreposta. Pílulas pequenas no topo direito mostram rating e
- *   views. Bom pra carrosséis horizontais.
+ *   sobreposta. Mantido pra carrosséis horizontais (futuro).
  */
 export function ProfileFeedCard({
     href,
@@ -107,12 +137,15 @@ export function ProfileFeedCard({
     cityName,
     stateSigla,
     neighborhood,
+    description,
     badge,
     viewsCount,
     rating,
     ratingCount,
     priceLabel,
     priceCaption,
+    mediaCount,
+    audio,
     hasAudio = false,
     variant = "split",
     aspect = "portrait",
@@ -204,6 +237,11 @@ export function ProfileFeedCard({
     }
 
     // variant === "split"
+    const showMediasChip =
+        typeof mediaCount === "number" && mediaCount > 0;
+    const showAudioChip = hasAudio && audio == null;
+    const showFooter = showMediasChip || showAudioChip || Boolean(priceLabel);
+
     return (
         <a
             href={href}
@@ -241,7 +279,8 @@ export function ProfileFeedCard({
             </div>
 
             {/* Bloco de info */}
-            <div className="flex flex-1 flex-col gap-2 p-4">
+            <div className="flex flex-1 flex-col gap-3 p-4">
+                {/* Header: nome/@id + rating */}
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-col gap-0.5">
                         <span className="truncate text-base font-semibold leading-tight tracking-tight text-text-primary">
@@ -270,6 +309,7 @@ export function ProfileFeedCard({
                     ) : null}
                 </div>
 
+                {/* Localização */}
                 <span className="inline-flex items-center gap-1 text-xs text-text-secondary">
                     <MapPinIcon size={12} />
                     <span className="truncate">
@@ -278,23 +318,48 @@ export function ProfileFeedCard({
                     </span>
                 </span>
 
-                {hasAudio ? (
-                    <span className="inline-flex w-max items-center gap-1 rounded-full border border-border bg-surface-muted px-2 py-0.5 text-[0.7rem] font-medium text-text-secondary">
-                        <MicIcon size={11} />
-                        Tem áudio
-                    </span>
+                {/* Descrição */}
+                {description ? (
+                    <p className="line-clamp-2 text-xs leading-relaxed text-text-secondary">
+                        {description}
+                    </p>
                 ) : null}
 
-                {priceLabel ? (
-                    <div className="mt-auto flex items-baseline gap-1.5 border-t border-border pt-3">
-                        {priceCaption ? (
-                            <span className="text-[0.7rem] text-text-secondary">
-                                {priceCaption}
-                            </span>
+                {/* Áudio inline */}
+                {audio != null ? <div>{audio}</div> : null}
+
+                {/* Rodapé: chips + preço */}
+                {showFooter ? (
+                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {showMediasChip ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[0.7rem] font-medium text-text-secondary">
+                                    <ImageIcon size={11} />
+                                    {mediaCount}
+                                    {mediaCount === 1
+                                        ? " mídia"
+                                        : " mídias"}
+                                </span>
+                            ) : null}
+                            {showAudioChip ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[0.7rem] font-medium text-text-secondary">
+                                    <MicIcon size={11} />
+                                    Áudio
+                                </span>
+                            ) : null}
+                        </div>
+                        {priceLabel ? (
+                            <div className="flex shrink-0 items-baseline gap-1.5">
+                                {priceCaption ? (
+                                    <span className="text-[0.7rem] text-text-secondary">
+                                        {priceCaption}
+                                    </span>
+                                ) : null}
+                                <span className="text-base font-semibold tabular-nums text-primary-700">
+                                    {priceLabel}
+                                </span>
+                            </div>
                         ) : null}
-                        <span className="text-lg font-semibold tabular-nums text-primary-700">
-                            {priceLabel}
-                        </span>
                     </div>
                 ) : null}
             </div>

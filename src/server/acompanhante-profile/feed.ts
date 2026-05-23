@@ -25,6 +25,8 @@ export interface FeedItem {
     estadoSigla: string;
     cidadeNome: string;
     bairroNome: string | null;
+    /** Texto livre da bio (truncado pelo consumidor). */
+    descricao: string;
     /** Selo discriminado. Mesmo formato usado pelo perfil público. */
     planoExibicao: PlanoExibicao;
     /** Total de visualizações públicas. */
@@ -35,8 +37,20 @@ export interface FeedItem {
     reviewsAverage: number;
     /** Valor da hora em centavos, ou `null` quando "a combinar". */
     valorHoraCents: number | null;
-    /** `true` quando há áudio publicado e disponível. */
-    temAudio: boolean;
+    /**
+     * URL do áudio de apresentação ou `null` quando não há.
+     * Quando presente, o caller pode renderizar inline com
+     * {@link import("@/components").AudioWavePlayer}.
+     */
+    audioUrl: string | null;
+    /** MIME type do áudio (necessário para o `<audio type>`). */
+    audioMimeType: string | null;
+    /**
+     * Quantidade de mídias publicadas na galeria
+     * (`role = GALLERY`, `status = COMMITTED`). Usado para a
+     * "pílula de mídias" no card.
+     */
+    mediasCount: number;
 }
 
 /**
@@ -90,7 +104,9 @@ export interface ListarFeedHomeOptions {
 const include = {
     user: { select: { nome: true, identificador: true } },
     fotoPerfil: { select: { storageKey: true } },
-    audioApresentacao: { select: { status: true } },
+    audioApresentacao: {
+        select: { storageKey: true, mimeType: true, status: true },
+    },
 } satisfies Prisma.AcompanhanteProfileInclude;
 
 type Row = Prisma.AcompanhanteProfileGetPayload<{ include: typeof include }>;
@@ -111,6 +127,10 @@ const baseWhereVisivel: Prisma.AcompanhanteProfileWhereInput = {
  *   ordenação `viewsCount` desc + `updatedAt` desc.
  *
  * Itens já vêm sem PII e com `fotoUrl` derivada de `/api/storage/...`.
+ *
+ * Mídias publicadas (galeria com status committed) são contadas em
+ * **um único groupBy** depois das queries principais para evitar
+ * N+1 — caller recebe `mediasCount` já preenchido.
  */
 export async function listarFeedHome(
     options: ListarFeedHomeOptions = {},
@@ -142,22 +162,63 @@ export async function listarFeedHome(
         }),
     ]);
 
+    // Conta mídias da galeria pra todos os perfis listados em uma
+    // só query, evitando N+1.
+    const allUserIds = Array.from(
+        new Set([
+            ...boostRows.map((r) => r.userId),
+            ...altaRows.map((r) => r.userId),
+        ]),
+    );
+    const mediasCountMap = await contarMidiasGaleria(allUserIds);
+
     return {
-        boost: boostRows.map((r) => toItem(r, now)),
-        alta: altaRows.map((r) => toItem(r, now)),
+        boost: boostRows.map((r) =>
+            toItem(r, now, mediasCountMap.get(r.userId) ?? 0),
+        ),
+        alta: altaRows.map((r) =>
+            toItem(r, now, mediasCountMap.get(r.userId) ?? 0),
+        ),
     };
 }
 
-function toItem(row: Row, now: Date): FeedItem {
+/**
+ * Conta mídias da galeria (`role = GALLERY`, `status = COMMITTED`)
+ * agrupadas por `ownerId`. Single query — passa todos os user IDs
+ * de uma vez.
+ */
+async function contarMidiasGaleria(
+    ownerIds: ReadonlyArray<string>,
+): Promise<Map<string, number>> {
+    if (ownerIds.length === 0) return new Map();
+    const grupos = await db.media.groupBy({
+        by: ["ownerId"],
+        where: {
+            ownerId: { in: ownerIds as string[] },
+            role: "GALLERY",
+            status: "COMMITTED",
+        },
+        _count: { _all: true },
+    });
+    const map = new Map<string, number>();
+    for (const g of grupos) {
+        map.set(g.ownerId, g._count._all);
+    }
+    return map;
+}
+
+function toItem(row: Row, now: Date, mediasCount: number): FeedItem {
     const planoExibicao: PlanoExibicao = isBoostAtivo(row.boostUntil, now)
         ? "BOOST"
         : row.planoVigente === "PREMIUM"
             ? "PREMIUM"
             : "BASICO";
 
-    const temAudio =
+    const audioOk =
         row.audioApresentacao !== null &&
-        row.audioApresentacao.status === "COMMITTED";
+            row.audioApresentacao.status === "COMMITTED"
+            ? row.audioApresentacao
+            : null;
 
     return {
         identificador: row.user.identificador,
@@ -168,12 +229,15 @@ function toItem(row: Row, now: Date): FeedItem {
         estadoSigla: row.estadoSigla,
         cidadeNome: row.cidadeNome,
         bairroNome: row.bairroNome,
+        descricao: row.descricao,
         planoExibicao,
         viewsCount: row.viewsCount,
         reviewsCount: row.reviewsCount,
         reviewsAverage: Number(row.reviewsAverage),
         valorHoraCents: row.valorHoraCents,
-        temAudio,
+        audioUrl: audioOk ? `/api/storage/${audioOk.storageKey}` : null,
+        audioMimeType: audioOk ? audioOk.mimeType : null,
+        mediasCount,
     };
 }
 
