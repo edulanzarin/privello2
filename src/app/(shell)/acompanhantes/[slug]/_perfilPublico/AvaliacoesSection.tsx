@@ -41,6 +41,8 @@ export interface AvaliacoesSectionProps {
     reviewsAverage: number;
     viewerKind: ViewerKind;
     viewerIsOwner: boolean;
+    /** Cliente Fan — só ele pode ver avaliações detalhadas. */
+    viewerIsFan: boolean;
     minhaReview: { rating: number; comment: string | null } | null;
 }
 
@@ -51,24 +53,42 @@ export function AvaliacoesSection({
     reviewsAverage,
     viewerKind,
     viewerIsOwner,
+    viewerIsFan,
     minhaReview,
 }: AvaliacoesSectionProps): React.ReactElement {
-    // Anônimo: bloqueia tudo (resumo, lista, formulário) com
-    // `LockedContent`. O conteúdo blurado é puramente fake — os
-    // dados reais não chegam ao payload RSC para anônimos
-    // (filtrado server-side em `page.tsx`). Aqui só renderizamos
-    // placeholders convincentes.
-    if (viewerKind === "anonimo") {
+    // Bloqueia tudo (resumo, lista, formulário) com `LockedContent`
+    // pra:
+    //   - anônimo: precisa logar pra ver qualquer avaliação;
+    //   - Cliente Grátis: precisa virar Fan;
+    //
+    // Acompanhante (Owner ou outra) e Cliente Fan passam direto. O
+    // conteúdo blurado é puramente fake — os dados reais não chegam
+    // ao payload RSC para esses perfis (filtrado server-side em
+    // `page.tsx`). Aqui só renderizamos placeholders convincentes.
+    const isLocked =
+        viewerKind === "anonimo" ||
+        (viewerKind === "cliente" && !viewerIsFan);
+
+    if (isLocked) {
+        const ctaHref =
+            viewerKind === "anonimo" ? "/login" : "/cliente/selecao-plano";
+        const ctaLabel =
+            viewerKind === "anonimo" ? "Entrar" : "Virar Fan";
+        const description =
+            viewerKind === "anonimo"
+                ? "Faça login pra ler o que outros Clientes acharam deste perfil."
+                : "Vire Fan pra ler o que outros Clientes estão dizendo.";
+
         return (
             <section className="flex flex-col gap-3">
                 <SectionHeader title="Avaliações" />
                 <LockedContent
                     blurAmount={10}
-                    title="Avaliações exclusivas para Clientes"
-                    description="Faça login pra ler o que outros Clientes acharam deste perfil."
+                    title="Avaliações exclusivas para Fans"
+                    description={description}
                     action={
-                        <Button href="/login" size="sm">
-                            Entrar
+                        <Button href={ctaHref} size="sm">
+                            {ctaLabel}
                         </Button>
                     }
                 >

@@ -5,13 +5,14 @@
  * (`@/domain/plano/definitions`), mas com o conjunto de benefícios
  * próprio do Cliente:
  *
- * - `GRATIS`: usuário pode ver Stories normalmente, criar avaliações
- *   para Acompanhantes que conheceu, e usar a busca padrão. Não pode
- *   ler avaliações alheias, ler/postar comentários em fotos, nem
- *   curtir mídias.
+ * - `GRATIS`: visualiza perfis públicos (foto, descrição, valores,
+ *   localização, galeria, áudio) e Stories. Não pode avaliar, ler
+ *   avaliações de outros, comentar, ler comentários ou curtir
+ *   mídias. As seções de avaliações e comentários aparecem com gate
+ *   visual borrado pra não-Fan.
  * - `FAN`: tudo do gratuito, acrescido de:
- *     - leitura de avaliações de outros Clientes,
- *     - leitura e escrita de comentários em fotos,
+ *     - publicar e ler avaliações,
+ *     - publicar e ler comentários em fotos,
  *     - curtir fotos e Stories.
  *
  * A constante {@link PLANO_CLIENTE_DEFINITIONS} é imutável tanto em
@@ -59,14 +60,15 @@ export type PlanoClienteDefinition = {
  *
  * Os valores foram derivados do design:
  *
- * - `GRATIS` (tier 0): ver Stories, avaliar (sem ler avaliações alheias).
- * - `FAN` (tier 1): tudo do gratuito + leitura de avaliações + comentários + curtidas.
+ * - `GRATIS` (tier 0): apenas visualizar perfis e Stories. Sem
+ *   avaliação, sem comentários, sem curtidas.
+ * - `FAN` (tier 1): tudo + avaliar, comentar, curtir.
  */
 export const PLANO_CLIENTE_DEFINITIONS = Object.freeze({
     GRATIS: Object.freeze({
         tipo: "GRATIS",
         tier: 0,
-        podeAvaliar: true,
+        podeAvaliar: false,
         podeVerAvaliacoes: false,
         podeVerComentarios: false,
         podeComentar: false,

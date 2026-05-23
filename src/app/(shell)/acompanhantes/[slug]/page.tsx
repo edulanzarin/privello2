@@ -113,20 +113,6 @@ export default async function PerfilPublicoPage({
         listarReviewsPublicos(result.userId),
     ]);
 
-    // Anônimo não vê detalhes de reviews — recebe lista vazia. A
-    // contagem agregada (`reviewsCount`) e a média ficam ocultas
-    // visualmente pelo `LockedContent` no client. O `reviews: []`
-    // garante que nenhum dado real chegue ao payload RSC.
-    const reviews = session !== null ? reviewsAll : [];
-
-    // Cliente autenticado vê o estado da própria avaliação para
-    // pré-popular o formulário "Sua avaliação". Acompanhantes e
-    // anônimos não acessam este caminho.
-    const minhaReview =
-        session?.userType === "CLIENTE"
-            ? await obterMinhaReview(result.userId, session.userId)
-            : null;
-
     // Plano do viewer Cliente — define se ele pode curtir/comentar.
     // Acompanhante e anônimo não interagem.
     const viewerClienteProfile =
@@ -134,6 +120,33 @@ export default async function PerfilPublicoPage({
             ? await obterPerfilCliente(session.userId)
             : null;
     const viewerIsFan = viewerClienteProfile?.planoVigente === "FAN";
+
+    // Anônimo OU Cliente Grátis não veem avaliações/comentários
+    // detalhados. Recebem lista vazia no payload RSC. Os contadores
+    // agregados (`reviewsCount`/`reviewsAverage`) também são zerados
+    // pra não vazar a média do perfil pra quem não tem plano.
+    //
+    // Acompanhante (Owner ou outra) vê normal: precisa enxergar o
+    // que estão dizendo dela.
+    const canSeeReviews =
+        session?.userType === "ACOMPANHANTE" || viewerIsFan;
+    const reviews = canSeeReviews ? reviewsAll : [];
+
+    const perfilSafe = canSeeReviews
+        ? result.perfil
+        : {
+            ...result.perfil,
+            reviewsCount: 0,
+            reviewsAverage: 0,
+        };
+
+    // Cliente autenticado vê o estado da própria avaliação para
+    // pré-popular o formulário "Sua avaliação". Acompanhantes e
+    // anônimos não acessam este caminho.
+    const minhaReview =
+        session?.userType === "CLIENTE" && viewerIsFan
+            ? await obterMinhaReview(result.userId, session.userId)
+            : null;
 
     // Marca quais mídias da galeria o viewer já curtiu (apenas Fan;
     // Grátis e anônimos veem 0 curtidas próprias).
@@ -155,7 +168,7 @@ export default async function PerfilPublicoPage({
             <ViewTracker slug={slug} />
             <PerfilPublicoView
                 slug={slug}
-                perfil={result.perfil}
+                perfil={perfilSafe}
                 galeriaItems={galeriaItems}
                 reviews={reviews}
                 viewerKind={

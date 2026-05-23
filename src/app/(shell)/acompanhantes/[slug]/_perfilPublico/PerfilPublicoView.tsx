@@ -188,11 +188,14 @@ export function PerfilPublicoView({
     /**
      * Carrega comentários da mídia ativa quando o carrossel abre
      * ou troca de item. Cache simples por id — não recarrega se
-     * já tem. Pula completamente para viewers anônimos (eles veem
-     * o gate visual, sem dados reais).
+     * já tem. Pula completamente para viewers que não podem ver
+     * comentários (anônimo e Cliente Grátis).
      */
     React.useEffect(() => {
-        if (viewerKind === "anonimo") return;
+        const podeVerComentarios =
+            viewerKind === "acompanhante" ||
+            (viewerKind === "cliente" && viewerIsFan);
+        if (!podeVerComentarios) return;
         if (!carousel.open || carousel.activeId === null) return;
         const id = carousel.activeId;
         if (commentsByMedia[id] !== undefined) return;
@@ -211,7 +214,13 @@ export function PerfilPublicoView({
         return () => {
             cancelled = true;
         };
-    }, [carousel.open, carousel.activeId, commentsByMedia, viewerKind]);
+    }, [
+        carousel.open,
+        carousel.activeId,
+        commentsByMedia,
+        viewerKind,
+        viewerIsFan,
+    ]);
 
     /**
      * Toggle de curtida com atualização otimista. Cliente Grátis e
@@ -725,6 +734,7 @@ export function PerfilPublicoView({
                 reviewsAverage={perfil.reviewsAverage}
                 viewerKind={viewerKind}
                 viewerIsOwner={viewerIsOwner}
+                viewerIsFan={viewerIsFan}
                 minhaReview={minhaReview}
             />
 
@@ -743,7 +753,11 @@ export function PerfilPublicoView({
                 open={carousel.open}
                 onClose={carousel.close}
                 comments={
-                    viewerKind === "anonimo" ? undefined : commentsByMedia
+                    viewerKind === "cliente" && viewerIsFan
+                        ? commentsByMedia
+                        : viewerKind === "acompanhante"
+                            ? commentsByMedia
+                            : undefined
                 }
                 onToggleLike={handleToggleLike}
                 onAddComment={
@@ -758,14 +772,28 @@ export function PerfilPublicoView({
                         ? {
                             title: "Comentários exclusivos",
                             description:
-                                "Faça login pra ver o que outros Clientes estão dizendo.",
+                                "Faça login como Cliente Fan pra ver e comentar.",
                             action: (
                                 <Button href="/login" size="sm">
                                     Entrar
                                 </Button>
                             ),
                         }
-                        : undefined
+                        : viewerKind === "cliente" && !viewerIsFan
+                            ? {
+                                title: "Comentários exclusivos pra Fans",
+                                description:
+                                    "Vire Fan pra ver e publicar comentários nas fotos.",
+                                action: (
+                                    <Button
+                                        href="/cliente/selecao-plano"
+                                        size="sm"
+                                    >
+                                        Virar Fan
+                                    </Button>
+                                ),
+                            }
+                            : undefined
                 }
             />
         </div>

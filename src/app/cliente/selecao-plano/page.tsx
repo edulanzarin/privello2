@@ -52,8 +52,8 @@ function rotularBotao(
 
 function descricaoPlano(tipo: PlanoClienteDefinition["tipo"]): string {
     return tipo === "GRATIS"
-        ? "Acompanhe Stories e deixe avaliações para Acompanhantes que conheceu."
-        : "Tudo do Grátis e ainda interaja com a comunidade: avaliações, comentários e curtidas.";
+        ? "Veja perfis, fotos e Stories. Bom pra explorar antes de virar Fan."
+        : "Tudo do Grátis e ainda interaja: leia e publique avaliações e comentários, curta fotos.";
 }
 
 function beneficios(plano: PlanoClienteDefinition): readonly OfferBenefit[] {
@@ -62,7 +62,7 @@ function beneficios(plano: PlanoClienteDefinition): readonly OfferBenefit[] {
 
     if (plano.podeVerStories) {
         items.push({
-            label: "Veja Stories de Acompanhantes",
+            label: "Veja Stories e fotos das Acompanhantes",
             icon: SparklesIcon,
         });
     }
@@ -70,6 +70,7 @@ function beneficios(plano: PlanoClienteDefinition): readonly OfferBenefit[] {
         items.push({
             label: "Publique avaliações sobre quem você conheceu",
             icon: StarIcon,
+            highlight: isFan,
         });
     }
     if (plano.podeVerAvaliacoes) {
@@ -81,13 +82,13 @@ function beneficios(plano: PlanoClienteDefinition): readonly OfferBenefit[] {
     }
     if (plano.podeVerComentarios) {
         items.push({
-            label: "Veja comentários em fotos",
+            label: "Veja comentários nas fotos",
             highlight: isFan,
         });
     }
     if (plano.podeComentar) {
         items.push({
-            label: "Comente em fotos",
+            label: "Comente nas fotos",
             highlight: isFan,
         });
     }
@@ -125,7 +126,7 @@ export default async function SelecaoPlanoClientePage() {
             subtitle={
                 isPrimeiraEscolha
                     ? "Comece grátis ou desbloqueie tudo com o Fan."
-                    : "Você está no Grátis. O Fan libera leitura de avaliações, comentários e curtidas."
+                    : "Você está no Grátis. O Fan libera avaliações, comentários e curtidas."
             }
             footer="Você pode dar upgrade depois. Trocar para um plano menor não é possível enquanto o atual estiver ativo."
         >

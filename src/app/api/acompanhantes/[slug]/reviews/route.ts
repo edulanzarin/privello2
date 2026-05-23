@@ -1,23 +1,23 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
-import { requireCliente } from "@/server/auth/guards";
+import { requireClienteFan } from "@/server/auth/guards";
 import { upsertReview } from "@/server/reviews";
 
 /**
  * `POST /api/acompanhantes/[slug]/reviews`
  *
- * Cliente autenticado deixa (ou atualiza) sua avaliação para a
+ * Cliente autenticado deixa (ou atualiza) sua avaliaÃ§Ã£o para a
  * Acompanhante identificada pelo `slug` (`User.identificador`).
  *
  * Body JSON:
- *   - `rating`: número 1..5 (obrigatório).
- *   - `comment`: string até 2000 chars, ou `null`/omitido.
+ *   - `rating`: nÃºmero 1..5 (obrigatÃ³rio).
+ *   - `comment`: string atÃ© 2000 chars, ou `null`/omitido.
  *
  * Respostas:
- *   - 200: `{ ok: true }`. Trigger SQL já recalculou agregados.
+ *   - 200: `{ ok: true }`. Trigger SQL jÃ¡ recalculou agregados.
  *   - 400: `{ ok: false, reason: "VALIDACAO" }` (rating fora de range,
- *     comentário muito longo).
+ *     comentÃ¡rio muito longo).
  *   - 401: `{ ok: false, reason: "NAO_AUTENTICADO" }`.
  *   - 403: `{ ok: false, reason: "TIPO_INVALIDO" }` (Acompanhante
  *     tentando avaliar) ou `"AUTO_AVALIACAO"` (mesmo userId).
@@ -27,7 +27,7 @@ export async function POST(
     request: Request,
     context: { params: Promise<{ slug: string }> },
 ): Promise<NextResponse> {
-    const auth = await requireCliente();
+    const auth = await requireClienteFan();
     if (!auth.ok) return auth.response;
 
     const { slug } = await context.params;
@@ -37,7 +37,7 @@ export async function POST(
     try {
         const parsed = await request.json();
         if (parsed === null || typeof parsed !== "object") {
-            throw new Error("body inválido");
+            throw new Error("body invÃ¡lido");
         }
         body = parsed as { rating?: unknown; comment?: unknown };
     } catch {
@@ -74,7 +74,7 @@ export async function POST(
             {
                 ok: false,
                 reason: "VALIDACAO",
-                detalhes: { comment: "Comentário inválido." },
+                detalhes: { comment: "ComentÃ¡rio invÃ¡lido." },
             },
             { status: 400 },
         );
@@ -86,7 +86,7 @@ export async function POST(
                     ok: false,
                     reason: "VALIDACAO",
                     detalhes: {
-                        comment: "Comentário deve ter até 2000 caracteres.",
+                        comment: "ComentÃ¡rio deve ter atÃ© 2000 caracteres.",
                     },
                 },
                 { status: 400 },
@@ -95,7 +95,7 @@ export async function POST(
         comment = trimmed.length > 0 ? trimmed : null;
     }
 
-    // Resolve `slug → targetUserId`. Filtramos por `type =
+    // Resolve `slug â†’ targetUserId`. Filtramos por `type =
     // ACOMPANHANTE` pra rejeitar identificadores de Cliente.
     const target = await db.user.findFirst({
         where: { identificador: slugNorm, type: "ACOMPANHANTE" },
@@ -134,14 +134,14 @@ export async function POST(
 /**
  * `DELETE /api/acompanhantes/[slug]/reviews`
  *
- * Cliente autenticado remove a própria avaliação. Idempotente — se
- * não havia avaliação, retorna 200 mesmo assim.
+ * Cliente autenticado remove a prÃ³pria avaliaÃ§Ã£o. Idempotente â€” se
+ * nÃ£o havia avaliaÃ§Ã£o, retorna 200 mesmo assim.
  */
 export async function DELETE(
     _request: Request,
     context: { params: Promise<{ slug: string }> },
 ): Promise<NextResponse> {
-    const auth = await requireCliente();
+    const auth = await requireClienteFan();
     if (!auth.ok) return auth.response;
 
     const { slug } = await context.params;
@@ -168,8 +168,9 @@ export async function DELETE(
             },
         })
         .catch(() => {
-            // Idempotente: se não havia review, ignora.
+            // Idempotente: se nÃ£o havia review, ignora.
         });
 
     return NextResponse.json({ ok: true }, { status: 200 });
 }
+

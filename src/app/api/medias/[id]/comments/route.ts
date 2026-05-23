@@ -5,17 +5,18 @@ import {
     adicionarComentario,
     listarComentarios,
 } from "@/server/media-interactions";
+import { obterPerfilCliente } from "@/server/cliente-profile";
 
 /**
  * `GET /api/medias/[id]/comments` — lista os comentários de uma
- * mídia. Requer sessão autenticada (Cliente ou Acompanhante).
+ * mídia. Requer sessão autenticada **e** privilégio de leitura:
  *
- * Anônimos recebem 401 — a UI do perfil público mostra um gate
- * visual ({@link LockedContent}) e não chama este endpoint para
- * viewers sem sessão.
- *
- * Quando há sessão, marca `isMine` no comentário do próprio viewer
- * para que o front mostre botão de excluir.
+ *   - Acompanhante (qualquer uma) pode ler — é parte do conteúdo
+ *     público que ela mesma poderia ver no próprio perfil.
+ *   - Cliente Fan pode ler.
+ *   - Cliente Grátis e anônimos recebem 401/402 — a UI mostra um
+ *     gate visual ({@link LockedContent}) e não chama este endpoint
+ *     para esses viewers.
  */
 export async function GET(
     _request: Request,
@@ -31,6 +32,17 @@ export async function GET(
 
     const auth = await requireSession();
     if (!auth.ok) return auth.response;
+
+    // Acompanhante pode ler livremente. Cliente precisa ser Fan.
+    if (auth.userType === "CLIENTE") {
+        const profile = await obterPerfilCliente(auth.userId);
+        if (profile?.planoVigente !== "FAN") {
+            return NextResponse.json(
+                { ok: false, reason: "PLANO_REQUERIDO" },
+                { status: 402 },
+            );
+        }
+    }
 
     const comments = await listarComentarios(mediaId, auth.userId);
     return NextResponse.json({ ok: true, comments });
