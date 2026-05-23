@@ -91,6 +91,8 @@ export type GaleriaItem = {
     mimeType: string;
     description: string | null;
     createdAt: Date;
+    likesCount: number;
+    commentsCount: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -286,6 +288,8 @@ export async function listarGaleria(
             mimeType: true,
             description: true,
             createdAt: true,
+            likesCount: true,
+            commentsCount: true,
         },
     });
 
@@ -296,6 +300,8 @@ export async function listarGaleria(
         mimeType: row.mimeType,
         description: row.description,
         createdAt: row.createdAt,
+        likesCount: row.likesCount,
+        commentsCount: row.commentsCount,
     }));
 }
 
@@ -308,8 +314,9 @@ export async function listarGaleria(
  *
  * Resolve a `storageKey` para uma URL relativa (`/api/storage/<key>`)
  * que o route handler serve em dev (e que vira uma URL pré-assinada
- * de R2 em produção). Não preenche `likes`/`comments` porque os
- * sistemas correspondentes ainda não existem.
+ * de R2 em produção). Preenche `likes` e `comments` com os agregados
+ * persistidos. O campo `liked` (per-viewer) precisa ser preenchido
+ * pelo caller separadamente.
  */
 export function toMediaItem(row: GaleriaItem): {
     id: string;
@@ -317,6 +324,8 @@ export function toMediaItem(row: GaleriaItem): {
     url: string;
     description: string | null;
     createdAt: Date;
+    likes: number;
+    comments: number;
 } {
     return {
         id: row.id,
@@ -324,5 +333,7 @@ export function toMediaItem(row: GaleriaItem): {
         url: `/api/storage/${row.storageKey}`,
         description: row.description,
         createdAt: row.createdAt,
+        likes: row.likesCount,
+        comments: row.commentsCount,
     };
 }

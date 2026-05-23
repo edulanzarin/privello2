@@ -11,6 +11,8 @@ import {
 } from "@/components";
 import { obterPerfilPublico } from "@/server/acompanhante-profile";
 import { getCurrentSession } from "@/server/auth/currentSession";
+import { obterPerfilCliente } from "@/server/cliente-profile";
+import { obterLikesDoViewer } from "@/server/media-interactions";
 import {
     listarGaleria,
     toMediaItem,
@@ -102,7 +104,7 @@ export default async function PerfilPublicoPage({
     }
 
     // result.state === "OK". Resolvemos em paralelo:
-    //   - galeria pública (mesmo helper do painel)
+    //   - galeria pública (com agregados de likes/comments)
     //   - sessão atual (pra pré-popular form de avaliação do Cliente)
     //   - lista de reviews públicas
     const [galeria, session, reviews] = await Promise.all([
@@ -119,7 +121,26 @@ export default async function PerfilPublicoPage({
             ? await obterMinhaReview(result.userId, session.userId)
             : null;
 
-    const galeriaItems = galeria.map(toMediaItem);
+    // Plano do viewer Cliente — define se ele pode curtir/comentar.
+    // Acompanhante e anônimo não interagem.
+    const viewerClienteProfile =
+        session?.userType === "CLIENTE"
+            ? await obterPerfilCliente(session.userId)
+            : null;
+    const viewerIsFan = viewerClienteProfile?.planoVigente === "FAN";
+
+    // Marca quais mídias da galeria o viewer já curtiu (apenas Fan;
+    // Grátis e anônimos veem 0 curtidas próprias).
+    const galeriaIds = galeria.map((g) => g.id);
+    const likedSet = viewerIsFan
+        ? await obterLikesDoViewer(galeriaIds, session?.userId ?? null)
+        : new Set<string>();
+
+    // Converte com `liked` per-viewer.
+    const galeriaItems = galeria.map((row) => ({
+        ...toMediaItem(row),
+        liked: likedSet.has(row.id),
+    }));
 
     return (
         <PageSurface
@@ -142,6 +163,9 @@ export default async function PerfilPublicoPage({
                     session?.userType === "ACOMPANHANTE" &&
                     session.userId === result.userId
                 }
+                viewerIsFan={viewerIsFan}
+                viewerNome={viewerClienteProfile?.nome ?? null}
+                viewerFotoUrl={viewerClienteProfile?.fotoUrl ?? null}
                 minhaReview={minhaReview}
             />
         </PageSurface>

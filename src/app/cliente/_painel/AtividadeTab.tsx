@@ -17,30 +17,32 @@ import {
     type FilterChipsOption,
 } from "@/components";
 import type { PlanoClienteTipo } from "@/domain/plano-cliente/definitions";
+import type {
+    CommentDoCliente,
+    LikeDoCliente,
+} from "@/server/media-interactions";
 import type { ReviewDoCliente } from "@/server/reviews";
 
 /**
  * Aba "Atividade" do painel do Cliente.
  *
- * 1. Banner de upgrade compacto no topo (apenas para o Grátis).
- * 2. Linha de filtros em pílula — Tudo, Avaliações, Curtidas,
- *    Comentários. Para o Grátis, Curtidas e Comentários aparecem
- *    com cadeado: clicar redireciona para `/cliente/selecao-plano`.
- * 3. {@link ActivityFeed} unificado: avaliações que o Cliente
- *    publicou são listadas com link pro perfil avaliado. Curtidas e
- *    comentários ainda mostram EmptyState (sistemas correspondentes
- *    não existem ainda).
+ * Renderiza um feed unificado das interações do Cliente com
+ * Acompanhantes:
+ *   - **Avaliações**: reviews publicadas, com link pro perfil.
+ *   - **Curtidas** (Fan): mídias curtidas, com thumbnail.
+ *   - **Comentários** (Fan): texto + perfil dono.
  *
- * # Visibilidade ao histórico
- *
- * Avaliações de Acompanhantes que cancelaram o plano somem do feed
- * automaticamente — o filtro é aplicado server-side em
- * `listarReviewsDoCliente` (Caminho A: filtrar no read).
+ * Cliente Grátis vê apenas o filtro de avaliações habilitado;
+ * Curtidas e Comentários aparecem com cadeado e redirecionam pra
+ * `/cliente/selecao-plano`. Quando uma Acompanhante cancela ou
+ * desativa, suas interações somem do feed automaticamente
+ * (filtros server-side em `listar*DoCliente`).
  */
 export interface AtividadeTabProps {
     planoVigente: PlanoClienteTipo | null;
-    /** Avaliações já publicadas pelo Cliente. */
     reviews: ReadonlyArray<ReviewDoCliente>;
+    likes: ReadonlyArray<LikeDoCliente>;
+    comentarios: ReadonlyArray<CommentDoCliente>;
 }
 
 type FiltroAtividade = "tudo" | "avaliacoes" | "curtidas" | "comentarios";
@@ -48,6 +50,8 @@ type FiltroAtividade = "tudo" | "avaliacoes" | "curtidas" | "comentarios";
 export function AtividadeTab({
     planoVigente,
     reviews,
+    likes,
+    comentarios,
 }: AtividadeTabProps): React.ReactElement {
     const isFan = planoVigente === "FAN";
     const [filtro, setFiltro] = React.useState<FiltroAtividade>("tudo");
@@ -88,10 +92,35 @@ export function AtividadeTab({
         },
     ];
 
-    // Decide o conteúdo do feed conforme filtro. Avaliações são
-    // dados reais; curtidas/comentários ainda não existem.
-    const showReviews = filtro === "tudo" || filtro === "avaliacoes";
-    const reviewItems = showReviews ? reviews : [];
+    // Combina os 3 tipos em um feed único ordenado por data.
+    type FeedRow =
+        | { kind: "review"; date: Date; review: ReviewDoCliente }
+        | { kind: "like"; date: Date; like: LikeDoCliente }
+        | { kind: "comment"; date: Date; comment: CommentDoCliente };
+
+    const feedRows: ReadonlyArray<FeedRow> = React.useMemo(() => {
+        const all: FeedRow[] = [];
+        if (filtro === "tudo" || filtro === "avaliacoes") {
+            for (const r of reviews) {
+                all.push({ kind: "review", date: r.createdAt, review: r });
+            }
+        }
+        if (filtro === "tudo" || filtro === "curtidas") {
+            for (const l of likes) {
+                all.push({ kind: "like", date: l.createdAt, like: l });
+            }
+        }
+        if (filtro === "tudo" || filtro === "comentarios") {
+            for (const c of comentarios) {
+                all.push({
+                    kind: "comment",
+                    date: c.createdAt,
+                    comment: c,
+                });
+            }
+        }
+        return all.sort((a, b) => b.date.getTime() - a.date.getTime());
+    }, [filtro, reviews, likes, comentarios]);
 
     return (
         <div className="flex flex-col gap-4">
@@ -114,10 +143,31 @@ export function AtividadeTab({
             />
 
             <ActivityFeed aria-label="Histórico de atividade">
-                {reviewItems.length > 0 ? (
-                    reviewItems.map((review) => (
-                        <ReviewActivityRow key={review.id} review={review} />
-                    ))
+                {feedRows.length > 0 ? (
+                    feedRows.map((row) => {
+                        if (row.kind === "review") {
+                            return (
+                                <ReviewRow
+                                    key={`r-${row.review.id}`}
+                                    review={row.review}
+                                />
+                            );
+                        }
+                        if (row.kind === "like") {
+                            return (
+                                <LikeRow
+                                    key={`l-${row.like.mediaId}`}
+                                    like={row.like}
+                                />
+                            );
+                        }
+                        return (
+                            <CommentRow
+                                key={`c-${row.comment.id}`}
+                                comment={row.comment}
+                            />
+                        );
+                    })
                 ) : (
                     <EmptyState
                         size="sm"
@@ -131,11 +181,11 @@ export function AtividadeTab({
     );
 }
 
-/**
- * Linha de avaliação no feed. Mostra estrelas + nome do alvo + tempo
- * relativo. Clicar leva ao perfil público da Acompanhante avaliada.
- */
-function ReviewActivityRow({
+// ---------------------------------------------------------------------------
+// Linhas do feed
+// ---------------------------------------------------------------------------
+
+function ReviewRow({
     review,
 }: {
     review: ReviewDoCliente;
@@ -144,7 +194,6 @@ function ReviewActivityRow({
     const subtitle = review.comment
         ? truncate(review.comment, 90)
         : `Nota ${review.rating} de 5`;
-
     return (
         <Link href={href} className="block focus:outline-none">
             <ActivityFeedItem
@@ -175,6 +224,68 @@ function ReviewActivityRow({
     );
 }
 
+function LikeRow({
+    like,
+}: {
+    like: LikeDoCliente;
+}): React.ReactElement {
+    const href = `/acompanhantes/${like.targetIdentificador}`;
+    return (
+        <Link href={href} className="block focus:outline-none">
+            <ActivityFeedItem
+                icon={<HeartIcon size={14} />}
+                title={
+                    <span className="text-text-primary">
+                        Você curtiu uma{" "}
+                        {like.mediaKind === "VIDEO" ? "vídeo" : "foto"} de{" "}
+                        <span className="font-semibold">
+                            {like.targetNome}
+                        </span>
+                    </span>
+                }
+                trailing={
+                    <span className="text-xs text-text-secondary">
+                        {formatRelative(like.createdAt)}
+                    </span>
+                }
+            />
+        </Link>
+    );
+}
+
+function CommentRow({
+    comment,
+}: {
+    comment: CommentDoCliente;
+}): React.ReactElement {
+    const href = `/acompanhantes/${comment.targetIdentificador}`;
+    return (
+        <Link href={href} className="block focus:outline-none">
+            <ActivityFeedItem
+                icon={<PlayCircleIcon size={14} />}
+                title={
+                    <span className="text-text-primary">
+                        Você comentou em{" "}
+                        <span className="font-semibold">
+                            {comment.targetNome}
+                        </span>
+                    </span>
+                }
+                subtitle={truncate(comment.text, 90)}
+                trailing={
+                    <span className="text-xs text-text-secondary">
+                        {formatRelative(comment.createdAt)}
+                    </span>
+                }
+            />
+        </Link>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 function truncate(text: string, max: number): string {
     if (text.length <= max) return text;
     return `${text.slice(0, max - 1).trimEnd()}…`;
@@ -198,11 +309,6 @@ function formatRelative(date: Date | string): string {
     return `há ${years}a`;
 }
 
-/**
- * Mensagens de estado vazio para cada filtro. Centralizar aqui
- * facilita reusar o mesmo `EmptyState` quando o feed real chegar e
- * uma busca/filtro voltar zero resultados.
- */
 const empties: Record<
     FiltroAtividade,
     { title: string; description: string; icon: React.ReactNode }

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { db } from "@/lib/db";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
 import { obterVigente } from "@/server/planos";
 import type { PlanoDefinition } from "@/domain/plano/definitions";
@@ -111,6 +112,37 @@ export async function requireCliente(): Promise<
             ),
         };
     }
+    return { ok: true, userId: auth.userId };
+}
+
+/**
+ * `requireCliente` + verificação de `planoVigente === "FAN"`.
+ *
+ * Usado em endpoints de interações premium (curtidas, comentários).
+ * Cliente Grátis recebe 402 com `reason: "PLANO_REQUERIDO"` —
+ * a UI redireciona pra `/cliente/selecao-plano` quando ver isso.
+ */
+export async function requireClienteFan(): Promise<
+    GuardResult<{ userId: string }>
+> {
+    const auth = await requireCliente();
+    if (!auth.ok) return auth;
+
+    const profile = await db.clientProfile.findUnique({
+        where: { userId: auth.userId },
+        select: { planoVigente: true },
+    });
+
+    if (profile?.planoVigente !== "FAN") {
+        return {
+            ok: false,
+            response: NextResponse.json(
+                { ok: false, reason: "PLANO_REQUERIDO" },
+                { status: 402 },
+            ),
+        };
+    }
+
     return { ok: true, userId: auth.userId };
 }
 

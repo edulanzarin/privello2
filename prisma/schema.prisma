@@ -164,6 +164,8 @@ model User {
   boostPayments BoostPayment[]
   reviewsReceived AcompanhanteReview[] @relation("ReviewTarget")
   reviewsAuthored AcompanhanteReview[] @relation("ReviewAuthor")
+  mediaLikes      MediaLike[]
+  mediaComments   MediaComment[]
 
   @@map("users")
 }
@@ -277,6 +279,13 @@ model Media {
   /// @deprecated — use `role` em vez disso. Mantido por compat até
   /// uma migration de cleanup remover.
   isProfilePhoto Boolean     @default(false) @map("is_profile_photo")
+
+  // Agregados de interação. Atualizados via triggers no banco
+  // (`trg_media_likes_agg`, `trg_media_comments_agg`) sempre que
+  // `media_likes` / `media_comments` mudam.
+  likesCount     Int         @default(0) @map("likes_count")
+  commentsCount  Int         @default(0) @map("comments_count")
+
   createdAt      DateTime    @default(now()) @map("created_at")
 
   acompanhanteAsProfile AcompanhanteProfile? @relation("FotoDePerfil")
@@ -284,9 +293,43 @@ model Media {
   acompanhanteAsAudio   AcompanhanteProfile? @relation("AudioDeApresentacao")
   clientAsProfile       ClientProfile?       @relation("ClientFotoDePerfil")
 
+  likes    MediaLike[]
+  comments MediaComment[]
+
   @@index([ownerId])
   @@index([ownerId, role, status, createdAt(sort: Desc)])
   @@map("medias")
+}
+
+/// Curtida em uma `Media`. Restrição UNIQUE em `(media_id, user_id)`
+/// garante 1 curtida por par. Trigger no banco recalcula
+/// `likes_count` em `medias` no INSERT/DELETE.
+model MediaLike {
+  mediaId   String   @map("media_id") @db.Uuid
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([mediaId, userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("media_likes")
+}
+
+/// Comentário em uma `Media`. N por par `(media, user)` (Cliente
+/// pode comentar várias vezes). Trigger recalcula `comments_count`.
+model MediaComment {
+  id           String   @id @default(uuid()) @db.Uuid
+  mediaId      String   @map("media_id") @db.Uuid
+  media        Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  authorUserId String   @map("author_user_id") @db.Uuid
+  author       User     @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+  text         String   @db.VarChar(2000)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([mediaId, createdAt(sort: Desc)])
+  @@index([authorUserId, createdAt(sort: Desc)])
+  @@map("media_comments")
 }
 
 // ---------------------------------------------------------------------------

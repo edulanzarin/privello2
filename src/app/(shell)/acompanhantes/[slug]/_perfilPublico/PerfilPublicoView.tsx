@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 
 import {
     AttributeTile,
@@ -39,6 +40,7 @@ import {
     useMediaCarousel,
     type BadgeTone,
     type IconSegmentedOption,
+    type MediaComment,
     type MediaItem,
     type WeekDay,
 } from "@/components";
@@ -113,6 +115,16 @@ export interface PerfilPublicoViewProps {
     /** `true` quando o viewer é a própria dona do perfil. */
     viewerIsOwner: boolean;
     /**
+     * `true` quando o viewer é Cliente Fan — pode curtir e comentar.
+     * Cliente Grátis e anônimo veem os botões mas são redirecionados
+     * pra upgrade ao tentar interagir.
+     */
+    viewerIsFan: boolean;
+    /** Identificador (`@`) do viewer autenticado, ou `null`. */
+    viewerNome: string | null;
+    /** URL da foto do viewer Cliente, pra avatar no `CommentInput`. */
+    viewerFotoUrl: string | null;
+    /**
      * Avaliação que o Cliente autenticado já deixou (ou `null`).
      * Usado pra pré-popular o formulário "Sua avaliação".
      */
@@ -143,15 +155,183 @@ type FiltroGaleria = "tudo" | "fotos" | "videos";
 export function PerfilPublicoView({
     slug,
     perfil,
-    galeriaItems,
+    galeriaItems: galeriaItemsProp,
     reviews,
     viewerKind,
     viewerIsOwner,
+    viewerIsFan,
+    viewerNome,
+    viewerFotoUrl,
     minhaReview,
 }: PerfilPublicoViewProps): React.ReactElement {
+    const router = useRouter();
     const carousel = useMediaCarousel();
     const [filtroGaleria, setFiltroGaleria] =
         React.useState<FiltroGaleria>("tudo");
+
+    // Estado local da galeria — permite atualização otimista de
+    // likes (toggle) e comments (count) sem reload completo. Resync
+    // com a prop quando o servidor manda nova galeria via refresh.
+    const [galeriaItems, setGaleriaItems] = React.useState<
+        ReadonlyArray<MediaItem>
+    >(galeriaItemsProp);
+    React.useEffect(() => {
+        setGaleriaItems(galeriaItemsProp);
+    }, [galeriaItemsProp]);
+
+    // Comentários por mídia. Carregados sob demanda quando o
+    // carrossel abre, ou quando o usuário envia/exclui.
+    const [commentsByMedia, setCommentsByMedia] = React.useState<
+        Record<string, ReadonlyArray<MediaComment>>
+    >({});
+
+    /**
+     * Carrega comentários da mídia ativa quando o carrossel abre
+     * ou troca de item. Cache simples por id — não recarrega se
+     * já tem.
+     */
+    React.useEffect(() => {
+        if (!carousel.open || carousel.activeId === null) return;
+        const id = carousel.activeId;
+        if (commentsByMedia[id] !== undefined) return;
+
+        let cancelled = false;
+        void fetch(`/api/medias/${encodeURIComponent(id)}/comments`)
+            .then((res) => (res.ok ? res.json() : null))
+            .then((payload: { comments?: ReadonlyArray<RawComment> } | null) => {
+                if (cancelled || !payload?.comments) return;
+                setCommentsByMedia((prev) => ({
+                    ...prev,
+                    [id]: payload.comments!.map(toMediaComment),
+                }));
+            })
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, [carousel.open, carousel.activeId, commentsByMedia]);
+
+    /**
+     * Toggle de curtida com atualização otimista. Cliente Grátis e
+     * anônimo são redirecionados pra rota apropriada.
+     */
+    function handleToggleLike(itemId: string, liked: boolean): void {
+        if (viewerKind === "anonimo") {
+            router.push("/login");
+            return;
+        }
+        if (viewerKind === "acompanhante" || !viewerIsFan) {
+            router.push("/cliente/selecao-plano");
+            return;
+        }
+
+        // Otimista.
+        setGaleriaItems((prev) =>
+            prev.map((m) =>
+                m.id === itemId
+                    ? {
+                        ...m,
+                        liked,
+                        likes:
+                            (m.likes ?? 0) +
+                            (liked ? 1 : -1) * (m.liked === liked ? 0 : 1),
+                    }
+                    : m,
+            ),
+        );
+
+        void fetch(`/api/medias/${encodeURIComponent(itemId)}/likes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ liked }),
+        })
+            .then((res) => (res.ok ? res.json() : null))
+            .then(
+                (payload: { likesCount?: number } | null) => {
+                    if (payload?.likesCount === undefined) return;
+                    // Reconcilia o contador exato com o que o servidor
+                    // retornou (corrige race conditions).
+                    setGaleriaItems((prev) =>
+                        prev.map((m) =>
+                            m.id === itemId
+                                ? { ...m, likes: payload.likesCount }
+                                : m,
+                        ),
+                    );
+                },
+            )
+            .catch(() => {
+                // Reverte otimismo em caso de falha.
+                setGaleriaItems((prev) =>
+                    prev.map((m) =>
+                        m.id === itemId ? { ...m, liked: !liked } : m,
+                    ),
+                );
+            });
+    }
+
+    /**
+     * Adiciona comentário com refetch da lista pra ter o item novo
+     * com avatar+nome corretos do servidor.
+     */
+    function handleAddComment(itemId: string, text: string): void {
+        if (viewerKind === "anonimo") {
+            router.push("/login");
+            return;
+        }
+        if (viewerKind === "acompanhante" || !viewerIsFan) {
+            router.push("/cliente/selecao-plano");
+            return;
+        }
+
+        const trimmed = text.trim();
+        if (trimmed.length === 0) return;
+
+        void fetch(`/api/medias/${encodeURIComponent(itemId)}/comments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: trimmed }),
+        })
+            .then((res) => (res.ok ? res.json() : null))
+            .then(
+                (
+                    payload: {
+                        commentsCount?: number;
+                    } | null,
+                ) => {
+                    if (!payload) return;
+                    if (typeof payload.commentsCount === "number") {
+                        setGaleriaItems((prev) =>
+                            prev.map((m) =>
+                                m.id === itemId
+                                    ? { ...m, comments: payload.commentsCount }
+                                    : m,
+                            ),
+                        );
+                    }
+                    // Refetch para atualizar a lista.
+                    return fetch(
+                        `/api/medias/${encodeURIComponent(itemId)}/comments`,
+                    )
+                        .then((res) => (res.ok ? res.json() : null))
+                        .then(
+                            (
+                                p: {
+                                    comments?: ReadonlyArray<RawComment>;
+                                } | null,
+                            ) => {
+                                if (!p?.comments) return;
+                                setCommentsByMedia((prev) => ({
+                                    ...prev,
+                                    [itemId]:
+                                        p.comments!.map(toMediaComment),
+                                }));
+                            },
+                        );
+                },
+            )
+            .catch(() => undefined);
+    }
 
     const valorHoraLabel =
         perfil.valorHoraCents !== null && perfil.valorHoraCents > 0
@@ -560,6 +740,15 @@ export function PerfilPublicoView({
                 onActiveChange={carousel.openAt}
                 open={carousel.open}
                 onClose={carousel.close}
+                comments={commentsByMedia}
+                onToggleLike={handleToggleLike}
+                onAddComment={
+                    viewerKind === "cliente" && viewerIsFan
+                        ? handleAddComment
+                        : undefined
+                }
+                currentUserPhotoUrl={viewerFotoUrl}
+                currentUserName={viewerNome ?? undefined}
             />
         </div>
     );
@@ -679,6 +868,50 @@ function TagBank({
 // ---------------------------------------------------------------------------
 // Formatters
 // ---------------------------------------------------------------------------
+
+/**
+ * Forma "raw" de um comentário retornado pelo endpoint
+ * `GET /api/medias/[id]/comments`. Mantemos local pra não acoplar
+ * o tipo do servidor ao tipo do client component primitivo.
+ */
+type RawComment = {
+    id: string;
+    text: string;
+    createdAt: string | Date;
+    isMine: boolean;
+    authorNome: string;
+    authorIdentificador: string;
+    authorFotoUrl: string | null;
+};
+
+function toMediaComment(raw: RawComment): MediaComment {
+    return {
+        id: raw.id,
+        text: raw.text,
+        timeAgo: formatRelative(raw.createdAt),
+        authorName: raw.authorNome,
+        authorIdentifier: raw.authorIdentificador,
+        authorPhotoUrl: raw.authorFotoUrl,
+    };
+}
+
+function formatRelative(date: Date | string): string {
+    const d = typeof date === "string" ? new Date(date) : date;
+    const diff = Date.now() - d.getTime();
+    const min = Math.floor(diff / 60_000);
+    if (min < 1) return "agora";
+    if (min < 60) return `${min}min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `${h}h`;
+    const days = Math.floor(h / 24);
+    if (days < 7) return `${days}d`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return `${weeks}sem`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}m`;
+    const years = Math.floor(days / 365);
+    return `${years}a`;
+}
 
 function formatViews(n: number): string {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;

@@ -15,6 +15,11 @@ import {
 import { getCurrentSession } from "@/server/auth/currentSession";
 import { obterPerfilCliente } from "@/server/cliente-profile";
 import {
+    contarInteracoesDoCliente,
+    listarComentariosDoCliente,
+    listarLikesDoCliente,
+} from "@/server/media-interactions";
+import {
     contarReviewsDoCliente,
     listarReviewsDoCliente,
 } from "@/server/reviews";
@@ -73,10 +78,14 @@ export default async function ClientePainelPage() {
         );
     }
 
-    const [reviews, reviewsCount] = await Promise.all([
-        listarReviewsDoCliente(session.userId),
-        contarReviewsDoCliente(session.userId),
-    ]);
+    const [reviews, reviewsCount, likes, comentarios, interacoes] =
+        await Promise.all([
+            listarReviewsDoCliente(session.userId),
+            contarReviewsDoCliente(session.userId),
+            listarLikesDoCliente(session.userId),
+            listarComentariosDoCliente(session.userId),
+            contarInteracoesDoCliente(session.userId),
+        ]);
 
     const isFan = perfil.planoVigente === "FAN";
 
@@ -102,12 +111,16 @@ export default async function ClientePainelPage() {
             >
                 <MetricPill
                     icon={<HeartIcon size={11} />}
-                    value="—"
+                    value={interacoes.likes > 0 ? String(interacoes.likes) : "—"}
                     label="curtidas"
                 />
                 <MetricPill
                     icon={<PlayCircleIcon size={11} />}
-                    value="—"
+                    value={
+                        interacoes.comentarios > 0
+                            ? String(interacoes.comentarios)
+                            : "—"
+                    }
                     label="comentários"
                 />
                 <MetricPill
@@ -133,6 +146,8 @@ export default async function ClientePainelPage() {
                     <AtividadeTab
                         planoVigente={perfil.planoVigente}
                         reviews={reviews}
+                        likes={likes}
+                        comentarios={comentarios}
                     />
                 </TabPanel>
                 <TabPanel value="configuracoes">
