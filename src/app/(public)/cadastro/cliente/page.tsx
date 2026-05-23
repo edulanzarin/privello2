@@ -87,7 +87,46 @@ const FOTO_INITIAL: FotoUploadState = {
 
 const FOTO_ACCEPT = "image/jpeg,image/png,image/webp";
 
+/**
+ * Wrapper Suspense pro Next 15. `useSearchParams()` em rota
+ * estática precisa de boundary explícita; sem ele o build fica
+ * em CSR-bailout. Mantemos o conteúdo real em
+ * {@link CadastroClienteForm} pra o boundary ficar mínimo.
+ */
 export default function CadastroClientePage(): React.ReactElement {
+    return (
+        <React.Suspense fallback={<CadastroClienteFallback />}>
+            <CadastroClienteForm />
+        </React.Suspense>
+    );
+}
+
+/**
+ * Skeleton enquanto o componente que lê `?next` é hidratado.
+ * Mantém o `AuthCard` no lugar pra evitar layout shift.
+ */
+function CadastroClienteFallback(): React.ReactElement {
+    return (
+        <AuthCard
+            title="Criar conta de Cliente"
+            subtitle="Leva menos de 1 minuto."
+        >
+            <div
+                aria-hidden="true"
+                className="flex flex-col gap-4 opacity-50"
+            >
+                <div className="h-24 rounded-2xl bg-neutral-100" />
+                <div className="h-10 rounded-2xl bg-neutral-100" />
+                <div className="h-10 rounded-2xl bg-neutral-100" />
+                <div className="h-10 rounded-2xl bg-neutral-100" />
+                <div className="h-10 rounded-2xl bg-neutral-100" />
+                <div className="h-10 rounded-2xl bg-primary-100" />
+            </div>
+        </AuthCard>
+    );
+}
+
+function CadastroClienteForm(): React.ReactElement {
     const searchParams = useSearchParams();
     const safeNext = sanitizarNext(searchParams?.get("next") ?? null, {
         proibidos: ["/cadastro", "/login"],

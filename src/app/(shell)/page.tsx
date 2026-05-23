@@ -1,34 +1,41 @@
-import { Card, EmptyState, PageSurface, SparklesIcon } from "@/components";
+import { PageSurface } from "@/components";
+import {
+    listarCidadesPopulares,
+    listarFeedHome,
+} from "@/server/acompanhante-profile/feed";
+
+import { HomeView } from "./_home/HomeView";
 
 /**
  * Home (`/`).
  *
- * Página pública de entrada da Privello. Atualmente um placeholder
- * — a versão final terá hero de busca, destaques de Acompanhantes
- * próximas e blocos de descoberta. A navegação (TopBar + BottomNav)
- * é fornecida pelo {@link import("./layout").default} via
- * {@link import("@/components").AppShell}.
+ * Página pública de descoberta da Privello. Exibe um feed editorial
+ * com 3 buckets (Boost / Premium / Básico) + atalhos por cidade
+ * popular. A barra de busca por cidade fica em destaque no Hero e
+ * leva pra `/acompanhantes` filtrada.
+ *
+ * Servidor (RSC):
+ *   - {@link listarFeedHome}: lê os 3 buckets em paralelo já
+ *     filtrados por `perfilVisivel` + `planoVigente !== null`.
+ *   - {@link listarCidadesPopulares}: top 8 cidades por contagem.
+ *
+ * O componente cliente {@link HomeView} cuida da interação:
+ * autocomplete de cidade, navegação ao buscar, snap horizontal.
+ *
+ * A navegação (TopBar + BottomNav) vem do
+ * {@link import("./layout").default} via `AppShell`.
  */
-export default function HomePage() {
-    return (
-        <PageSurface width="sm">
-            <section className="flex flex-col gap-2 text-center">
-                <h1 className="text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">
-                    Encontre Acompanhantes próximas a você
-                </h1>
-                <p className="text-sm text-text-secondary">
-                    Use a aba <span className="font-medium">Acompanhantes</span>{" "}
-                    para começar sua busca.
-                </p>
-            </section>
+export default async function HomePage() {
+    const [feed, cidades] = await Promise.all([
+        listarFeedHome({
+            limite: { boost: 12, premium: 12, basico: 12 },
+        }),
+        listarCidadesPopulares(8),
+    ]);
 
-            <Card padding="none">
-                <EmptyState
-                    icon={<SparklesIcon size={20} />}
-                    title="Em breve"
-                    description="Busca por cidade, destaques e Reels chegam nas próximas atualizações."
-                />
-            </Card>
+    return (
+        <PageSurface width="lg">
+            <HomeView feed={feed} cidades={cidades} />
         </PageSurface>
     );
 }

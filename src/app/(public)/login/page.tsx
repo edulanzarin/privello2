@@ -36,6 +36,37 @@ import { buildAuthUrl, sanitizarNext } from "@/domain/redirect";
  * já no próximo request.
  */
 export default function LoginPage(): React.ReactElement {
+    return (
+        <React.Suspense fallback={<LoginFallback />}>
+            <LoginForm />
+        </React.Suspense>
+    );
+}
+
+function LoginFallback(): React.ReactElement {
+    return (
+        <AuthCard
+            title="Bem-vindo de volta"
+            subtitle={
+                <>
+                    Entre com seu email ou{" "}
+                    <span className="font-medium">@usuário</span>
+                </>
+            }
+        >
+            <div
+                aria-hidden="true"
+                className="flex flex-col gap-4 opacity-50"
+            >
+                <div className="h-10 rounded-2xl bg-neutral-100" />
+                <div className="h-10 rounded-2xl bg-neutral-100" />
+                <div className="h-10 rounded-2xl bg-primary-100" />
+            </div>
+        </AuthCard>
+    );
+}
+
+function LoginForm(): React.ReactElement {
     const searchParams = useSearchParams();
     const nextRaw = searchParams?.get("next") ?? null;
     const safeNext = sanitizarNext(nextRaw, { proibidos: ["/login"] });

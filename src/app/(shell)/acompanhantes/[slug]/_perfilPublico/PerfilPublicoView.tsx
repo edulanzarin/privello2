@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
     AttributeTile,
     AudioWavePlayer,
-    Badge,
     BanknoteIcon,
     Button,
     Card,
@@ -26,6 +25,7 @@ import {
     PixIcon,
     PlayIcon,
     ProfileHeader,
+    RankBadge,
     RatingStars,
     RulerIcon,
     ScissorsIcon,
@@ -38,7 +38,6 @@ import {
     WeightIcon,
     WhatsappIcon,
     useMediaCarousel,
-    type BadgeTone,
     type IconSegmentedOption,
     type MediaComment,
     type MediaItem,
@@ -807,8 +806,10 @@ export function PerfilPublicoView({
 // ---------------------------------------------------------------------------
 
 /**
- * Selo de plano discriminado. Boost ganha tom gradient + ícone de
- * chama; Premium tem coroa; Básico fica neutro com estrela.
+ * Selo de plano discriminado. Wrap fino sobre o {@link RankBadge}
+ * que mapeia `PlanoExibicao` → tom semântico + label/ícone. Boost
+ * ganha tom "hero" + ícone de chama; Premium tem "feature" com
+ * coroa; Básico fica "standard" com estrela.
  */
 function PlanoBadge({
     plano,
@@ -817,29 +818,33 @@ function PlanoBadge({
 }): React.ReactElement {
     const config: Record<
         PlanoExibicao,
-        { tone: BadgeTone; icon: React.ReactElement; label: string }
+        {
+            tone: "hero" | "feature" | "standard";
+            icon: React.ReactElement;
+            label: string;
+        }
     > = {
         BOOST: {
-            tone: "primaryGradient",
+            tone: "hero",
             icon: <FlameIcon size={11} />,
             label: "Em destaque",
         },
         PREMIUM: {
-            tone: "primary",
+            tone: "feature",
             icon: <CrownIcon size={11} />,
             label: "Premium",
         },
         BASICO: {
-            tone: "neutral",
+            tone: "standard",
             icon: <StarIcon size={11} />,
             label: "Básico",
         },
     };
     const c = config[plano];
     return (
-        <Badge tone={c.tone} icon={c.icon}>
+        <RankBadge tone={c.tone} icon={c.icon}>
             {c.label}
-        </Badge>
+        </RankBadge>
     );
 }
 

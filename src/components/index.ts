@@ -147,6 +147,24 @@ export type { InfoListProps } from "./primitives/InfoList";
 export { Badge } from "./primitives/Badge";
 export type { BadgeProps, BadgeTone } from "./primitives/Badge";
 
+export { RankBadge } from "./primitives/RankBadge";
+export type { RankBadgeProps, RankBadgeTone } from "./primitives/RankBadge";
+
+export { HorizontalSnap } from "./primitives/HorizontalSnap";
+export type { HorizontalSnapProps } from "./primitives/HorizontalSnap";
+
+export { SearchInput } from "./primitives/SearchInput";
+export type { SearchInputProps } from "./primitives/SearchInput";
+
+export { CityCombobox } from "./primitives/CityCombobox";
+export type {
+    CityComboboxProps,
+    CityComboboxValue,
+} from "./primitives/CityCombobox";
+
+export { ProfileFeedCard } from "./primitives/ProfileFeedCard";
+export type { ProfileFeedCardProps } from "./primitives/ProfileFeedCard";
+
 export { OptionCard } from "./primitives/OptionCard";
 export type { OptionCardProps, OptionCardTone } from "./primitives/OptionCard";
 
