@@ -101,7 +101,7 @@ export function IconSegmented({
                         className={[
                             "inline-flex flex-none items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium tracking-tight transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40",
                             isActive
-                                ? "bg-text-primary text-white"
+                                ? "bg-primary-100 text-primary-700"
                                 : "text-text-disabled hover:text-text-primary",
                         ].join(" ")}
                     >

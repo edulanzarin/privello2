@@ -36,6 +36,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE_NAME } from "@/server/auth/logout";
+import { sanitizarNext } from "@/domain/redirect";
 import { signSessionCookie } from "@/server/auth/sessions";
 import { registrar } from "@/server/cadastro-cliente";
 
@@ -149,12 +150,18 @@ export async function registrarClienteAction(
             path: "/",
         });
         // `redirect` lança internamente; nada após esta linha executa.
-        // Cliente recém-cadastrado vai direto para a tela de seleção
-        // de plano (`Sistema_de_Planos_Cliente`). Diferente da
-        // Acompanhante, o plano não bloqueia acesso à plataforma —
-        // mas oferecemos a escolha logo após o cadastro para que o
-        // Cliente já comece com Grátis ou Fan ativo.
-        redirect("/cliente/selecao-plano");
+        //
+        // Quando o formulário traz `nextHidden` (deep-link vindo do
+        // `?next=` da URL pré-cadastro), o usuário volta direto pra
+        // tela de origem após criar conta. Senão cai no destino
+        // padrão (`/cliente/selecao-plano`), onde o Cliente escolhe
+        // entre Grátis e Fan logo após o cadastro.
+        const nextRaw = formData.get("next");
+        const safeNext = sanitizarNext(
+            typeof nextRaw === "string" ? nextRaw : null,
+            { proibidos: ["/cadastro", "/login"] },
+        );
+        redirect(safeNext ?? "/cliente/selecao-plano");
     }
 
     // Valores preservados para repopular o formulário (sem `senha`).

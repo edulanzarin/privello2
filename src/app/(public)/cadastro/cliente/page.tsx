@@ -36,6 +36,7 @@
 
 import * as React from "react";
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import {
     AtIcon,
@@ -48,6 +49,7 @@ import {
     PasswordInput,
     UserIcon,
 } from "@/components";
+import { buildAuthUrl, sanitizarNext } from "@/domain/redirect";
 
 import {
     registrarClienteAction,
@@ -86,6 +88,11 @@ const FOTO_INITIAL: FotoUploadState = {
 const FOTO_ACCEPT = "image/jpeg,image/png,image/webp";
 
 export default function CadastroClientePage(): React.ReactElement {
+    const searchParams = useSearchParams();
+    const safeNext = sanitizarNext(searchParams?.get("next") ?? null, {
+        proibidos: ["/cadastro", "/login"],
+    });
+
     const [state, formAction, pending] = useActionState(
         registrarClienteAction,
         INITIAL_STATE,
@@ -179,7 +186,7 @@ export default function CadastroClientePage(): React.ReactElement {
                 <>
                     Já tem conta?{" "}
                     <a
-                        href="/login"
+                        href={buildAuthUrl("/login", safeNext)}
                         className="font-medium text-primary-700 hover:text-primary-800"
                     >
                         Entrar
@@ -211,6 +218,9 @@ export default function CadastroClientePage(): React.ReactElement {
 
                 {/* Hidden inputs propagam o staging para a Server Action.
                     Permanecem vazios quando o usuário não escolhe foto. */}
+                {safeNext !== null ? (
+                    <input type="hidden" name="next" value={safeNext} />
+                ) : null}
                 <input
                     type="hidden"
                     name="fotoStagedKey"

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 
 import {
     AtIcon,
@@ -10,6 +11,7 @@ import {
     LockIcon,
     PasswordInput,
 } from "@/components";
+import { buildAuthUrl, sanitizarNext } from "@/domain/redirect";
 
 /**
  * Página `/login`.
@@ -34,6 +36,10 @@ import {
  * já no próximo request.
  */
 export default function LoginPage(): React.ReactElement {
+    const searchParams = useSearchParams();
+    const nextRaw = searchParams?.get("next") ?? null;
+    const safeNext = sanitizarNext(nextRaw, { proibidos: ["/login"] });
+
     const [loginValue, setLoginValue] = React.useState("");
     const [password, setPassword] = React.useState("");
     const [loginError, setLoginError] = React.useState(false);
@@ -42,18 +48,20 @@ export default function LoginPage(): React.ReactElement {
     const [formError, setFormError] = React.useState<string | null>(null);
 
     /**
-     * Roteia o usuário recém-autenticado de acordo com o `userType`
-     * exposto pelo `Sistema_de_Autenticacao` (Requirement 1.6).
+     * Roteia o usuário recém-autenticado.
      *
-     * - `CLIENTE`: vai para a home pública `/`. O foco do Cliente é
-     *   consumir/solicitar serviços, não administrar perfil; a área
-     *   privada `/cliente/*` fica reservada para futuras telas de
-     *   configuração e ajustes pontuais.
-     * - `ACOMPANHANTE`: vai para `/acompanhante`. O layout dessa rota
-     *   decide entre a área principal e `/acompanhante/selecao-plano`
-     *   conforme o plano vigente (Requirements 5.5 e 5.10).
+     * Quando há `?next=<url>` válido na query, redireciona pra ele.
+     * Caso contrário, cai no destino default por `userType`:
+     *   - `CLIENTE` → home pública `/`.
+     *   - `ACOMPANHANTE` → `/acompanhante` (layout decide entre
+     *     área principal e `/acompanhante/selecao-plano` conforme
+     *     plano vigente).
      */
-    function redirectByUserType(userType: string): void {
+    function redirectAfterLogin(userType: string): void {
+        if (safeNext !== null) {
+            window.location.href = safeNext;
+            return;
+        }
         if (userType === "CLIENTE") {
             window.location.href = "/";
             return;
@@ -119,7 +127,7 @@ export default function LoginPage(): React.ReactElement {
                 return;
             }
 
-            redirectByUserType(payload.userType);
+            redirectAfterLogin(payload.userType);
         } catch {
             setFormError("Login ou senha inválidos");
         } finally {
@@ -140,7 +148,7 @@ export default function LoginPage(): React.ReactElement {
                 <>
                     Sem conta ainda?{" "}
                     <a
-                        href="/cadastro"
+                        href={buildAuthUrl("/cadastro", safeNext)}
                         className="font-medium text-primary-700 hover:text-primary-800"
                     >
                         Criar conta

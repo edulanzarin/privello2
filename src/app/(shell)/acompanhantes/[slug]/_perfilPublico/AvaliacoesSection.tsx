@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
     Avatar,
@@ -14,6 +14,7 @@ import {
     SectionHeader,
     StarIcon,
 } from "@/components";
+import { buildAuthUrl } from "@/domain/redirect";
 
 import type { ReviewPublico } from "@/server/reviews";
 import type { ViewerKind } from "./PerfilPublicoView";
@@ -56,6 +57,7 @@ export function AvaliacoesSection({
     viewerIsFan,
     minhaReview,
 }: AvaliacoesSectionProps): React.ReactElement {
+    const pathname = usePathname();
     // Bloqueia tudo (resumo, lista, formulário) com `LockedContent`
     // pra:
     //   - anônimo: precisa logar pra ver qualquer avaliação;
@@ -70,8 +72,9 @@ export function AvaliacoesSection({
         (viewerKind === "cliente" && !viewerIsFan);
 
     if (isLocked) {
-        const ctaHref =
+        const baseHref =
             viewerKind === "anonimo" ? "/login" : "/cliente/selecao-plano";
+        const ctaHref = buildAuthUrl(baseHref, pathname);
         const ctaLabel =
             viewerKind === "anonimo" ? "Entrar" : "Virar Fan";
         const description =
