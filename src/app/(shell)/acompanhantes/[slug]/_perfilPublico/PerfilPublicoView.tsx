@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -70,54 +70,54 @@ import type { ReviewPublico } from "@/server/reviews";
 import { AvaliacoesSection } from "./AvaliacoesSection";
 
 /**
- * "Tipo de viewer" â€” quem estÃ¡ abrindo o perfil. Determina UX:
+ * "Tipo de viewer" — quem está abrindo o perfil. Determina UX:
  *
- * - `"anonimo"`: usuÃ¡rio nÃ£o logado. VÃª tudo, mas nÃ£o pode avaliar.
+ * - `"anonimo"`: usuário não logado. Vê tudo, mas não pode avaliar.
  * - `"cliente"`: Cliente autenticado. Pode avaliar.
- * - `"acompanhante"`: outra Acompanhante. Pode visitar mas nÃ£o avalia.
+ * - `"acompanhante"`: outra Acompanhante. Pode visitar mas não avalia.
  */
 export type ViewerKind = "anonimo" | "cliente" | "acompanhante";
 
 /**
- * RenderizaÃ§Ã£o completa do perfil pÃºblico. Aceita o
- * {@link PerfilAcompanhantePublico} (sem PII) e a galeria jÃ¡ mapeada
+ * Renderização completa do perfil público. Aceita o
+ * {@link PerfilAcompanhantePublico} (sem PII) e a galeria já mapeada
  * pra `MediaItem`.
  *
  * Visual mais "vitrine" do que "ficha de cadastro":
  *
  * 1. Header com avatar + nome + plano discriminado.
- * 2. Meta-row compacta com localizaÃ§Ã£o e visualizaÃ§Ãµes.
+ * 2. Meta-row compacta com localização e visualizações.
  * 3. CTA grande do WhatsApp.
- * 4. Ãudio (se houver).
+ * 4. Áudio (se houver).
  * 5. Bio.
- * 6. Galeria com filtro (Tudo/Fotos/VÃ­deos) e paginaÃ§Ã£o.
+ * 6. Galeria com filtro (Tudo/Fotos/Vídeos) e paginação.
  * 7. **Valor da hora**: {@link StatHighlight} hero com gradiente.
- * 8. **Pagamentos**: chips chunky com Ã­cones grandes.
+ * 8. **Pagamentos**: chips chunky com ícones grandes.
  * 9. **Disponibilidade semanal**: {@link WeekCalendar} visual.
- * 10. **AparÃªncia**: grid de {@link AttributeTile} com Ã­cones autorais
- *     (peso/altura/pÃ©/etnia/olhos/cabelo).
- * 11. **CaracterÃ­sticas**: hashtags sÃ³ pros booleanos `true`.
- * 12. **Quem atendo** + prÃ¡ticas + idiomas em chips.
+ * 10. **Aparência**: grid de {@link AttributeTile} com ícones autorais
+ *     (peso/altura/pé/etnia/olhos/cabelo).
+ * 11. **Características**: hashtags só pros booleanos `true`.
+ * 12. **Quem atendo** + práticas + idiomas em chips.
  *
- * Mobile-first sempre. Sem botÃµes de like/delete (sistemas
- * correspondentes ainda nÃ£o existem).
+ * Mobile-first sempre. Sem botões de like/delete (sistemas
+ * correspondentes ainda não existem).
  */
 export interface PerfilPublicoViewProps {
     /** `User.identificador` da Acompanhante (slug). Usado nos calls
-     *  de avaliaÃ§Ã£o. */
+     *  de avaliação. */
     slug: string;
     perfil: PerfilAcompanhantePublico;
     galeriaItems: ReadonlyArray<MediaItem>;
-    /** AvaliaÃ§Ãµes pÃºblicas mais recentes. */
+    /** Avaliações públicas mais recentes. */
     reviews: ReadonlyArray<ReviewPublico>;
-    /** Tipo de viewer â€” alimenta UI condicional do bloco de
-     *  avaliaÃ§Ã£o. */
+    /** Tipo de viewer — alimenta UI condicional do bloco de
+     *  avaliação. */
     viewerKind: ViewerKind;
-    /** `true` quando o viewer Ã© a prÃ³pria dona do perfil. */
+    /** `true` quando o viewer é a própria dona do perfil. */
     viewerIsOwner: boolean;
     /**
-     * `true` quando o viewer Ã© Cliente Fan â€” pode curtir e comentar.
-     * Cliente GrÃ¡tis e anÃ´nimo veem os botÃµes mas sÃ£o redirecionados
+     * `true` quando o viewer é Cliente Fan — pode curtir e comentar.
+     * Cliente Grátis e anônimo veem os botões mas são redirecionados
      * pra upgrade ao tentar interagir.
      */
     viewerIsFan: boolean;
@@ -126,8 +126,8 @@ export interface PerfilPublicoViewProps {
     /** URL da foto do viewer Cliente, pra avatar no `CommentInput`. */
     viewerFotoUrl: string | null;
     /**
-     * AvaliaÃ§Ã£o que o Cliente autenticado jÃ¡ deixou (ou `null`).
-     * Usado pra prÃ©-popular o formulÃ¡rio "Sua avaliaÃ§Ã£o".
+     * Avaliação que o Cliente autenticado já deixou (ou `null`).
+     * Usado pra pré-popular o formulário "Sua avaliação".
      */
     minhaReview: { rating: number; comment: string | null } | null;
 }
@@ -141,8 +141,8 @@ const FORMA_PAGAMENTO_ICONS: Record<FormaPagamento, React.ReactElement> = {
 };
 
 /**
- * Mapa visual dos 7 dias da semana. Mantemos a ordem pt-BR canÃ´nica
- * (SEG â†’ DOM). Os labels longos sÃ£o lidos por screen readers via o
+ * Mapa visual dos 7 dias da semana. Mantemos a ordem pt-BR canônica
+ * (SEG → DOM). Os labels longos são lidos por screen readers via o
  * `WeekCalendar`.
  */
 const WEEK_DAYS_VIEW: ReadonlyArray<WeekDay> = DIAS_SEMANA.map((d) => ({
@@ -171,7 +171,7 @@ export function PerfilPublicoView({
     const [filtroGaleria, setFiltroGaleria] =
         React.useState<FiltroGaleria>("tudo");
 
-    // Estado local da galeria â€” permite atualizaÃ§Ã£o otimista de
+    // Estado local da galeria — permite atualização otimista de
     // likes (toggle) e comments (count) sem reload completo. Resync
     // com a prop quando o servidor manda nova galeria via refresh.
     const [galeriaItems, setGaleriaItems] = React.useState<
@@ -181,17 +181,17 @@ export function PerfilPublicoView({
         setGaleriaItems(galeriaItemsProp);
     }, [galeriaItemsProp]);
 
-    // ComentÃ¡rios por mÃ­dia. Carregados sob demanda quando o
-    // carrossel abre, ou quando o usuÃ¡rio envia/exclui.
+    // Comentários por mídia. Carregados sob demanda quando o
+    // carrossel abre, ou quando o usuário envia/exclui.
     const [commentsByMedia, setCommentsByMedia] = React.useState<
         Record<string, ReadonlyArray<MediaComment>>
     >({});
 
     /**
-     * Carrega comentÃ¡rios da mÃ­dia ativa quando o carrossel abre
-     * ou troca de item. Cache simples por id â€” nÃ£o recarrega se
-     * jÃ¡ tem. Pula completamente para viewers que nÃ£o podem ver
-     * comentÃ¡rios (anÃ´nimo e Cliente GrÃ¡tis).
+     * Carrega comentários da mídia ativa quando o carrossel abre
+     * ou troca de item. Cache simples por id — não recarrega se
+     * já tem. Pula completamente para viewers que não podem ver
+     * comentários (anônimo e Cliente Grátis).
      */
     React.useEffect(() => {
         const podeVerComentarios =
@@ -225,8 +225,8 @@ export function PerfilPublicoView({
     ]);
 
     /**
-     * Toggle de curtida com atualizaÃ§Ã£o otimista. Cliente GrÃ¡tis e
-     * anÃ´nimo sÃ£o redirecionados pra rota apropriada.
+     * Toggle de curtida com atualização otimista. Cliente Grátis e
+     * anônimo são redirecionados pra rota apropriada.
      */
     function handleToggleLike(itemId: string, liked: boolean): void {
         if (viewerKind === "anonimo") {
@@ -284,7 +284,7 @@ export function PerfilPublicoView({
     }
 
     /**
-     * Adiciona comentÃ¡rio com refetch da lista pra ter o item novo
+     * Adiciona comentário com refetch da lista pra ter o item novo
      * com avatar+nome corretos do servidor.
      */
     function handleAddComment(itemId: string, text: string): void {
@@ -368,8 +368,8 @@ export function PerfilPublicoView({
         .map((v) => labelFor(IDIOMAS, v))
         .filter((v): v is string => Boolean(v));
 
-    // Apenas atributos "Sim" viram hashtags. Os "NÃ£o"/null somem para
-    // nÃ£o poluir. Se nenhum estiver Sim, a seÃ§Ã£o inteira nÃ£o renderiza.
+    // Apenas atributos "Sim" viram hashtags. Os "Não"/null somem para
+    // não poluir. Se nenhum estiver Sim, a seção inteira não renderiza.
     const characteristics = [
         { active: perfil.temSilicone === true, label: "Silicone" },
         { active: perfil.temTatuagens === true, label: "Tatuagens" },
@@ -377,7 +377,7 @@ export function PerfilPublicoView({
         { active: perfil.fumante === true, label: "Fumante" },
     ].filter((x) => x.active);
 
-    // Galeria filtrada â€” espelha o padrÃ£o do painel privado (MidiasTab).
+    // Galeria filtrada — espelha o padrão do painel privado (MidiasTab).
     const galeriaFiltrada = React.useMemo<ReadonlyArray<MediaItem>>(() => {
         if (filtroGaleria === "fotos")
             return galeriaItems.filter((m) => m.type === "photo");
@@ -407,7 +407,7 @@ export function PerfilPublicoView({
         },
         {
             value: "videos",
-            label: "VÃ­deos",
+            label: "Vídeos",
             icon: <PlayIcon size={14} />,
             count: galeriaTotais.videos,
         },
@@ -423,9 +423,9 @@ export function PerfilPublicoView({
                 badge={<PlanoBadge plano={perfil.planoExibicao} />}
             />
 
-            {/* Meta-row compacta. VisualizaÃ§Ãµes + nota agregada (se
-                houver). LocalizaÃ§Ã£o sai daqui â€” jÃ¡ aparece em
-                destaque no StatCard "LocalizaÃ§Ã£o" abaixo. */}
+            {/* Meta-row compacta. Visualizações + nota agregada (se
+                houver). Localização sai daqui — já aparece em
+                destaque no StatCard "Localização" abaixo. */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-text-secondary">
                 <span className="inline-flex items-center gap-1.5">
                     <EyeIcon size={12} />
@@ -433,13 +433,13 @@ export function PerfilPublicoView({
                         <span className="font-medium text-text-primary">
                             {formatViews(perfil.viewsCount)}
                         </span>{" "}
-                        visualizaÃ§Ãµes
+                        visualizações
                     </span>
                 </span>
                 {perfil.reviewsCount > 0 && viewerKind !== "anonimo" ? (
                     <>
                         <span aria-hidden="true" className="text-text-disabled">
-                            Â·
+                            ·
                         </span>
                         <span className="inline-flex items-center gap-1.5">
                             <RatingStars
@@ -462,9 +462,9 @@ export function PerfilPublicoView({
                 <WhatsappCTA href={perfil.whatsappUrl} />
             ) : null}
 
-            {/* Valores + LocalizaÃ§Ã£o â€” duas StatCards lado a lado em
+            {/* Valores + Localização — duas StatCards lado a lado em
                 desktop, empilhadas em mobile. Ficam logo abaixo do
-                CTA do WhatsApp pra serem a primeira "ficha" Ãºtil
+                CTA do WhatsApp pra serem a primeira "ficha" útil
                 quando o visitante decide se vale a pena conversar. */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <StatCard
@@ -488,7 +488,7 @@ export function PerfilPublicoView({
 
                 <StatCard
                     icon={<MapPinIcon size={14} />}
-                    label="LocalizaÃ§Ã£o"
+                    label="Localização"
                 >
                     <div className="flex flex-col gap-0.5">
                         {perfil.bairroNome ? (
@@ -497,16 +497,16 @@ export function PerfilPublicoView({
                             </span>
                         ) : null}
                         <span className="text-sm text-text-primary">
-                            {perfil.cidadeNome} Â· {perfil.estadoSigla}
+                            {perfil.cidadeNome} · {perfil.estadoSigla}
                         </span>
                     </div>
                 </StatCard>
             </div>
 
-            {/* Ãudio de apresentaÃ§Ã£o */}
+            {/* Áudio de apresentação */}
             {perfil.audioUrl !== null ? (
                 <section className="flex flex-col gap-2">
-                    <SectionHeader title="OuÃ§a minha voz" />
+                    <SectionHeader title="Ouça minha voz" />
                     <Card>
                         <AudioWavePlayer
                             src={perfil.audioUrl}
@@ -540,7 +540,7 @@ export function PerfilPublicoView({
                                 onChange={(v) =>
                                     setFiltroGaleria(v as FiltroGaleria)
                                 }
-                                aria-label="Filtrar tipo de mÃ­dia"
+                                aria-label="Filtrar tipo de mídia"
                             />
                         ) : null
                     }
@@ -561,17 +561,17 @@ export function PerfilPublicoView({
                     <Card>
                         <p className="text-center text-sm text-text-secondary">
                             {galeriaTotais.total === 0
-                                ? "Sem mÃ­dias publicadas ainda."
+                                ? "Sem mídias publicadas ainda."
                                 : "Nenhum item neste filtro."}
                         </p>
                     </Card>
                 )}
             </section>
 
-            {/* Formas de pagamento â€” tiles chunky */}
+            {/* Formas de pagamento — tiles chunky */}
             {formasPagamentoVisuals.length > 0 ? (
                 <section className="flex flex-col gap-2">
-                    <SectionHeader title="Como vocÃª pode pagar" />
+                    <SectionHeader title="Como você pode pagar" />
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         {formasPagamentoVisuals.map((item) => (
                             <PaymentTile
@@ -584,7 +584,7 @@ export function PerfilPublicoView({
                 </section>
             ) : null}
 
-            {/* Disponibilidade semanal â€” calendÃ¡rio visual */}
+            {/* Disponibilidade semanal — calendário visual */}
             {perfil.diasAtende.length > 0 ? (
                 <section className="flex flex-col gap-2">
                     <SectionHeader title="Disponibilidade" />
@@ -594,22 +594,22 @@ export function PerfilPublicoView({
                             activeValues={perfil.diasAtende}
                         />
                         <p className="mt-3 text-center text-[0.7rem] text-text-secondary">
-                            Dias destacados sÃ£o os que atendo.
+                            Dias destacados são os que atendo.
                         </p>
                     </Card>
                 </section>
             ) : null}
 
-            {/* AparÃªncia â€” grid de tiles com Ã­cones grandes */}
+            {/* Aparência — grid de tiles com ícones grandes */}
             <section className="flex flex-col gap-2">
-                <SectionHeader title="AparÃªncia" />
+                <SectionHeader title="Aparência" />
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     <AttributeTile
                         icon={<WeightIcon size={20} />}
                         value={
                             perfil.pesoKg !== null
                                 ? `${perfil.pesoKg} kg`
-                                : "â€”"
+                                : "—"
                         }
                         label="Peso"
                     />
@@ -618,7 +618,7 @@ export function PerfilPublicoView({
                         value={
                             perfil.alturaCm !== null
                                 ? `${perfil.alturaCm} cm`
-                                : "â€”"
+                                : "—"
                         }
                         label="Altura"
                     />
@@ -627,18 +627,18 @@ export function PerfilPublicoView({
                         value={
                             perfil.tamanhoPe !== null
                                 ? String(perfil.tamanhoPe)
-                                : "â€”"
+                                : "—"
                         }
-                        label="PÃ©"
+                        label="Pé"
                     />
                     <AttributeTile
                         icon={<GlobeIcon size={20} />}
-                        value={labelFor(ETNIAS, perfil.etnia) ?? "â€”"}
+                        value={labelFor(ETNIAS, perfil.etnia) ?? "—"}
                         label="Etnia"
                     />
                     <AttributeTile
                         icon={<EyeIcon size={20} />}
-                        value={labelFor(CORES_OLHOS, perfil.corOlhos) ?? "â€”"}
+                        value={labelFor(CORES_OLHOS, perfil.corOlhos) ?? "—"}
                         label="Olhos"
                     />
                     <AttributeTile
@@ -652,9 +652,9 @@ export function PerfilPublicoView({
                 </div>
             </section>
 
-            {/* Quem atendo + CaracterÃ­sticas â€” Card Ãºnico com grid
+            {/* Quem atendo + Características — Card único com grid
                 interno 1col mobile / 2cols desktop pra distribuir as
-                TagBanks (Atende, Realiza, CaracterÃ­sticas, Idiomas)
+                TagBanks (Atende, Realiza, Características, Idiomas)
                 e evitar o visual "tudo socado na esquerda". Usa
                 gap-x-8 generoso entre colunas pra que cada TagBank
                 respire. */}
@@ -663,7 +663,7 @@ export function PerfilPublicoView({
                 idiomasLabels.length > 0 ||
                 characteristics.length > 0) ? (
                 <section className="flex flex-col gap-2">
-                    <SectionHeader title="CaracterÃ­sticas" />
+                    <SectionHeader title="Características" />
                     <Card>
                         <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
                             {atendeLabels.length > 0 ? (
@@ -695,7 +695,7 @@ export function PerfilPublicoView({
                             ) : null}
 
                             {characteristics.length > 0 ? (
-                                <TagBank label="CaracterÃ­sticas">
+                                <TagBank label="Características">
                                     {characteristics.map((c) => (
                                         <TagChip
                                             key={c.label}
@@ -728,7 +728,7 @@ export function PerfilPublicoView({
                 </section>
             ) : null}
 
-            {/* AvaliaÃ§Ãµes */}
+            {/* Avaliações */}
             <AvaliacoesSection
                 slug={slug}
                 reviews={reviews}
@@ -740,9 +740,9 @@ export function PerfilPublicoView({
                 minhaReview={minhaReview}
             />
 
-            {/* CTA secundÃ¡rio: repete o "Falar no WhatsApp" no fim
-                da pÃ¡gina. Quem rolou tudo atÃ© aqui jÃ¡ decidiu â€” nÃ£o
-                obrigamos o usuÃ¡rio a rolar pra cima de novo. */}
+            {/* CTA secundário: repete o "Falar no WhatsApp" no fim
+                da página. Quem rolou tudo até aqui já decidiu — não
+                obrigamos o usuário a rolar pra cima de novo. */}
             {perfil.whatsappUrl !== null ? (
                 <WhatsappCTA href={perfil.whatsappUrl} />
             ) : null}
@@ -772,9 +772,9 @@ export function PerfilPublicoView({
                 commentsLocked={
                     viewerKind === "anonimo"
                         ? {
-                            title: "ComentÃ¡rios exclusivos",
+                            title: "Comentários exclusivos",
                             description:
-                                "FaÃ§a login como Cliente Fan pra ver e comentar.",
+                                "Faça login como Cliente Fan pra ver e comentar.",
                             action: (
                                 <Button href={buildAuthUrl("/login", pathname)} size="sm">
                                     Entrar
@@ -783,9 +783,9 @@ export function PerfilPublicoView({
                         }
                         : viewerKind === "cliente" && !viewerIsFan
                             ? {
-                                title: "ComentÃ¡rios exclusivos pra Fans",
+                                title: "Comentários exclusivos pra Fans",
                                 description:
-                                    "Vire Fan pra ver e publicar comentÃ¡rios nas fotos.",
+                                    "Vire Fan pra ver e publicar comentários nas fotos.",
                                 action: (
                                     <Button
                                         href={buildAuthUrl("/cliente/selecao-plano", pathname)}
@@ -807,8 +807,8 @@ export function PerfilPublicoView({
 // ---------------------------------------------------------------------------
 
 /**
- * Selo de plano discriminado. Boost ganha tom gradient + Ã­cone de
- * chama; Premium tem coroa; BÃ¡sico fica neutro com estrela.
+ * Selo de plano discriminado. Boost ganha tom gradient + ícone de
+ * chama; Premium tem coroa; Básico fica neutro com estrela.
  */
 function PlanoBadge({
     plano,
@@ -832,7 +832,7 @@ function PlanoBadge({
         BASICO: {
             tone: "neutral",
             icon: <StarIcon size={11} />,
-            label: "BÃ¡sico",
+            label: "Básico",
         },
     };
     const c = config[plano];
@@ -844,10 +844,10 @@ function PlanoBadge({
 }
 
 /**
- * CTA full-width "Falar no WhatsApp" reutilizado no topo (logo apÃ³s
- * o header) e no rodapÃ© (apÃ³s AvaliaÃ§Ãµes). Mantemos a duplicaÃ§Ã£o
- * deliberada â€” visitante que rolou tudo atÃ© o fim jÃ¡ decidiu, e
- * nÃ£o queremos forÃ§ar ele a rolar de volta pra clicar.
+ * CTA full-width "Falar no WhatsApp" reutilizado no topo (logo após
+ * o header) e no rodapé (após Avaliações). Mantemos a duplicação
+ * deliberada — visitante que rolou tudo até o fim já decidiu, e
+ * não queremos forçar ele a rolar de volta pra clicar.
  */
 function WhatsappCTA({ href }: { href: string }): React.ReactElement {
     return (
@@ -864,8 +864,8 @@ function WhatsappCTA({ href }: { href: string }): React.ReactElement {
 }
 
 /**
- * Tile chunky para forma de pagamento. Ãcone grande Ã  esquerda,
- * label compacto Ã  direita. Mais "presente" que um chip pequeno.
+ * Tile chunky para forma de pagamento. Ícone grande à esquerda,
+ * label compacto à direita. Mais "presente" que um chip pequeno.
  */
 function PaymentTile({
     icon,
@@ -891,10 +891,10 @@ function PaymentTile({
 
 /**
  * Bank de tags com label uppercase em cima e linha de chips em baixo.
- * Usado no bloco "Quem atendo" pra agrupar visualmente pÃºblico,
- * prÃ¡ticas e idiomas. Mantido local porque Ã© apenas um wrapper de
- * layout especÃ­fico desta pÃ¡gina â€” promover a primitivo sÃ³ quando
- * outra tela quiser o mesmo padrÃ£o.
+ * Usado no bloco "Quem atendo" pra agrupar visualmente público,
+ * práticas e idiomas. Mantido local porque é apenas um wrapper de
+ * layout específico desta página — promover a primitivo só quando
+ * outra tela quiser o mesmo padrão.
  */
 function TagBank({
     label,
@@ -918,8 +918,8 @@ function TagBank({
 // ---------------------------------------------------------------------------
 
 /**
- * Forma "raw" de um comentÃ¡rio retornado pelo endpoint
- * `GET /api/medias/[id]/comments`. Mantemos local pra nÃ£o acoplar
+ * Forma "raw" de um comentário retornado pelo endpoint
+ * `GET /api/medias/[id]/comments`. Mantemos local pra não acoplar
  * o tipo do servidor ao tipo do client component primitivo.
  */
 type RawComment = {
@@ -982,7 +982,7 @@ function joinCabelo(
     const partes = [estilo, tamanho].filter(
         (v): v is string => typeof v === "string" && v.length > 0,
     );
-    return partes.length > 0 ? partes.join(", ") : "â€”";
+    return partes.length > 0 ? partes.join(", ") : "—";
 }
 
 
