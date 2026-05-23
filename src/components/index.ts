@@ -165,6 +165,16 @@ export type {
 export { ProfileFeedCard } from "./primitives/ProfileFeedCard";
 export type { ProfileFeedCardProps } from "./primitives/ProfileFeedCard";
 
+export { FeatureCard } from "./primitives/FeatureCard";
+export type {
+    FeatureCardProps,
+    FeatureCardShape,
+    FeatureCardTone,
+} from "./primitives/FeatureCard";
+
+export { StatStrip } from "./primitives/StatStrip";
+export type { StatStripProps, StatStripItem } from "./primitives/StatStrip";
+
 export { OptionCard } from "./primitives/OptionCard";
 export type { OptionCardProps, OptionCardTone } from "./primitives/OptionCard";
 

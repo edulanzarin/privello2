@@ -1,41 +1,31 @@
 import { PageSurface } from "@/components";
-import {
-    listarCidadesPopulares,
-    listarFeedHome,
-} from "@/server/acompanhante-profile/feed";
+import { getCurrentSession } from "@/server/auth/currentSession";
 
 import { HomeView } from "./_home/HomeView";
 
 /**
  * Home (`/`).
  *
- * Página pública de descoberta da Privello. Exibe um feed editorial
- * com 3 buckets (Boost / Premium / Básico) + atalhos por cidade
- * popular. A barra de busca por cidade fica em destaque no Hero e
- * leva pra `/acompanhantes` filtrada.
+ * Landing pública da Privello: hero descritivo, barra de busca por
+ * cidade, atalhos pras rotas principais (acompanhantes/reels/
+ * avaliações/conta), bloco de "por que Privello" com selos de
+ * confiança e CTA de cadastro pra visitantes anônimos.
  *
- * Servidor (RSC):
- *   - {@link listarFeedHome}: lê os 3 buckets em paralelo já
- *     filtrados por `perfilVisivel` + `planoVigente !== null`.
- *   - {@link listarCidadesPopulares}: top 8 cidades por contagem.
+ * **Não lista perfis.** A descoberta de perfis acontece em
+ * `/acompanhantes` (página de busca filtrada). A home se concentra
+ * em apresentar a marca e direcionar tráfego — quem quer ver perfis
+ * passa pelo Hero e cai na busca.
  *
- * O componente cliente {@link HomeView} cuida da interação:
- * autocomplete de cidade, navegação ao buscar, snap horizontal.
- *
- * A navegação (TopBar + BottomNav) vem do
- * {@link import("./layout").default} via `AppShell`.
+ * O `viewerType` da sessão atual é passado pra UI pra adaptar
+ * pequenos detalhes (esconde CTAs de cadastro pra logados, troca
+ * o atalho "Entrar" por "Minha conta", etc).
  */
 export default async function HomePage() {
-    const [feed, cidades] = await Promise.all([
-        listarFeedHome({
-            limite: { boost: 12, premium: 12, basico: 12 },
-        }),
-        listarCidadesPopulares(8),
-    ]);
+    const session = await getCurrentSession();
 
     return (
         <PageSurface width="lg">
-            <HomeView feed={feed} cidades={cidades} />
+            <HomeView viewerType={session?.userType ?? null} />
         </PageSurface>
     );
 }

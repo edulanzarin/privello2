@@ -4,51 +4,57 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import {
-    Card,
+    Button,
+    CalendarIcon,
+    ChatIcon,
+    ChevronRightIcon,
     CityCombobox,
-    CrownIcon,
-    EmptyState,
+    EyeIcon,
+    FeatureCard,
     FlameIcon,
-    HorizontalSnap,
-    MapPinIcon,
-    ProfileFeedCard,
-    RankBadge,
+    HeartIcon,
+    LockIcon,
+    PlayCircleIcon,
     SectionHeader,
     SparklesIcon,
+    StarIcon,
+    StatStrip,
     UsersIcon,
     type CityComboboxValue,
 } from "@/components";
 
-import type { FeedHome, FeedItem, CidadePopular } from "@/server/acompanhante-profile/feed";
-import type { PlanoExibicao } from "@/server/acompanhante-profile";
-
 /**
  * Props do {@link HomeView}.
  *
- * Recebe os 3 buckets do feed e a lista de cidades populares já
- * resolvidos pelo RSC. Mantém-se cliente apenas pra orquestrar o
- * `CityCombobox` (autocomplete fetch-driven) e a navegação ao
- * submeter a busca.
+ * Visualização de "landing" da Privello. A home **não** lista perfis
+ * — apresenta a marca, atalhos para descoberta e CTAs de cadastro.
+ * Toda navegação leva pra `/acompanhantes` (busca) ou pra páginas
+ * de cadastro/login.
  */
 export interface HomeViewProps {
-    feed: FeedHome;
-    cidades: ReadonlyArray<CidadePopular>;
+    /** `userType` da sessão atual ou `null` (anônimo). */
+    viewerType: "CLIENTE" | "ACOMPANHANTE" | null;
 }
 
 /**
- * HomeView — feed de descoberta da página inicial.
+ * HomeView — landing pública da Privello.
  *
- * Estrutura mobile-first:
+ * Estrutura mobile-first em seis blocos:
  *
- * 1. Hero compacto com headline + barra de busca de cidade.
- * 2. "Em destaque agora" — fileira horizontal com Acompanhantes
- *    com Boost ativo. Esconde se nenhum.
- * 3. Cidades populares — chips clicáveis que filtram a busca.
- * 4. "Premium" — grid 2/3 colunas.
- * 5. "Recém-chegadas" (Básico) — grid 2/3 colunas.
- * 6. Rodapé com fallback se não há nada (banco zerado).
+ * 1. **Hero**: headline + sub + barra de busca por cidade + CTAs
+ *    pra cadastro (apenas para visitantes anônimos).
+ * 2. **StatStrip**: métricas tipográficas de orgulho.
+ * 3. **Atalhos rápidos**: 4 `FeatureCard` em grid pra rotas
+ *    principais (Acompanhantes, Reels, Avaliações, Conta).
+ * 4. **Por que Privello**: 4 `FeatureCard` tile com selos de
+ *    confiança (privacidade, pagamento seguro, fotos verificadas,
+ *    avaliações reais).
+ * 5. **CTA final**: bloco de destaque pra "Crie sua conta de graça".
+ * 6. **Rodapé curto** com responsabilidade legal.
  */
-export function HomeView({ feed, cidades }: HomeViewProps): React.ReactElement {
+export function HomeView({
+    viewerType,
+}: HomeViewProps): React.ReactElement {
     const router = useRouter();
     const [cityValue, setCityValue] = React.useState<CityComboboxValue>({
         query: "",
@@ -56,225 +62,233 @@ export function HomeView({ feed, cidades }: HomeViewProps): React.ReactElement {
         uf: "",
     });
 
-    function navegarBusca(args: {
-        cidadeNome?: string;
-        estadoSigla?: string;
-        textoLivre?: string;
-    }): void {
+    function handleSubmit(value: CityComboboxValue): void {
         const params = new URLSearchParams();
-        if (args.cidadeNome && args.estadoSigla) {
-            params.set("cidade", args.cidadeNome);
-            params.set("uf", args.estadoSigla);
-        } else if (args.textoLivre && args.textoLivre.length > 0) {
-            params.set("q", args.textoLivre);
+        if (value.name && value.uf) {
+            params.set("cidade", value.name);
+            params.set("uf", value.uf);
+        } else if (value.query.trim().length > 0) {
+            params.set("q", value.query.trim());
         }
         const qs = params.toString();
         router.push(`/acompanhantes${qs ? `?${qs}` : ""}`);
     }
 
-    function handleSubmit(value: CityComboboxValue): void {
-        if (value.name && value.uf) {
-            navegarBusca({
-                cidadeNome: value.name,
-                estadoSigla: value.uf,
-            });
-            return;
-        }
-        navegarBusca({ textoLivre: value.query });
-    }
-
-    const totalGeral =
-        feed.boost.length + feed.premium.length + feed.basico.length;
+    const isAnonimo = viewerType === null;
 
     return (
-        <div className="flex flex-col gap-8">
-            {/* Hero */}
-            <section className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2 text-center sm:gap-3 sm:text-left">
-                    <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">
-                        Encontre quem está perto de você.
+        <div className="flex flex-col gap-12">
+            {/* 1. Hero */}
+            <section className="flex flex-col gap-6 sm:gap-8">
+                <div className="flex flex-col gap-3">
+                    <span className="inline-flex w-max items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-wider text-primary-700">
+                        <FlameIcon size={11} />
+                        Privello 2026
+                    </span>
+                    <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-5xl sm:leading-[1.05]">
+                        Encontros com{" "}
+                        <span className="text-primary-700">respeito,</span>{" "}
+                        privacidade e atitude.
                     </h1>
-                    <p className="text-sm text-text-secondary sm:text-base">
-                        Descubra perfis em destaque agora e explore por cidade.
+                    <p className="max-w-2xl text-base text-text-secondary sm:text-lg">
+                        A plataforma que coloca acompanhantes no centro: perfil
+                        completo, agenda transparente e contato direto. Você
+                        decide com quem, quando e como.
                     </p>
                 </div>
-                <CityCombobox
-                    value={cityValue}
-                    onChange={setCityValue}
-                    onSubmit={handleSubmit}
-                    placeholder="Buscar por cidade"
+
+                <div className="flex flex-col gap-3 sm:max-w-2xl">
+                    <CityCombobox
+                        value={cityValue}
+                        onChange={setCityValue}
+                        onSubmit={handleSubmit}
+                        placeholder="Em qual cidade você está?"
+                    />
+                    <p className="text-xs text-text-secondary">
+                        Digite a cidade e tecle enter pra ver quem está perto.
+                    </p>
+                </div>
+
+                {isAnonimo ? (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                        <Button
+                            href="/cadastro/cliente"
+                            variant="primary"
+                            size="md"
+                        >
+                            Criar conta grátis
+                        </Button>
+                        <Button
+                            href="/cadastro/acompanhante"
+                            variant="ghost"
+                            size="md"
+                        >
+                            Quero anunciar como acompanhante
+                        </Button>
+                    </div>
+                ) : null}
+            </section>
+
+            {/* 2. StatStrip */}
+            <section>
+                <StatStrip
+                    items={[
+                        {
+                            icon: <UsersIcon size={14} />,
+                            value: "+10mi",
+                            label: "visitas mensais",
+                        },
+                        {
+                            icon: <SparklesIcon size={14} />,
+                            value: "+50k",
+                            label: "perfis ativos",
+                        },
+                        {
+                            icon: <StarIcon size={14} />,
+                            value: "+200k",
+                            label: "avaliações reais",
+                        },
+                        {
+                            icon: <PlayCircleIcon size={14} />,
+                            value: "+1M",
+                            label: "vídeos publicados",
+                        },
+                    ]}
                 />
             </section>
 
-            {/* Cidades populares */}
-            {cidades.length > 0 ? (
-                <section className="flex flex-col gap-3">
-                    <SectionHeader
-                        icon={<MapPinIcon size={16} />}
-                        title="Cidades populares"
-                        subtitle="Toque pra ver quem está disponível"
-                    />
-                    <HorizontalSnap aria-label="Cidades populares" gap="sm">
-                        {cidades.map((c) => (
-                            <button
-                                key={`${c.estadoSigla}-${c.cidadeNome}`}
-                                type="button"
-                                onClick={() =>
-                                    navegarBusca({
-                                        cidadeNome: c.cidadeNome,
-                                        estadoSigla: c.estadoSigla,
-                                    })
-                                }
-                                className="snap-start inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-border bg-surface px-4 py-2 text-sm text-text-primary transition-colors hover:border-primary-300 hover:bg-primary-50"
-                            >
-                                <MapPinIcon size={14} />
-                                <span className="font-medium">
-                                    {c.cidadeNome}
-                                </span>
-                                <span className="text-xs text-text-secondary">
-                                    {c.estadoSigla}
-                                </span>
-                                <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[0.7rem] font-semibold text-text-secondary">
-                                    {c.total}
-                                </span>
-                            </button>
-                        ))}
-                    </HorizontalSnap>
-                </section>
-            ) : null}
-
-            {/* Boost — destaque do dia */}
-            {feed.boost.length > 0 ? (
-                <section className="flex flex-col gap-3">
-                    <SectionHeader
-                        icon={<FlameIcon size={16} />}
-                        title="Em destaque agora"
-                        subtitle="Boost ativo nas próximas horas"
-                    />
-                    <HorizontalSnap aria-label="Em destaque agora" gap="md">
-                        {feed.boost.map((item) => (
-                            <FeedCardSnap key={item.identificador} item={item} />
-                        ))}
-                    </HorizontalSnap>
-                </section>
-            ) : null}
-
-            {/* Premium */}
-            {feed.premium.length > 0 ? (
-                <section className="flex flex-col gap-3">
-                    <SectionHeader
-                        icon={<CrownIcon size={16} />}
-                        title="Premium"
-                        subtitle="Perfis com plano Premium ativo"
-                    />
-                    <FeedGrid items={feed.premium} />
-                </section>
-            ) : null}
-
-            {/* Básico */}
-            {feed.basico.length > 0 ? (
-                <section className="flex flex-col gap-3">
-                    <SectionHeader
-                        icon={<UsersIcon size={16} />}
-                        title="Recém-chegadas"
-                        subtitle="Conheça novos perfis na plataforma"
-                    />
-                    <FeedGrid items={feed.basico} />
-                </section>
-            ) : null}
-
-            {/* Empty state geral */}
-            {totalGeral === 0 ? (
-                <Card padding="none">
-                    <EmptyState
-                        icon={<SparklesIcon size={20} />}
-                        title="Ainda não há perfis disponíveis"
-                        description="Volte em breve. Estamos preparando tudo pra você descobrir quem está perto."
-                    />
-                </Card>
-            ) : null}
-        </div>
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Item do feed renderizado dentro de um {@link HorizontalSnap}.
- * Aplica `snap-start` e largura fixa pra que cards iguais convivam
- * lado a lado.
- */
-function FeedCardSnap({ item }: { item: FeedItem }): React.ReactElement {
-    return (
-        <div className="snap-start w-44 flex-none sm:w-56">
-            <ProfileFeedCard
-                href={`/acompanhantes/${item.identificador}`}
-                name={item.nome}
-                identifier={item.identificador}
-                photoUrl={item.fotoUrl}
-                cityName={item.cidadeNome}
-                stateSigla={item.estadoSigla}
-                neighborhood={item.bairroNome}
-                viewsCount={item.viewsCount}
-                rating={item.reviewsAverage}
-                badge={renderRankBadge(item.planoExibicao)}
-            />
-        </div>
-    );
-}
-
-/**
- * Grid responsivo de cards: 2 colunas no mobile, 3 em sm+, 4 em
- * lg. Mantém o ritmo visual da home sem cards "espremidos".
- */
-function FeedGrid({
-    items,
-}: {
-    items: ReadonlyArray<FeedItem>;
-}): React.ReactElement {
-    return (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {items.map((item) => (
-                <ProfileFeedCard
-                    key={item.identificador}
-                    href={`/acompanhantes/${item.identificador}`}
-                    name={item.nome}
-                    identifier={item.identificador}
-                    photoUrl={item.fotoUrl}
-                    cityName={item.cidadeNome}
-                    stateSigla={item.estadoSigla}
-                    neighborhood={item.bairroNome}
-                    viewsCount={item.viewsCount}
-                    rating={item.reviewsAverage}
-                    badge={renderRankBadge(item.planoExibicao)}
+            {/* 3. Atalhos */}
+            <section className="flex flex-col gap-4">
+                <SectionHeader
+                    icon={<SparklesIcon size={16} />}
+                    title="Atalhos rápidos"
+                    subtitle="O que você quer fazer agora?"
                 />
-            ))}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <FeatureCard
+                        href="/acompanhantes"
+                        tone="primary"
+                        icon={<UsersIcon size={18} />}
+                        title="Ver acompanhantes"
+                        description="Filtre por cidade, idade, atendimento e mais."
+                        trailing={<ChevronRightIcon size={16} />}
+                    />
+                    <FeatureCard
+                        href="/reels"
+                        icon={<PlayCircleIcon size={18} />}
+                        title="Reels"
+                        description="Vídeos curtos pra descobrir novos perfis."
+                        trailing={<ChevronRightIcon size={16} />}
+                    />
+                    <FeatureCard
+                        href="/acompanhantes?ordenar=avaliacoes"
+                        icon={<ChatIcon size={18} />}
+                        title="Ler avaliações"
+                        description="Quem já contratou, quem foi bem atendido."
+                        trailing={<ChevronRightIcon size={16} />}
+                    />
+                    <FeatureCard
+                        href={
+                            viewerType === "CLIENTE"
+                                ? "/cliente"
+                                : viewerType === "ACOMPANHANTE"
+                                    ? "/acompanhante"
+                                    : "/login"
+                        }
+                        icon={<HeartIcon size={18} />}
+                        title={
+                            viewerType === null
+                                ? "Entrar na minha conta"
+                                : "Minha conta"
+                        }
+                        description={
+                            viewerType === null
+                                ? "Já tem perfil? Acesse pra continuar."
+                                : "Acesse seu painel privado."
+                        }
+                        trailing={<ChevronRightIcon size={16} />}
+                    />
+                </div>
+            </section>
+
+            {/* 4. Por que Privello */}
+            <section className="flex flex-col gap-4">
+                <SectionHeader
+                    icon={<StarIcon size={16} />}
+                    title="Por que Privello"
+                    subtitle="Pensada pra acompanhantes e clientes que querem mais"
+                />
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <FeatureCard
+                        shape="tile"
+                        icon={<LockIcon size={20} />}
+                        title="Privacidade real"
+                        description="Telefone só vai pro WhatsApp quando você decidir."
+                    />
+                    <FeatureCard
+                        shape="tile"
+                        icon={<EyeIcon size={20} />}
+                        title="Perfis verificados"
+                        description="Foto, áudio e atendimento conferidos pela equipe."
+                    />
+                    <FeatureCard
+                        shape="tile"
+                        icon={<CalendarIcon size={20} />}
+                        title="Agenda transparente"
+                        description="Dias, horários e formas de pagamento em destaque."
+                    />
+                    <FeatureCard
+                        shape="tile"
+                        icon={<ChatIcon size={20} />}
+                        title="Avaliações reais"
+                        description="Só clientes que pagaram podem avaliar."
+                    />
+                </div>
+            </section>
+
+            {/* 5. CTA final — só pra anônimos */}
+            {isAnonimo ? (
+                <section className="rounded-3xl border border-primary-100 bg-gradient-to-br from-primary-50 to-secondary-50 p-6 sm:p-10">
+                    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-col gap-2">
+                            <h2 className="text-xl font-semibold tracking-tight text-text-primary sm:text-2xl">
+                                Crie seu perfil de graça e comece hoje.
+                            </h2>
+                            <p className="max-w-xl text-sm text-text-secondary">
+                                Cadastro em menos de 1 minuto. Para
+                                acompanhantes que querem visibilidade séria e
+                                clientes que valorizam discrição.
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            <Button
+                                href="/cadastro/cliente"
+                                variant="primary"
+                                size="md"
+                            >
+                                Sou cliente
+                            </Button>
+                            <Button
+                                href="/cadastro/acompanhante"
+                                variant="ghost"
+                                size="md"
+                            >
+                                Sou acompanhante
+                            </Button>
+                        </div>
+                    </div>
+                </section>
+            ) : null}
+
+            {/* 6. Rodapé curto */}
+            <footer className="border-t border-border pt-6 text-center text-xs text-text-secondary sm:text-left">
+                <p>
+                    Privello é uma plataforma para maiores de 18 anos. Não
+                    intermediamos contratações; cada acompanhante negocia
+                    diretamente com o cliente. Conteúdos publicados são de
+                    responsabilidade dos respectivos titulares.
+                </p>
+            </footer>
         </div>
     );
-}
-
-/**
- * Mapeia o {@link PlanoExibicao} para o {@link RankBadge} compacto
- * exibido no canto superior direito do card. Boost ganha selo
- * "Boost", Premium ganha "Premium", Básico fica oculto pra reduzir
- * ruído visual em cards menores.
- */
-function renderRankBadge(plano: PlanoExibicao): React.ReactNode {
-    if (plano === "BOOST") {
-        return (
-            <RankBadge tone="hero" icon={<FlameIcon size={10} />}>
-                Boost
-            </RankBadge>
-        );
-    }
-    if (plano === "PREMIUM") {
-        return (
-            <RankBadge tone="feature" icon={<CrownIcon size={10} />}>
-                Premium
-            </RankBadge>
-        );
-    }
-    return null;
 }
