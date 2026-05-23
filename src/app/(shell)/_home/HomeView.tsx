@@ -1,20 +1,20 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
+    Badge,
     Button,
     CameraIcon,
     CheckIcon,
-    ChevronRightIcon,
     CityCombobox,
     CrownIcon,
     FlameIcon,
     LockIcon,
     ProfileFeedCard,
     RankBadge,
+    SectionLink,
     SectionTitle,
     SparklesIcon,
     StarIcon,
@@ -93,10 +93,12 @@ export function HomeView({
                 <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-16">
                     {/* Esquerda: headline + sub */}
                     <div className="flex flex-col gap-6">
-                        <span className="inline-flex w-max items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-wider text-primary-700">
-                            <FlameIcon size={11} />
+                        <Badge
+                            tone="primary"
+                            icon={<FlameIcon size={11} />}
+                        >
                             Privello 2026
-                        </span>
+                        </Badge>
                         <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl lg:text-6xl lg:leading-[1.05]">
                             Encontros com{" "}
                             <span className="text-primary-700">respeito,</span>
@@ -185,13 +187,9 @@ export function HomeView({
                             </RankBadge>
                         }
                         trailing={
-                            <Link
-                                href="/acompanhantes?ordenar=boost"
-                                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-700 transition-colors hover:text-primary-800"
-                            >
+                            <SectionLink href="/acompanhantes?ordenar=boost">
                                 Ver todos
-                                <ChevronRightIcon size={14} />
-                            </Link>
+                            </SectionLink>
                         }
                     />
                     <FeedGrid items={feed.boost} />
@@ -212,13 +210,9 @@ export function HomeView({
                         </RankBadge>
                     }
                     trailing={
-                        <Link
-                            href="/acompanhantes?ordenar=alta"
-                            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-700 transition-colors hover:text-primary-800"
-                        >
+                        <SectionLink href="/acompanhantes?ordenar=alta">
                             Ver todos
-                            <ChevronRightIcon size={14} />
-                        </Link>
+                        </SectionLink>
                     }
                 />
                 {feed.alta.length > 0 ? (

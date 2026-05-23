@@ -117,6 +117,9 @@ export type { SectionHeaderProps } from "./primitives/SectionHeader";
 export { SectionTitle } from "./primitives/SectionTitle";
 export type { SectionTitleProps } from "./primitives/SectionTitle";
 
+export { SectionLink } from "./primitives/SectionLink";
+export type { SectionLinkProps } from "./primitives/SectionLink";
+
 export { StatList } from "./primitives/StatList";
 export type { StatListProps, StatListItem } from "./primitives/StatList";
 
@@ -156,12 +159,6 @@ export type { BadgeProps, BadgeTone } from "./primitives/Badge";
 export { RankBadge } from "./primitives/RankBadge";
 export type { RankBadgeProps, RankBadgeTone } from "./primitives/RankBadge";
 
-export { HorizontalSnap } from "./primitives/HorizontalSnap";
-export type { HorizontalSnapProps } from "./primitives/HorizontalSnap";
-
-export { SearchInput } from "./primitives/SearchInput";
-export type { SearchInputProps } from "./primitives/SearchInput";
-
 export { CityCombobox } from "./primitives/CityCombobox";
 export type {
     CityComboboxProps,
@@ -173,16 +170,6 @@ export type {
     ProfileFeedCardProps,
     ProfileFeedCardVariant,
 } from "./primitives/ProfileFeedCard";
-
-export { FeatureCard } from "./primitives/FeatureCard";
-export type {
-    FeatureCardProps,
-    FeatureCardShape,
-    FeatureCardTone,
-} from "./primitives/FeatureCard";
-
-export { StatStrip } from "./primitives/StatStrip";
-export type { StatStripProps, StatStripItem } from "./primitives/StatStrip";
 
 export { OptionCard } from "./primitives/OptionCard";
 export type { OptionCardProps, OptionCardTone } from "./primitives/OptionCard";
