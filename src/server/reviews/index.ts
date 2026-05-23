@@ -188,3 +188,97 @@ export async function obterMinhaReview(
     });
     return row;
 }
+
+
+/**
+ * Forma de uma avaliação escrita por um Cliente, com info do alvo
+ * (Acompanhante) renderizada para o feed de atividade.
+ */
+export interface ReviewDoCliente {
+    id: string;
+    rating: number;
+    comment: string | null;
+    createdAt: Date;
+    /** Acompanhante avaliada (Conhecida pelo `@`). */
+    targetIdentificador: string;
+    targetNome: string;
+    targetFotoUrl: string | null;
+}
+
+/**
+ * Lista as avaliações que um Cliente publicou, ordenadas das mais
+ * recentes para as mais antigas. Usado pela aba "Atividade" do
+ * painel do Cliente.
+ *
+ * Filtra Acompanhantes que ainda têm plano vigente — quando uma
+ * Acompanhante cancela ou desativa, suas avaliações somem do
+ * histórico do Cliente automaticamente (Caminho A: filtrar no read).
+ */
+export async function listarReviewsDoCliente(
+    authorUserId: string,
+    options: { limit?: number } = {},
+): Promise<ReadonlyArray<ReviewDoCliente>> {
+    const limit = Math.max(1, Math.min(200, options.limit ?? 100));
+
+    const rows = await db.acompanhanteReview.findMany({
+        where: {
+            authorUserId,
+            target: {
+                acompanhante: {
+                    planoVigente: { not: null },
+                },
+            },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            target: {
+                select: {
+                    nome: true,
+                    identificador: true,
+                    acompanhante: {
+                        select: {
+                            fotoPerfil: { select: { storageKey: true } },
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    return rows.map((row) => ({
+        id: row.id,
+        rating: row.rating,
+        comment: row.comment,
+        createdAt: row.createdAt,
+        targetNome: row.target.nome,
+        targetIdentificador: row.target.identificador,
+        targetFotoUrl:
+            row.target.acompanhante?.fotoPerfil
+                ? `/api/storage/${row.target.acompanhante.fotoPerfil.storageKey}`
+                : null,
+    }));
+}
+
+/**
+ * Conta quantas avaliações um Cliente publicou (filtrando target
+ * com plano vigente). Usado nos contadores do painel.
+ */
+export async function contarReviewsDoCliente(
+    authorUserId: string,
+): Promise<number> {
+    return db.acompanhanteReview.count({
+        where: {
+            authorUserId,
+            target: {
+                acompanhante: {
+                    planoVigente: { not: null },
+                },
+            },
+        },
+    });
+}

@@ -14,6 +14,10 @@ import {
 } from "@/components";
 import { getCurrentSession } from "@/server/auth/currentSession";
 import { obterPerfilCliente } from "@/server/cliente-profile";
+import {
+    contarReviewsDoCliente,
+    listarReviewsDoCliente,
+} from "@/server/reviews";
 
 import { AtividadeTab } from "./_painel/AtividadeTab";
 import { ConfiguracoesTab } from "./_painel/ConfiguracoesTab";
@@ -69,6 +73,11 @@ export default async function ClientePainelPage() {
         );
     }
 
+    const [reviews, reviewsCount] = await Promise.all([
+        listarReviewsDoCliente(session.userId),
+        contarReviewsDoCliente(session.userId),
+    ]);
+
     const isFan = perfil.planoVigente === "FAN";
 
     return (
@@ -103,7 +112,7 @@ export default async function ClientePainelPage() {
                 />
                 <MetricPill
                     icon={<StarIcon size={11} />}
-                    value="—"
+                    value={reviewsCount > 0 ? String(reviewsCount) : "—"}
                     label="avaliações"
                 />
             </div>
@@ -121,7 +130,10 @@ export default async function ClientePainelPage() {
                     <PerfilTab perfil={perfil} />
                 </TabPanel>
                 <TabPanel value="atividade">
-                    <AtividadeTab planoVigente={perfil.planoVigente} />
+                    <AtividadeTab
+                        planoVigente={perfil.planoVigente}
+                        reviews={reviews}
+                    />
                 </TabPanel>
                 <TabPanel value="configuracoes">
                     <ConfiguracoesTab perfil={perfil} />
