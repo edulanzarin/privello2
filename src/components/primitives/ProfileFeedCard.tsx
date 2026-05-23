@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { ImageIcon, MapPinIcon, MicIcon, StarIcon } from "../icons";
+import { ImageIcon, MapPinIcon, MicIcon } from "../icons";
 
 /**
  * Variante visual do {@link ProfileFeedCard}.
@@ -25,6 +25,12 @@ export type ProfileFeedCardVariant = "overlay" | "split";
  * é responsável por chamar `stopPropagation` no `onClick` do
  * player). Suporta duas variantes visuais (`split`/`overlay`) que
  * partilham o mesmo contrato.
+ *
+ * Decisão de design: o card **não exibe nota agregada nem
+ * estrelas**. A leitura comparativa de notas favorece perfis
+ * populares e penaliza injustamente perfis novos ou com poucas
+ * avaliações. As avaliações detalhadas continuam acessíveis dentro
+ * do perfil público — só a nota numérica/estrelas saiu da listagem.
  *
  * Nenhuma prop carrega nomes de entidades de domínio (Property 29).
  */
@@ -55,12 +61,6 @@ export interface ProfileFeedCardProps {
      * domínio.
      */
     badge?: React.ReactNode;
-    /** Total de visualizações. Usado em variant `"overlay"`. */
-    viewsCount?: number;
-    /** Média de avaliação (0..5). Quando 0/ausente, omite. */
-    rating?: number;
-    /** Total de avaliações pra exibir entre parênteses. */
-    ratingCount?: number;
     /**
      * Preço pré-formatado (ex.: `"R$ 350,00"`). Renderizado no
      * rodapé do card em variant `"split"`. Consumidor decide o
@@ -79,8 +79,8 @@ export interface ProfileFeedCardProps {
      * variant `"split"` logo após a descrição. Tipicamente um
      * {@link import("./AudioWavePlayer").AudioWavePlayer} com
      * `variant="mini"` e `stopPropagation`. Quando ausente, o
-     * primitivo cai num chip estático "Tem áudio" se
-     * {@link hasAudio} for `true`.
+     * primitivo cai num chip estático "Áudio" se {@link hasAudio}
+     * for `true`.
      */
     audio?: React.ReactNode;
     /**
@@ -119,7 +119,7 @@ const ASPECT_CLASSES: Record<
  *   Hover faz a imagem dar zoom suave (`scale-[1.03]`). Bloco
  *   branco organizado em colunas:
  *
- *     1. **Header**: nome + `@id` à esquerda; rating à direita.
+ *     1. **Header**: nome + `@id`.
  *     2. **Localização**: linha "bairro · cidade · UF".
  *     3. **Descrição**: bio em 2 linhas com `line-clamp-2`.
  *     4. **Áudio**: slot full-width quando consumidor passa.
@@ -139,9 +139,6 @@ export function ProfileFeedCard({
     neighborhood,
     description,
     badge,
-    viewsCount,
-    rating,
-    ratingCount,
     priceLabel,
     priceCaption,
     mediaCount,
@@ -151,9 +148,6 @@ export function ProfileFeedCard({
     aspect = "portrait",
     className,
 }: ProfileFeedCardProps): React.ReactElement {
-    const showRating = typeof rating === "number" && rating > 0;
-    const showViews = typeof viewsCount === "number" && viewsCount > 0;
-
     if (variant === "overlay") {
         const localPrincipal = neighborhood ?? cityName;
         const localSecundario = neighborhood
@@ -193,17 +187,6 @@ export function ProfileFeedCard({
                         aria-hidden="true"
                         className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
                     />
-
-                    {(showRating || showViews) ? (
-                        <div className="pointer-events-none absolute right-2 top-2 flex flex-wrap items-center gap-1.5">
-                            {showRating ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[0.7rem] font-semibold text-white backdrop-blur-sm">
-                                    <StarIcon size={11} />
-                                    {rating!.toFixed(1)}
-                                </span>
-                            ) : null}
-                        </div>
-                    ) : null}
 
                     {badge != null ? (
                         <div className="pointer-events-none absolute left-2 top-2">
@@ -280,33 +263,14 @@ export function ProfileFeedCard({
 
             {/* Bloco de info */}
             <div className="flex flex-1 flex-col gap-3 p-4">
-                {/* Header: nome/@id + rating */}
-                <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-col gap-0.5">
-                        <span className="truncate text-base font-semibold leading-tight tracking-tight text-text-primary">
-                            {name}
-                        </span>
-                        <span className="text-[0.7rem] text-text-secondary">
-                            @{identifier}
-                        </span>
-                    </div>
-                    {showRating ? (
-                        <span className="flex shrink-0 items-center gap-1 text-xs">
-                            <StarIcon
-                                size={12}
-                                className="text-secondary-400"
-                            />
-                            <span className="font-semibold tabular-nums text-text-primary">
-                                {rating!.toFixed(1)}
-                            </span>
-                            {typeof ratingCount === "number" &&
-                                ratingCount > 0 ? (
-                                <span className="text-text-secondary">
-                                    ({ratingCount})
-                                </span>
-                            ) : null}
-                        </span>
-                    ) : null}
+                {/* Header: nome/@id */}
+                <div className="flex flex-col gap-0.5">
+                    <span className="truncate text-base font-semibold leading-tight tracking-tight text-text-primary">
+                        {name}
+                    </span>
+                    <span className="text-[0.7rem] text-text-secondary">
+                        @{identifier}
+                    </span>
                 </div>
 
                 {/* Localização */}

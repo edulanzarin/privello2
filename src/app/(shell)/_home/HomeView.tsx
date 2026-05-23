@@ -350,8 +350,6 @@ function FeedGrid({
                     stateSigla={item.estadoSigla}
                     neighborhood={item.bairroNome}
                     description={item.descricao}
-                    rating={item.reviewsAverage}
-                    ratingCount={item.reviewsCount}
                     priceLabel={
                         item.valorHoraCents !== null
                             ? formatarValorHora(item.valorHoraCents)
