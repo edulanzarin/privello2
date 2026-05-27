@@ -32,7 +32,7 @@ export const maxDuration = 60;
  * - `500`: `{ ok: false, reason: "PERSISTENCIA" }`.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-    const auth = await requireAcompanhanteWithPlano();
+    const auth = await requireAcompanhanteWithPlano({}, request);
     if (!auth.ok) return auth.response;
 
     const fileGuard = await requireFile(request, "foto");

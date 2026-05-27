@@ -203,3 +203,19 @@ body {
 .glass-cta {
     /* No-op — temas antigos. Componentes são migrados gradualmente. */
 }
+
+
+/* ---------------------------------------------------------------------------
+ * Story progress bar — anima a largura de 0 a 100% no tempo
+ * configurado pelo caller (`storyAutoAdvanceMs`). Usado pelo
+ * `MediaCarousel` em `storyMode` pra dar progressão visual sem
+ * depender de re-render contínuo do React.
+ * ------------------------------------------------------------------------- */
+@keyframes story-progress-bar {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}

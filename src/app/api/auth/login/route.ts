@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { enforceCsrf } from "@/server/auth/csrf";
 import { login } from "@/server/auth/login";
+import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { signSessionCookie } from "@/server/auth/sessions";
 
 /**
@@ -33,13 +35,6 @@ import { signSessionCookie } from "@/server/auth/sessions";
 // ---------------------------------------------------------------------------
 // Constantes
 // ---------------------------------------------------------------------------
-
-/**
- * Nome do cookie que carrega o `sessionId` assinado. Mantido em sintonia
- * com `SESSION_COOKIE_NAME` em `src/server/auth/logout.ts` para que o
- * cookie definido aqui seja exatamente o cookie apagado lá.
- */
-const SESSION_COOKIE_NAME = "sessionId";
 
 /**
  * Janela do rate limit em segundos (Requirement 1.8): 15 minutos. Usado
@@ -81,6 +76,9 @@ const loginBodySchema = z
  *          no header deste módulo.
  */
 export async function POST(request: Request): Promise<NextResponse> {
+    const csrf = enforceCsrf(request);
+    if (csrf) return csrf;
+
     let rawBody: unknown;
     try {
         rawBody = await request.json();

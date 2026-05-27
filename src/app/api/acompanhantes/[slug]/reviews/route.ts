@@ -7,39 +7,39 @@ import { upsertReview } from "@/server/reviews";
 /**
  * `POST /api/acompanhantes/[slug]/reviews`
  *
- * Cliente autenticado deixa (ou atualiza) sua avaliação para a
- * Acompanhante identificada pelo `slug` (`User.identificador`).
+ * Cliente Fan deixa (ou atualiza) sua avaliação para a Acompanhante
+ * identificada pelo `slug` (`User.identificador`).
+ *
+ * Avaliação é apenas texto (sem nota numérica).
  *
  * Body JSON:
- *   - `rating`: número 1..5 (obrigatório).
- *   - `comment`: string até 2000 chars, ou `null`/omitido.
+ *   - `comment`: string entre 1 e 2000 chars (obrigatório).
  *
  * Respostas:
- *   - 200: `{ ok: true }`. Trigger SQL já recalculou agregados.
- *   - 400: `{ ok: false, reason: "VALIDACAO" }` (rating fora de range,
- *     comentário muito longo).
+ *   - 200: `{ ok: true }`. Trigger SQL recalculou `reviewsCount`.
+ *   - 400: `{ ok: false, reason: "VALIDACAO" | "COMENTARIO_INVALIDO" }`.
  *   - 401: `{ ok: false, reason: "NAO_AUTENTICADO" }`.
- *   - 403: `{ ok: false, reason: "TIPO_INVALIDO" }` (Acompanhante
- *     tentando avaliar) ou `"AUTO_AVALIACAO"` (mesmo userId).
+ *   - 402: `{ ok: false, reason: "PLANO_REQUERIDO" }`.
+ *   - 403: `{ ok: false, reason: "TIPO_INVALIDO" | "AUTO_AVALIACAO" }`.
  *   - 404: `{ ok: false, reason: "TARGET_NAO_ENCONTRADO" }`.
  */
 export async function POST(
     request: Request,
     context: { params: Promise<{ slug: string }> },
 ): Promise<NextResponse> {
-    const auth = await requireClienteFan();
+    const auth = await requireClienteFan(request);
     if (!auth.ok) return auth.response;
 
     const { slug } = await context.params;
     const slugNorm = slug.trim().toLowerCase();
 
-    let body: { rating?: unknown; comment?: unknown };
+    let body: { comment?: unknown };
     try {
         const parsed = await request.json();
         if (parsed === null || typeof parsed !== "object") {
             throw new Error("body inválido");
         }
-        body = parsed as { rating?: unknown; comment?: unknown };
+        body = parsed as { comment?: unknown };
     } catch {
         return NextResponse.json(
             { ok: false, reason: "VALIDACAO" },
@@ -47,56 +47,18 @@ export async function POST(
         );
     }
 
-    const rating = body.rating;
     const commentRaw = body.comment;
-
-    if (
-        typeof rating !== "number" ||
-        !Number.isInteger(rating) ||
-        rating < 1 ||
-        rating > 5
-    ) {
+    if (typeof commentRaw !== "string") {
         return NextResponse.json(
             {
                 ok: false,
                 reason: "VALIDACAO",
-                detalhes: { rating: "Nota deve ser de 1 a 5." },
+                detalhes: { comment: "Escreva sua avaliação." },
             },
             { status: 400 },
         );
     }
 
-    let comment: string | null;
-    if (commentRaw === undefined || commentRaw === null) {
-        comment = null;
-    } else if (typeof commentRaw !== "string") {
-        return NextResponse.json(
-            {
-                ok: false,
-                reason: "VALIDACAO",
-                detalhes: { comment: "Comentário inválido." },
-            },
-            { status: 400 },
-        );
-    } else {
-        const trimmed = commentRaw.trim();
-        if (trimmed.length > 2000) {
-            return NextResponse.json(
-                {
-                    ok: false,
-                    reason: "VALIDACAO",
-                    detalhes: {
-                        comment: "Comentário deve ter até 2000 caracteres.",
-                    },
-                },
-                { status: 400 },
-            );
-        }
-        comment = trimmed.length > 0 ? trimmed : null;
-    }
-
-    // Resolve `slug → targetUserId`. Filtramos por `type =
-    // ACOMPANHANTE` pra rejeitar identificadores de Cliente.
     const target = await db.user.findFirst({
         where: { identificador: slugNorm, type: "ACOMPANHANTE" },
         select: { id: true },
@@ -111,8 +73,7 @@ export async function POST(
     const result = await upsertReview({
         targetUserId: target.id,
         authorUserId: auth.userId,
-        rating,
-        comment,
+        comment: commentRaw,
     });
 
     if (!result.ok) {
@@ -134,14 +95,13 @@ export async function POST(
 /**
  * `DELETE /api/acompanhantes/[slug]/reviews`
  *
- * Cliente autenticado remove a própria avaliação. Idempotente — se
- * não havia avaliação, retorna 200 mesmo assim.
+ * Cliente Fan remove a própria avaliação. Idempotente.
  */
 export async function DELETE(
-    _request: Request,
+    request: Request,
     context: { params: Promise<{ slug: string }> },
 ): Promise<NextResponse> {
-    const auth = await requireClienteFan();
+    const auth = await requireClienteFan(request);
     if (!auth.ok) return auth.response;
 
     const { slug } = await context.params;
@@ -173,4 +133,3 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true }, { status: 200 });
 }
-

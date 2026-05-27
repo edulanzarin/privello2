@@ -176,15 +176,23 @@ function LoginForm(): React.ReactElement {
                 </>
             }
             footer={
-                <>
-                    Sem conta ainda?{" "}
+                <div className="flex flex-col items-center gap-1.5">
+                    <span>
+                        Sem conta ainda?{" "}
+                        <a
+                            href={buildAuthUrl("/cadastro", safeNext)}
+                            className="font-medium text-primary-700 hover:text-primary-800"
+                        >
+                            Criar conta
+                        </a>
+                    </span>
                     <a
-                        href={buildAuthUrl("/cadastro", safeNext)}
-                        className="font-medium text-primary-700 hover:text-primary-800"
+                        href="/recuperar-senha"
+                        className="text-xs text-text-secondary hover:text-text-primary"
                     >
-                        Criar conta
+                        Esqueci minha senha
                     </a>
-                </>
+                </div>
             }
         >
             <form

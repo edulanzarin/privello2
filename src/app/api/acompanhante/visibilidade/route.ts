@@ -23,7 +23,7 @@ import { requireAcompanhante } from "@/server/auth/guards";
  * - `500`: `{ ok: false, reason: "PERSISTENCIA" }`.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-    const auth = await requireAcompanhante();
+    const auth = await requireAcompanhante(request);
     if (!auth.ok) return auth.response;
 
     let body: unknown;

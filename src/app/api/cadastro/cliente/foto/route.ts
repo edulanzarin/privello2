@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { enforceCsrf } from "@/server/auth/csrf";
 import {
     InvalidProfilePhotoError,
     stageProfilePhoto,
@@ -48,6 +49,9 @@ import {
  * mesma sessão de UI.
  */
 export async function POST(request: Request): Promise<NextResponse> {
+    const csrf = enforceCsrf(request);
+    if (csrf) return csrf;
+
     let formData: FormData;
     try {
         formData = await request.formData();

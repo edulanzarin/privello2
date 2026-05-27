@@ -23,7 +23,7 @@ import { db } from "@/lib/db";
  * - `500`: `{ ok: false, reason: "PERSISTENCIA" }`.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-    const auth = await requireAcompanhante();
+    const auth = await requireAcompanhante(request);
     if (!auth.ok) return auth.response;
 
     // `baseUrl`: prioriza variável de ambiente NEXT_PUBLIC_APP_URL;

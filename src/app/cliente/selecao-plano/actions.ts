@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
 import { selecionar } from "@/server/planos-cliente";
 
@@ -28,8 +29,6 @@ import { selecionar } from "@/server/planos-cliente";
  * checagem defensiva adicional e lança um `Error` se a sessão não
  * puder ser resolvida.
  */
-
-const SESSION_COOKIE_NAME = "sessionId";
 
 /** Forma do retorno em caso de erro. Sucesso redireciona via `redirect()`. */
 export type SelecionarPlanoClienteActionError = { error: string };

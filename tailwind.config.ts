@@ -86,6 +86,10 @@ const config: Config = {
                     "0%": { backgroundPosition: "-200% 0" },
                     "100%": { backgroundPosition: "200% 0" },
                 },
+                "skeleton-shimmer": {
+                    "0%": { transform: "translateX(-100%)" },
+                    "100%": { transform: "translateX(100%)" },
+                },
                 "blob-1": {
                     "0%, 100%": {
                         transform: "translate(0, 0) scale(1)",
@@ -115,6 +119,7 @@ const config: Config = {
                 "spring-press": "spring-press 220ms ease-out",
                 "pop": "pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1)",
                 "shimmer": "shimmer 2.4s linear infinite",
+                "skeleton-shimmer": "skeleton-shimmer 1.4s linear infinite",
                 "blob-1": "blob-1 18s ease-in-out infinite",
                 "blob-2": "blob-2 22s ease-in-out infinite",
             },

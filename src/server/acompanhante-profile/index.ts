@@ -99,11 +99,6 @@ export interface PerfilAcompanhantePublicoBase {
     viewsCount: number;
     /** Total de avaliações públicas recebidas. */
     reviewsCount: number;
-    /**
-     * Média das avaliações (0..5) com até 2 casas. Quando
-     * `reviewsCount === 0`, é `0`.
-     */
-    reviewsAverage: number;
 
     // Plano e destaque.
     /** Selo discriminado para o badge de plano (BOOST > PREMIUM > BASICO). */
@@ -244,7 +239,6 @@ export async function obterPerfilAcompanhante(
         whatsappUrl: buildWhatsappUrl(profile.telefone),
         viewsCount: profile.viewsCount,
         reviewsCount: profile.reviewsCount,
-        reviewsAverage: Number(profile.reviewsAverage),
         planoExibicao,
     };
 }
@@ -391,7 +385,6 @@ export async function obterPerfilPublico(
         whatsappUrl: buildWhatsappUrl(profile.telefone),
         viewsCount: profile.viewsCount,
         reviewsCount: profile.reviewsCount,
-        reviewsAverage: Number(profile.reviewsAverage),
         planoExibicao,
     };
 

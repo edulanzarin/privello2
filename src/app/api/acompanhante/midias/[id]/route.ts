@@ -14,10 +14,10 @@ import { excluirMidia } from "@/server/storage/galleryMedia-delete";
  * - `500`: `{ ok: false, reason: "PERSISTENCIA" }`.
  */
 export async function DELETE(
-    _request: Request,
+    request: Request,
     { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-    const auth = await requireAcompanhante();
+    const auth = await requireAcompanhante(request);
     if (!auth.ok) return auth.response;
 
     const { id } = await params;

@@ -100,6 +100,45 @@ export interface MediaCarouselProps {
         description?: React.ReactNode;
         action?: React.ReactNode;
     };
+    /**
+     * Quando `true`, oculta completamente o bloco de comentários
+     * (lista + input + lock). Usado pra Stories, que não tem
+     * comentário — só like, descrição e ações.
+     *
+     * `comments`, `onAddComment` e `commentsLocked` são ignorados.
+     * O painel lateral fica enxuto: toolbar (like + ações) +
+     * descrição (se houver). Em desktop a aside encolhe naturalmente
+     * porque não tem mais lista pra ocupar.
+     */
+    hideComments?: boolean;
+    /**
+     * Modo Story. Quando `true`:
+     *
+     *   - O painel direito (`aside` branca) é completamente
+     *     escondido — fica só a mídia centralizada no fundo preto.
+     *   - Uma barra de progresso segmentada (uma seção por item)
+     *     aparece no topo, animando ao longo de
+     *     `storyAutoAdvanceMs` ms.
+     *   - Toolbar overlay translúcida sobre a mídia: like (canto
+     *     superior esquerdo), tempo relativo + close (canto
+     *     superior direito).
+     *   - Caption opcional (vinda de `MediaItem.description`)
+     *     aparece sobre a base, em texto claro com gradiente.
+     *   - Auto-advance: foto passa pra próxima após
+     *     `storyAutoAdvanceMs` (padrão: 5000); vídeo avança ao
+     *     terminar. No último item, fecha o modal.
+     *   - Tap no centro pausa/retoma; tap esquerda volta; tap
+     *     direita avança.
+     *
+     * `hideComments` é tratado como `true` automaticamente nesse
+     * modo.
+     */
+    storyMode?: boolean;
+    /**
+     * Duração de exibição de fotos no `storyMode`, em ms. Padrão:
+     * 5000.
+     */
+    storyAutoAdvanceMs?: number;
 }
 
 /**
@@ -124,8 +163,14 @@ export function MediaCarousel({
     currentUserName,
     onDelete,
     commentsLocked,
+    hideComments = false,
+    storyMode = false,
+    storyAutoAdvanceMs = 5000,
 }: MediaCarouselProps): React.ReactElement | null {
     const [draft, setDraft] = React.useState("");
+    const storyVideoRef = React.useRef<HTMLVideoElement>(null);
+    // Em story mode, comentários sempre escondidos.
+    const effectiveHideComments = hideComments || storyMode;
 
     // Limpa o rascunho ao trocar de item para evitar postar texto
     // pensado para outra mídia.
@@ -149,6 +194,36 @@ export function MediaCarousel({
         window.addEventListener("keydown", handleKey);
         return () => window.removeEventListener("keydown", handleKey);
     }, [open, activeId, items, onActiveChange]);
+
+    // Auto-advance no story mode. Foto: setTimeout simples de
+    // `storyAutoAdvanceMs`; vídeo: avança no `onEnded` via callback
+    // direto. Quando passa do último item, fecha o modal.
+    React.useEffect(() => {
+        if (!storyMode || !open || activeId === null) return;
+        const idx = items.findIndex((m) => m.id === activeId);
+        if (idx < 0) return;
+        const current = items[idx];
+        if (!current || current.type === "video") return;
+
+        const timer = window.setTimeout(() => {
+            const nextItem = items[idx + 1];
+            if (nextItem !== undefined) {
+                onActiveChange(nextItem.id);
+            } else {
+                onClose();
+            }
+        }, storyAutoAdvanceMs);
+
+        return () => window.clearTimeout(timer);
+    }, [
+        storyMode,
+        open,
+        activeId,
+        items,
+        storyAutoAdvanceMs,
+        onActiveChange,
+        onClose,
+    ]);
 
     if (!open || activeId === null) {
         // Mantém o Modal montado mesmo sem activeId pra ele cuidar
@@ -174,6 +249,169 @@ export function MediaCarousel({
 
     const itemComments = comments?.[active.id] ?? [];
     const canComment = onAddComment !== undefined;
+
+    if (storyMode) {
+        return (
+            <Modal
+                open={open}
+                onClose={onClose}
+                size="sm"
+                backdropTone="strong"
+                showCloseButton={false}
+                className="!p-0"
+            >
+                {/* Story mode — sempre vertical: mídia em cima,
+                    bloco branco com info embaixo. Sem aside lateral. */}
+                <div className="flex h-full w-full flex-col">
+                    {/* Mídia + overlays (progress bar + close + setas). */}
+                    <div className="relative flex flex-1 items-center justify-center bg-black">
+                        <CarouselMedia
+                            item={active}
+                            videoRef={
+                                active.type === "video"
+                                    ? storyVideoRef
+                                    : undefined
+                            }
+                            onVideoEnded={() => {
+                                queueMicrotask(() => {
+                                    const next = items[activeIndex + 1];
+                                    if (next !== undefined) {
+                                        onActiveChange(next.id);
+                                    } else {
+                                        onClose();
+                                    }
+                                });
+                            }}
+                            autoPlayVideo
+                        />
+
+                        {/* Progress bar segmentada — uma seção
+                            por item, animada via CSS animation pra
+                            ficar independente do React re-render.
+                            Usa `transform: scaleX(0→1)` (mais
+                            performático que animar `width`). */}
+                        <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex gap-1 px-3 pt-3">
+                            {items.map((it, i) => {
+                                const state =
+                                    i < activeIndex
+                                        ? "done"
+                                        : i === activeIndex
+                                            ? "active"
+                                            : "pending";
+                                return (
+                                    <div
+                                        key={it.id}
+                                        className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/30"
+                                    >
+                                        <div
+                                            // Reset de animação ao
+                                            // trocar de item via key
+                                            // (forçando re-mount do
+                                            // elemento animado).
+                                            key={`${activeId}-${i}`}
+                                            className="h-full w-full origin-left bg-white"
+                                            style={{
+                                                transform:
+                                                    state === "done"
+                                                        ? "scaleX(1)"
+                                                        : state === "pending"
+                                                            ? "scaleX(0)"
+                                                            : undefined,
+                                                animation:
+                                                    state === "active"
+                                                        ? `story-progress-bar ${storyAutoAdvanceMs}ms linear forwards`
+                                                        : undefined,
+                                            }}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Close no canto superior direito. */}
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            aria-label="Fechar"
+                            className="absolute right-2 top-7 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:right-3"
+                        >
+                            <XIcon size={18} />
+                        </button>
+
+                        {/* Setas — visíveis em todos os tamanhos.
+                            Em mobile ficam menores e mais grudadas
+                            na borda; em desktop maiores. */}
+                        {hasPrev ? (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    onActiveChange(items[activeIndex - 1]!.id)
+                                }
+                                aria-label="Story anterior"
+                                className="absolute left-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-black/45 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:left-3 sm:p-2"
+                            >
+                                <ChevronLeftIcon size={18} />
+                            </button>
+                        ) : null}
+                        {hasNext ? (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    onActiveChange(items[activeIndex + 1]!.id)
+                                }
+                                aria-label="Próximo story"
+                                className="absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-black/45 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:right-3 sm:p-2"
+                            >
+                                <ChevronRightIcon size={18} />
+                            </button>
+                        ) : null}
+                    </div>
+
+                    {/* Bloco branco embaixo: like + delete + tempo +
+                        descrição. Mesmo visual da aside da galeria,
+                        mas embaixo (mobile e desktop). */}
+                    <div className="flex flex-col bg-surface">
+                        <div className="flex items-center justify-between gap-3 border-t border-neutral-200 px-4 py-3">
+                            <LikeButton
+                                liked={Boolean(active.liked)}
+                                count={active.likes}
+                                disabled={onToggleLike === undefined}
+                                onChange={(next) =>
+                                    onToggleLike?.(active.id, next)
+                                }
+                                size="lg"
+                            />
+                            <div className="flex items-center gap-3">
+                                {onDelete !== undefined ? (
+                                    <IconButton
+                                        icon={<TrashIcon size={16} />}
+                                        aria-label="Excluir Story"
+                                        tone="danger"
+                                        size="sm"
+                                        onClick={() =>
+                                            void onDelete(active.id)
+                                        }
+                                    />
+                                ) : null}
+                                {active.createdAt !== undefined ? (
+                                    <span className="text-xs font-medium text-text-disabled">
+                                        {formatRelativeTime(active.createdAt)}
+                                    </span>
+                                ) : null}
+                            </div>
+                        </div>
+                        {active.description ? (
+                            <div className="border-t border-neutral-100 px-4 py-3">
+                                <p className="whitespace-pre-line break-words text-sm leading-relaxed text-text-primary">
+                                    {active.description}
+                                </p>
+                            </div>
+                        ) : null}
+                    </div>
+                </div>
+            </Modal>
+        );
+    }
 
     return (
         <Modal
@@ -286,8 +524,8 @@ export function MediaCarousel({
                     {/* Lista de comentários — quando há gate, exibe
                         LockedContent com placeholders fake. O caller
                         (anônimo / Cliente Grátis) não deve ver
-                        comentários reais. */}
-                    {commentsLocked ? (
+                        comentários reais. Pulado quando hideComments. */}
+                    {effectiveHideComments ? null : commentsLocked ? (
                         <div className="flex-1 overflow-hidden p-4">
                             <LockedContent
                                 blurAmount={8}
@@ -338,7 +576,7 @@ export function MediaCarousel({
                     )}
 
                     {/* Input de comentário (quando habilitado e sem gate) */}
-                    {canComment && !commentsLocked ? (
+                    {!effectiveHideComments && canComment && !commentsLocked ? (
                         <div className="border-t border-neutral-200 px-4 py-3">
                             <CommentInput
                                 value={draft}
@@ -360,18 +598,46 @@ export function MediaCarousel({
 
 /**
  * Renderização da mídia ativa: foto via `<img>` ou vídeo via
- * `<video>` com controles nativos. Centralizado dentro do container
- * preto sem cortar (object-contain).
+ * `<video>` com controles nativos (ou autoplay quando em story
+ * mode). Centralizado dentro do container preto sem cortar
+ * (object-contain).
  */
-function CarouselMedia({ item }: { item: MediaItem }): React.ReactElement {
+function CarouselMedia({
+    item,
+    videoRef,
+    onVideoTimeUpdate,
+    onVideoEnded,
+    autoPlayVideo = false,
+}: {
+    item: MediaItem;
+    videoRef?: React.RefObject<HTMLVideoElement | null>;
+    onVideoTimeUpdate?: (progressPct: number) => void;
+    onVideoEnded?: () => void;
+    autoPlayVideo?: boolean;
+}): React.ReactElement {
     if (item.type === "video") {
         return (
             <video
+                ref={videoRef}
                 key={item.id}
                 src={item.url}
                 poster={item.posterUrl ?? undefined}
-                controls
+                controls={!autoPlayVideo}
+                autoPlay={autoPlayVideo}
                 playsInline
+                onTimeUpdate={
+                    onVideoTimeUpdate
+                        ? (e) => {
+                            const v = e.currentTarget;
+                            if (v.duration > 0) {
+                                onVideoTimeUpdate(
+                                    (v.currentTime / v.duration) * 100,
+                                );
+                            }
+                        }
+                        : undefined
+                }
+                onEnded={onVideoEnded}
                 className="max-h-full max-w-full object-contain"
                 aria-label={item.description ?? "Vídeo"}
             />

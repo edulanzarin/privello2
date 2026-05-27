@@ -18,7 +18,7 @@ export async function POST(
     request: Request,
     context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-    const auth = await requireClienteFan();
+    const auth = await requireClienteFan(request);
     if (!auth.ok) return auth.response;
 
     const { id: mediaId } = await context.params;

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { enforceCsrf } from "@/server/auth/csrf";
 import {
     SESSION_COOKIE_NAME,
     clearSessionCookieHeader,
@@ -32,6 +33,9 @@ import { verifySessionCookie } from "@/server/auth/sessions";
  * @returns       `200` com `Set-Cookie` que apaga o cookie de sessão.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+    const csrf = enforceCsrf(request);
+    if (csrf) return csrf;
+
     const cookieValue = request.cookies.get(SESSION_COOKIE_NAME)?.value;
     const sessionId = await verifySessionCookie(cookieValue);
     if (sessionId !== null) {

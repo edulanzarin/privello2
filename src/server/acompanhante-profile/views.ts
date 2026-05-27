@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 
 import { db } from "@/lib/db";
 
+import { incrementarStatDiaria } from "./stats";
+
 /**
  * Cooldown padrão entre visualizações que contam para o mesmo
  * `userId` no mesmo viewer (anônimo ou autenticado). 6 horas é
@@ -80,6 +82,12 @@ export async function incrementarVisualizacao(
             data: { viewsCount: { increment: 1 } },
             select: { userId: true },
         });
+        // Incremento da série diária pra o gráfico do painel.
+        // Best-effort — falha aqui não derruba a métrica agregada.
+        await incrementarStatDiaria({
+            userId: targetUserId,
+            field: "views",
+        }).catch(() => undefined);
         return { applied: true };
     } catch {
         // Métrica não derruba página.

@@ -33,8 +33,6 @@ export interface FeedItem {
     viewsCount: number;
     /** Total de avaliações. */
     reviewsCount: number;
-    /** Média das avaliações (0..5). */
-    reviewsAverage: number;
     /** Valor da hora em centavos, ou `null` quando "a combinar". */
     valorHoraCents: number | null;
     /**
@@ -137,8 +135,8 @@ export async function listarFeedHome(
 ): Promise<FeedHome> {
     const now = options.now ?? new Date();
     const limites = {
-        boost: options.limite?.boost ?? 12,
-        alta: options.limite?.alta ?? 12,
+        boost: options.limite?.boost ?? 30,
+        alta: options.limite?.alta ?? 30,
     };
     const janelaMs = (options.janelaDias ?? 7) * 24 * 60 * 60 * 1000;
     const desde = new Date(now.getTime() - janelaMs);
@@ -233,7 +231,6 @@ function toItem(row: Row, now: Date, mediasCount: number): FeedItem {
         planoExibicao,
         viewsCount: row.viewsCount,
         reviewsCount: row.reviewsCount,
-        reviewsAverage: Number(row.reviewsAverage),
         valorHoraCents: row.valorHoraCents,
         audioUrl: audioOk ? `/api/storage/${audioOk.storageKey}` : null,
         audioMimeType: audioOk ? audioOk.mimeType : null,

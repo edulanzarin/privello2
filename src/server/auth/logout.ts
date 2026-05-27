@@ -1,4 +1,7 @@
 import { revokeSession } from "@/server/auth/sessions";
+import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
+
+export { SESSION_COOKIE_NAME };
 
 /**
  * Sistema_de_Autenticacao — operação de logout.
@@ -22,10 +25,14 @@ import { revokeSession } from "@/server/auth/sessions";
 
 /**
  * Nome do cookie que carrega o `sessionId` assinado emitido por
- * `signSessionCookie` em `src/server/auth/sessions.ts`. Mantido como
- * constante deste módulo até que `sessions.ts` exporte um equivalente.
+ * `signSessionCookie` em `src/server/auth/sessions.ts`.
+ *
+ * Em **produção** usa o prefixo `__Host-` que dá garantias extras
+ * pelo browser: cookie SÓ é aceito quando vem com `Secure` + `Path=/`
+ * + sem `Domain`. Bloqueia cookie injection a partir de subdomínios
+ * comprometidos. Em dev (HTTP), o prefixo seria rejeitado pelo
+ * browser; mantemos `sessionId` puro pra continuar funcionando.
  */
-export const SESSION_COOKIE_NAME = "sessionId";
 
 // ---------------------------------------------------------------------------
 // API pública

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { getCurrentSession } from "@/server/auth/currentSession";
+import { enforceCsrf } from "@/server/auth/csrf";
 import {
     VIEW_COOLDOWN_SECONDS,
     buildViewCooldownCookieName,
@@ -34,9 +35,12 @@ import {
  * lado da request, e o erro é absorvido por `incrementarVisualizacao`.
  */
 export async function POST(
-    _request: Request,
+    request: Request,
     context: { params: Promise<{ slug: string }> },
 ): Promise<NextResponse> {
+    const csrf = enforceCsrf(request);
+    if (csrf) return csrf;
+
     const { slug } = await context.params;
     const slugNorm = slug.trim().toLowerCase();
     if (slugNorm.length === 0) {

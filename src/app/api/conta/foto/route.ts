@@ -23,7 +23,7 @@ import { replaceProfilePhoto } from "@/server/storage/replaceProfilePhoto";
  * idêntico — diferenciar via path criaria duplicação desnecessária.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-    const auth = await requireSession();
+    const auth = await requireSession(request);
     if (!auth.ok) return auth.response;
 
     const fileGuard = await requireFile(request, "foto");

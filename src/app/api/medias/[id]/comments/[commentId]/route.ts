@@ -11,12 +11,12 @@ import { removerComentario } from "@/server/media-interactions";
  * retorna 404 mas a UI pode tratar igualmente.
  */
 export async function DELETE(
-    _request: Request,
+    request: Request,
     context: {
         params: Promise<{ id: string; commentId: string }>;
     },
 ): Promise<NextResponse> {
-    const auth = await requireCliente();
+    const auth = await requireCliente(request);
     if (!auth.ok) return auth.response;
 
     const { commentId } = await context.params;

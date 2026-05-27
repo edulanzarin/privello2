@@ -7,12 +7,11 @@ import {
     Avatar,
     Button,
     Card,
+    ChatIcon,
     InlineAlert,
     LockedContent,
     Paginator,
-    RatingStars,
     SectionHeader,
-    StarIcon,
 } from "@/components";
 import { buildAuthUrl } from "@/domain/redirect";
 
@@ -20,53 +19,41 @@ import type { ReviewPublico } from "@/server/reviews";
 import type { ViewerKind } from "./PerfilPublicoView";
 
 /**
- * Bloco completo de Avaliações no perfil público.
+ * Bloco de Avaliações (apenas texto) no perfil público.
  *
- * Estrutura:
+ * Diferente da versão antiga, aqui **não há nota numérica**:
+ * avaliação é só comentário escrito. Estrutura:
  *
- *   1. **Resumo**: estrelas grandes + nota média + total. Quando
- *      ainda não há avaliações, exibe estado vazio.
- *   2. **Sua avaliação** (Cliente autenticado, não-dono): formulário
- *      com 5 estrelas clicáveis + textarea + botão Enviar/Atualizar.
- *      Pré-popula com `minhaReview` se já existir.
- *   3. **Avaliações recentes**: lista paginada.
+ *   1. Header com contador de avaliações.
+ *   2. **Sua avaliação** (Cliente Fan, não-dono): textarea +
+ *      botão Enviar/Atualizar/Remover.
+ *   3. Lista paginada das avaliações recentes.
  *
- * Para Acompanhantes e visitantes anônimos o formulário fica
- * substituído por um aviso ("Faça login pra avaliar" / "Acompanhante
- * não avalia"). A própria dona do perfil também não vê o formulário.
+ * Cliente Grátis e anônimo veem `LockedContent` com placeholder
+ * borrado. Acompanhante (Owner ou outra) e Cliente Fan passam
+ * direto.
  */
 export interface AvaliacoesSectionProps {
     slug: string;
     reviews: ReadonlyArray<ReviewPublico>;
     reviewsCount: number;
-    reviewsAverage: number;
     viewerKind: ViewerKind;
     viewerIsOwner: boolean;
-    /** Cliente Fan — só ele pode ver avaliações detalhadas. */
+    /** Cliente Fan — só ele pode ver/escrever. */
     viewerIsFan: boolean;
-    minhaReview: { rating: number; comment: string | null } | null;
+    minhaReview: { comment: string } | null;
 }
 
 export function AvaliacoesSection({
     slug,
     reviews,
     reviewsCount,
-    reviewsAverage,
     viewerKind,
     viewerIsOwner,
     viewerIsFan,
     minhaReview,
 }: AvaliacoesSectionProps): React.ReactElement {
     const pathname = usePathname();
-    // Bloqueia tudo (resumo, lista, formulário) com `LockedContent`
-    // pra:
-    //   - anônimo: precisa logar pra ver qualquer avaliação;
-    //   - Cliente Grátis: precisa virar Fan;
-    //
-    // Acompanhante (Owner ou outra) e Cliente Fan passam direto. O
-    // conteúdo blurado é puramente fake — os dados reais não chegam
-    // ao payload RSC para esses perfis (filtrado server-side em
-    // `page.tsx`). Aqui só renderizamos placeholders convincentes.
     const isLocked =
         viewerKind === "anonimo" ||
         (viewerKind === "cliente" && !viewerIsFan);
@@ -109,54 +96,19 @@ export function AvaliacoesSection({
                     reviewsCount > 0 ? (
                         <span className="text-xs text-text-secondary">
                             {reviewsCount}{" "}
-                            {reviewsCount === 1 ? "avaliação" : "avaliações"}
+                            {reviewsCount === 1
+                                ? "avaliação"
+                                : "avaliações"}
                         </span>
                     ) : null
                 }
             />
 
-            {/* Resumo agregado */}
-            <Card>
-                {reviewsCount > 0 ? (
-                    <div className="flex flex-col items-center gap-1.5 text-center">
-                        <RatingStars
-                            value={reviewsAverage}
-                            size="lg"
-                        />
-                        <span className="text-3xl font-semibold tracking-tight text-text-primary">
-                            {reviewsAverage.toFixed(1)}
-                        </span>
-                        <span className="text-xs text-text-secondary">
-                            de {reviewsCount}{" "}
-                            {reviewsCount === 1
-                                ? "avaliação"
-                                : "avaliações"}
-                        </span>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center gap-1.5 py-2 text-center">
-                        <span
-                            aria-hidden="true"
-                            className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-text-disabled"
-                        >
-                            <StarIcon size={20} />
-                        </span>
-                        <span className="text-sm font-medium text-text-primary">
-                            Sem avaliações ainda
-                        </span>
-                        <span className="text-xs text-text-secondary">
-                            Seja o primeiro a avaliar este perfil.
-                        </span>
-                    </div>
-                )}
-            </Card>
-
-            {/* Formulário de avaliação (Cliente autenticado, não-dono) */}
+            {/* Formulário de avaliação (Cliente Fan, não-dono) */}
             {viewerKind === "cliente" && !viewerIsOwner ? (
                 <ReviewForm slug={slug} initial={minhaReview} />
             ) : null}
 
-            {/* Lista de avaliações */}
             {reviews.length > 0 ? (
                 <Paginator
                     items={reviews}
@@ -171,7 +123,24 @@ export function AvaliacoesSection({
                         </div>
                     )}
                 />
-            ) : null}
+            ) : (
+                <Card>
+                    <div className="flex flex-col items-center gap-1.5 py-2 text-center">
+                        <span
+                            aria-hidden="true"
+                            className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-text-disabled"
+                        >
+                            <ChatIcon size={20} />
+                        </span>
+                        <span className="text-sm font-medium text-text-primary">
+                            Sem avaliações ainda
+                        </span>
+                        <span className="text-xs text-text-secondary">
+                            Seja o primeiro a deixar uma.
+                        </span>
+                    </div>
+                </Card>
+            )}
         </section>
     );
 }
@@ -185,39 +154,29 @@ function ReviewForm({
     initial,
 }: {
     slug: string;
-    initial: { rating: number; comment: string | null } | null;
+    initial: { comment: string } | null;
 }): React.ReactElement {
     const router = useRouter();
-    const [rating, setRating] = React.useState(initial?.rating ?? 0);
     const [comment, setComment] = React.useState(initial?.comment ?? "");
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
     const [success, setSuccess] = React.useState(false);
     const isEditing = initial !== null;
+    const trimmed = comment.trim();
+    const canSubmit = trimmed.length > 0 && trimmed.length <= 2000;
 
     async function submit(): Promise<void> {
-        if (submitting) return;
-        if (rating < 1 || rating > 5) {
-            setError("Escolha uma nota de 1 a 5 estrelas.");
-            return;
-        }
+        if (submitting || !canSubmit) return;
         setSubmitting(true);
         setError(null);
         setSuccess(false);
         try {
-            const trimmedComment = comment.trim();
             const res = await fetch(
                 `/api/acompanhantes/${encodeURIComponent(slug)}/reviews`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        rating,
-                        comment:
-                            trimmedComment.length > 0
-                                ? trimmedComment
-                                : null,
-                    }),
+                    body: JSON.stringify({ comment: trimmed }),
                 },
             );
             if (!res.ok) {
@@ -257,7 +216,6 @@ function ReviewForm({
                 );
                 return;
             }
-            setRating(0);
             setComment("");
             router.refresh();
         } catch {
@@ -277,32 +235,25 @@ function ReviewForm({
                 className="flex flex-col gap-3"
             >
                 <span className="text-sm font-semibold text-text-primary">
-                    {isEditing ? "Sua avaliação" : "Avaliar este perfil"}
+                    {isEditing ? "Sua avaliação" : "Deixar uma avaliação"}
                 </span>
 
-                {/* Star input — 5 botões clicáveis */}
-                <div className="flex items-center gap-1.5">
-                    <RatingInput value={rating} onChange={setRating} />
-                    {rating > 0 ? (
-                        <span className="text-sm font-medium text-text-primary">
-                            {rating}/5
-                        </span>
-                    ) : (
-                        <span className="text-xs text-text-secondary">
-                            Toque para escolher
-                        </span>
-                    )}
-                </div>
-
                 <textarea
-                    rows={3}
+                    rows={4}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Comente sua experiência (opcional)."
+                    placeholder="Conte como foi sua experiência."
                     maxLength={2000}
                     disabled={submitting}
                     className="block w-full resize-none rounded-md border border-neutral-200 bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 focus-visible:border-primary-400 disabled:cursor-not-allowed disabled:bg-neutral-50"
                 />
+                <div className="flex items-center justify-between text-[0.7rem] text-text-secondary">
+                    <span>
+                        {trimmed.length === 0
+                            ? "Mínimo 1 caractere."
+                            : `${trimmed.length}/2000`}
+                    </span>
+                </div>
 
                 {error !== null ? (
                     <InlineAlert tone="danger">{error}</InlineAlert>
@@ -330,7 +281,7 @@ function ReviewForm({
                         variant="primary"
                         size="sm"
                         loading={submitting}
-                        disabled={submitting || rating < 1}
+                        disabled={submitting || !canSubmit}
                     >
                         {isEditing ? "Atualizar" : "Enviar"}
                     </Button>
@@ -340,50 +291,15 @@ function ReviewForm({
     );
 }
 
-/**
- * Input de estrelas — 5 botões clicáveis com hover de pré-visualização.
- * Usa o `RatingStars` decorativo internamente para manter a aparência
- * consistente.
- */
-function RatingInput({
-    value,
-    onChange,
-}: {
-    value: number;
-    onChange: (v: number) => void;
-}): React.ReactElement {
-    const [hover, setHover] = React.useState<number | null>(null);
-    const display = hover ?? value;
-    return (
-        <div
-            role="radiogroup"
-            aria-label="Sua nota"
-            className="inline-flex items-center"
-            onMouseLeave={() => setHover(null)}
-        >
-            {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                    key={n}
-                    type="button"
-                    role="radio"
-                    aria-checked={value === n}
-                    aria-label={`${n} ${n === 1 ? "estrela" : "estrelas"}`}
-                    onClick={() => onChange(n)}
-                    onMouseEnter={() => setHover(n)}
-                    className="cursor-pointer rounded p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30"
-                >
-                    <RatingStars value={display >= n ? 1 : 0} max={1} size="lg" />
-                </button>
-            ))}
-        </div>
-    );
-}
-
 // ---------------------------------------------------------------------------
 // ReviewCard
 // ---------------------------------------------------------------------------
 
-function ReviewCard({ review }: { review: ReviewPublico }): React.ReactElement {
+function ReviewCard({
+    review,
+}: {
+    review: ReviewPublico;
+}): React.ReactElement {
     return (
         <Card>
             <div className="flex flex-col gap-2">
@@ -402,13 +318,10 @@ function ReviewCard({ review }: { review: ReviewPublico }): React.ReactElement {
                             {formatRelative(review.createdAt)}
                         </span>
                     </div>
-                    <RatingStars value={review.rating} size="sm" />
                 </div>
-                {review.comment ? (
-                    <p className="whitespace-pre-line text-sm leading-relaxed text-text-primary">
-                        {review.comment}
-                    </p>
-                ) : null}
+                <p className="whitespace-pre-line text-sm leading-relaxed text-text-primary">
+                    {review.comment}
+                </p>
             </div>
         </Card>
     );
@@ -416,27 +329,13 @@ function ReviewCard({ review }: { review: ReviewPublico }): React.ReactElement {
 
 /**
  * Placeholder visual usado dentro do {@link LockedContent} para
- * anônimos. Renderiza um resumo agregado falso + 3 reviews fake
- * com texto curto. Quando o `LockedContent` borra, o que aparece
- * dá a sensação de "tem conteúdo aqui" sem vazar nada real.
- *
- * Mantido local por ser específico desta seção. Se mais de um
- * caller precisar de fake reviews, promove a primitivo.
+ * anônimos e Clientes Grátis. Renderiza 3 reviews fake com texto
+ * curto. Quando o `LockedContent` borra, o que aparece dá a sensação
+ * de "tem conteúdo aqui" sem vazar nada real.
  */
 function FakeAvaliacoesPreview(): React.ReactElement {
     return (
         <div className="flex flex-col gap-3">
-            <Card>
-                <div className="flex flex-col items-center gap-1.5 text-center">
-                    <RatingStars value={4.5} size="lg" />
-                    <span className="text-3xl font-semibold tracking-tight text-text-primary">
-                        4.5
-                    </span>
-                    <span className="text-xs text-text-secondary">
-                        de muitas avaliações
-                    </span>
-                </div>
-            </Card>
             {[1, 2, 3].map((i) => (
                 <Card key={i}>
                     <div className="flex flex-col gap-2">
@@ -450,7 +349,6 @@ function FakeAvaliacoesPreview(): React.ReactElement {
                                     @•••• · há ••• dias
                                 </span>
                             </div>
-                            <RatingStars value={4 + (i % 2)} size="sm" />
                         </div>
                         <p className="text-sm leading-relaxed text-text-primary">
                             ••••••• ••• ••••••• •••• ••••••••• ••• •••••• •••••.
@@ -463,11 +361,6 @@ function FakeAvaliacoesPreview(): React.ReactElement {
     );
 }
 
-/**
- * Formato relativo simples ("há 2 dias", "há 3 semanas"). Para
- * volumes baixos é suficiente — quando precisarmos de
- * internacionalização, troca por `Intl.RelativeTimeFormat`.
- */
 function formatRelative(date: Date | string): string {
     const d = typeof date === "string" ? new Date(date) : date;
     const diffMs = Date.now() - d.getTime();

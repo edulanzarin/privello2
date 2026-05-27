@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components";
 import { buildNavItems } from "@/components/shell/navItems";
+import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
 import { obterVigente } from "@/server/planos";
 import { db } from "@/lib/db";
@@ -59,7 +60,7 @@ export default async function AcompanhanteLayout({
     if (!sessionId) {
         const cookieStore = await cookies();
         sessionId = await verifySessionCookie(
-            cookieStore.get("sessionId")?.value,
+            cookieStore.get(SESSION_COOKIE_NAME)?.value,
         );
     }
 

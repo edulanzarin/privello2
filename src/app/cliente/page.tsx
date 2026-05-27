@@ -1,4 +1,5 @@
 import {
+    ChatIcon,
     DiamondIcon,
     HeartIcon,
     LogoutButton,
@@ -6,7 +7,6 @@ import {
     PageSurface,
     PlayCircleIcon,
     ProfilePhotoEditor,
-    StarIcon,
     TabList,
     TabPanel,
     TabTrigger,
@@ -124,7 +124,7 @@ export default async function ClientePainelPage() {
                     label="comentários"
                 />
                 <MetricPill
-                    icon={<StarIcon size={11} />}
+                    icon={<ChatIcon size={11} />}
                     value={reviewsCount > 0 ? String(reviewsCount) : "—"}
                     label="avaliações"
                 />

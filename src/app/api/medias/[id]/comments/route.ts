@@ -19,7 +19,7 @@ import { obterPerfilCliente } from "@/server/cliente-profile";
  *     para esses viewers.
  */
 export async function GET(
-    _request: Request,
+    request: Request,
     context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
     const { id: mediaId } = await context.params;
@@ -30,7 +30,7 @@ export async function GET(
         );
     }
 
-    const auth = await requireSession();
+    const auth = await requireSession(request);
     if (!auth.ok) return auth.response;
 
     // Acompanhante pode ler livremente. Cliente precisa ser Fan.
@@ -61,7 +61,7 @@ export async function POST(
     request: Request,
     context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-    const auth = await requireClienteFan();
+    const auth = await requireClienteFan(request);
     if (!auth.ok) return auth.response;
 
     const { id: mediaId } = await context.params;

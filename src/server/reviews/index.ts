@@ -1,23 +1,23 @@
 /**
- * Sistema de Avaliações da Acompanhante.
+ * Sistema de Avaliações da Acompanhante (apenas texto).
  *
  * Cada `Cliente` autenticado pode deixar **uma** avaliação por
  * `Acompanhante`. O par `(targetUserId, authorUserId)` é único
  * (constraint do banco). Reedição = UPSERT — sobrescreve a linha
- * existente e o trigger `trg_reviews_agregado` reconstrói os
- * agregados de `acompanhante_profiles`.
+ * existente e o trigger `trg_reviews_agregado` reconstrói o
+ * agregado `reviews_count` em `acompanhante_profiles`.
  *
- * Visibilidade: avaliações são **públicas**. Aparecem em
- * `/acompanhantes/[slug]` para qualquer visitante. Apenas o
- * conteúdo opcional (`comment`) é livre — `rating` é restrito a
- * 1..5 pelo CHECK constraint.
+ * # Sem nota numérica
  *
- * Anti-spam:
- * - Só Cliente autenticado pode avaliar (Acompanhante e anônimos
- *   são bloqueados na route handler).
- * - Auto-avaliação é proibida (Cliente avaliando o próprio @ não
- *   faz sentido, mas defensivamente checamos).
- * - 1 review por par de usuários — força revisão em vez de spam.
+ * O produto removeu a nota (estrelas) por opção de UX — nota
+ * gera incentivo errado e disputa de média. Mantemos apenas o
+ * comentário escrito (obrigatório, 1..2000 chars). Quem precisa
+ * de "rank" entre Acompanhantes usa Boost ou ordenação por
+ * popularidade (visualizações/curtidas).
+ *
+ * Visibilidade: avaliações são exibidas em
+ * `/acompanhantes/[slug]` para Cliente Fan e Acompanhante.
+ * Cliente Grátis e anônimo veem placeholder bloqueado.
  */
 
 import { db } from "@/lib/db";
@@ -27,8 +27,7 @@ import { db } from "@/lib/db";
  */
 export interface ReviewPublico {
     id: string;
-    rating: number;
-    comment: string | null;
+    comment: string;
     createdAt: Date;
     /**
      * Autor — exibido como "@identificador" + nome. Sem PII além do
@@ -41,25 +40,17 @@ export interface ReviewPublico {
 
 /**
  * Resultado de {@link upsertReview}.
- *
- * - `OK`: avaliação criada/atualizada com sucesso.
- * - `AUTO_AVALIACAO`: Cliente tentou avaliar o próprio @ — bloqueado.
- * - `TARGET_NAO_E_ACOMPANHANTE`: o `targetUserId` não corresponde a
- *   uma Acompanhante.
- * - `RATING_INVALIDO`: rating fora do range 1..5 (defesa em
- *   profundidade — a route já valida).
  */
 export type UpsertReviewResult =
     | { ok: true; reviewId: string }
     | { ok: false; reason: "AUTO_AVALIACAO" }
     | { ok: false; reason: "TARGET_NAO_E_ACOMPANHANTE" }
-    | { ok: false; reason: "RATING_INVALIDO" };
+    | { ok: false; reason: "COMENTARIO_INVALIDO" };
 
 export interface UpsertReviewInput {
     targetUserId: string;
     authorUserId: string;
-    rating: number;
-    comment: string | null;
+    comment: string;
 }
 
 /**
@@ -67,8 +58,8 @@ export interface UpsertReviewInput {
  * `(targetUserId, authorUserId)`.
  *
  * Não retorna o agregado atualizado — o trigger SQL recalcula
- * `reviewsCount`/`reviewsAverage` antes do commit; quem precisar do
- * valor novo lê o perfil de novo.
+ * `reviewsCount` antes do commit; quem precisar do valor novo lê
+ * o perfil de novo.
  */
 export async function upsertReview(
     input: UpsertReviewInput,
@@ -76,16 +67,12 @@ export async function upsertReview(
     if (input.authorUserId === input.targetUserId) {
         return { ok: false, reason: "AUTO_AVALIACAO" };
     }
-    if (
-        !Number.isInteger(input.rating) ||
-        input.rating < 1 ||
-        input.rating > 5
-    ) {
-        return { ok: false, reason: "RATING_INVALIDO" };
+    const trimmed = input.comment.trim();
+    if (trimmed.length === 0 || trimmed.length > 2000) {
+        return { ok: false, reason: "COMENTARIO_INVALIDO" };
     }
 
-    // Confirma que o target é uma Acompanhante. Cliente não recebe
-    // review.
+    // Confirma que o target é uma Acompanhante.
     const target = await db.user.findUnique({
         where: { id: input.targetUserId },
         select: { type: true },
@@ -102,14 +89,12 @@ export async function upsertReview(
             },
         },
         update: {
-            rating: input.rating,
-            comment: input.comment,
+            comment: trimmed,
         },
         create: {
             targetUserId: input.targetUserId,
             authorUserId: input.authorUserId,
-            rating: input.rating,
-            comment: input.comment,
+            comment: trimmed,
         },
         select: { id: true },
     });
@@ -119,9 +104,6 @@ export async function upsertReview(
 
 /**
  * Lista as avaliações públicas mais recentes de uma Acompanhante.
- * Limita por padrão a 50 registros — o front exibe os primeiros via
- * `Paginator`. Quando precisarmos de mais, paginação cursor-based
- * pode ser adicionada.
  */
 export async function listarReviewsPublicos(
     targetUserId: string,
@@ -135,7 +117,6 @@ export async function listarReviewsPublicos(
         take: limit,
         select: {
             id: true,
-            rating: true,
             comment: true,
             createdAt: true,
             author: {
@@ -155,7 +136,6 @@ export async function listarReviewsPublicos(
 
     return rows.map((row) => ({
         id: row.id,
-        rating: row.rating,
         comment: row.comment,
         createdAt: row.createdAt,
         authorNome: row.author.nome,
@@ -171,12 +151,12 @@ export async function listarReviewsPublicos(
  * Lê a avaliação que o Cliente autenticado deixou (se houver) na
  * Acompanhante apontada por `targetUserId`. Retorna `null` quando
  * não há avaliação. Usado pelo formulário "Sua avaliação" no perfil
- * público pra pré-popular os campos quando o Cliente já avaliou.
+ * público pra pré-popular o textarea quando o Cliente já avaliou.
  */
 export async function obterMinhaReview(
     targetUserId: string,
     authorUserId: string,
-): Promise<{ rating: number; comment: string | null } | null> {
+): Promise<{ comment: string } | null> {
     const row = await db.acompanhanteReview.findUnique({
         where: {
             targetUserId_authorUserId: {
@@ -184,7 +164,7 @@ export async function obterMinhaReview(
                 authorUserId,
             },
         },
-        select: { rating: true, comment: true },
+        select: { comment: true },
     });
     return row;
 }
@@ -196,8 +176,7 @@ export async function obterMinhaReview(
  */
 export interface ReviewDoCliente {
     id: string;
-    rating: number;
-    comment: string | null;
+    comment: string;
     createdAt: Date;
     /** Acompanhante avaliada (Conhecida pelo `@`). */
     targetIdentificador: string;
@@ -233,7 +212,6 @@ export async function listarReviewsDoCliente(
         take: limit,
         select: {
             id: true,
-            rating: true,
             comment: true,
             createdAt: true,
             target: {
@@ -252,7 +230,6 @@ export async function listarReviewsDoCliente(
 
     return rows.map((row) => ({
         id: row.id,
-        rating: row.rating,
         comment: row.comment,
         createdAt: row.createdAt,
         targetNome: row.target.nome,

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { verifySessionCookie } from "@/server/auth/sessionCookie";
 
 /**
@@ -51,9 +52,6 @@ import { verifySessionCookie } from "@/server/auth/sessionCookie";
  * usuários já autenticados). O middleware **não** força redirect
  * nessas rotas — as próprias páginas decidem o que fazer.
  */
-
-/** Nome do cookie que carrega o `sessionId` assinado por HMAC. */
-const SESSION_COOKIE_NAME = "sessionId";
 
 /** Prefixos de rota que exigem cookie de sessão com assinatura válida. */
 const PROTECTED_PREFIXES = ["/cliente", "/acompanhante"] as const;

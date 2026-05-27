@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
 import { selecionar } from "@/server/planos";
 
@@ -33,14 +34,6 @@ import { selecionar } from "@/server/planos";
  * resolvida — situação que indica adulteração do cookie ou expiração
  * fora da janela do middleware.
  */
-
-/**
- * Nome do cookie que carrega o `sessionId` assinado emitido por
- * `signSessionCookie`. Mantido em sincronia com:
- * - `SESSION_COOKIE_NAME` em `src/app/api/auth/login/route.ts`,
- * - `SESSION_COOKIE_NAME` em `src/server/auth/logout.ts`.
- */
-const SESSION_COOKIE_NAME = "sessionId";
 
 /**
  * Forma do retorno em caso de erro da action. Em caso de sucesso a

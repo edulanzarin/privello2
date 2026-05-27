@@ -37,6 +37,7 @@ enum MediaStatus {
   COMMITTED
   PENDING_REPAIR
   DELETED
+  ARCHIVED
 }
 
 enum MediaKind {
@@ -50,6 +51,7 @@ enum MediaRole {
   COVER
   AUDIO
   GALLERY
+  STORY
 }
 
 enum BoostPaymentStatus {
@@ -161,11 +163,16 @@ model User {
   sessions      Session[]
   medias        Media[]
   loginAttempts LoginAttempt[]
+  passwordResetTokens PasswordResetToken[]
   boostPayments BoostPayment[]
   reviewsReceived AcompanhanteReview[] @relation("ReviewTarget")
   reviewsAuthored AcompanhanteReview[] @relation("ReviewAuthor")
+  questionsReceived AcompanhanteQuestion[] @relation("QuestionTarget")
+  questionsAuthored AcompanhanteQuestion[] @relation("QuestionAuthor")
   mediaLikes      MediaLike[]
   mediaComments   MediaComment[]
+  storyViews      StoryView[]
+  profileDailyStats ProfileDailyStat[]
 
   @@map("users")
 }
@@ -246,12 +253,11 @@ model AcompanhanteProfile {
   // baseada em eventos quando o `Sistema_de_Estatisticas` existir.
   viewsCount         Int            @default(0) @map("views_count")
 
-  // Agregado de avaliações. Materializados pela trigger
-  // `trg_reviews_agregado` sempre que `acompanhante_reviews` muda.
-  // O valor médio fica como Decimal(3,2) para evitar imprecisão de
-  // float (ex.: 4.67). `reviews_count` é número de avaliações.
+  // Contador de avaliações (apenas comentários textuais — nota
+  // foi removida do produto). Materializado pela trigger
+  // `trg_reviews_agregado` em INSERT/DELETE de
+  // `acompanhante_reviews`.
   reviewsCount       Int            @default(0) @map("reviews_count")
-  reviewsAverage     Decimal        @default(0) @map("reviews_average") @db.Decimal(3, 2)
 
   createdAt          DateTime   @default(now()) @map("created_at")
   updatedAt          DateTime   @updatedAt @map("updated_at")
@@ -286,6 +292,14 @@ model Media {
   likesCount     Int         @default(0) @map("likes_count")
   commentsCount  Int         @default(0) @map("comments_count")
 
+  // Para Stories, momento em que a mídia expira (default: 24h após
+  // o `createdAt`). Para outros `role`s fica `NULL`. A varredura
+  // periódica (cron lazy) muda `status` para `DELETED` quando
+  // `expires_at <= now()`. Stories também não aparecem em queries
+  // de leitura quando expirados — filtro `expiresAt > now()` é
+  // aplicado no read.
+  expiresAt      DateTime?   @map("expires_at")
+
   createdAt      DateTime    @default(now()) @map("created_at")
 
   acompanhanteAsProfile AcompanhanteProfile? @relation("FotoDePerfil")
@@ -295,9 +309,11 @@ model Media {
 
   likes    MediaLike[]
   comments MediaComment[]
+  storyViews StoryView[]
 
   @@index([ownerId])
   @@index([ownerId, role, status, createdAt(sort: Desc)])
+  @@index([role, status, expiresAt])
   @@map("medias")
 }
 
@@ -314,6 +330,25 @@ model MediaLike {
   @@id([mediaId, userId])
   @@index([userId, createdAt(sort: Desc)])
   @@map("media_likes")
+}
+
+/// Visualização de Story por um viewer autenticado. 1 por par
+/// `(media, user)` — visualizar o mesmo Story duas vezes não cria
+/// nova linha. Usado para colorir o ring do avatar no perfil
+/// público (azul/colorido = não visto, cinza = visto).
+///
+/// Não tem trigger de agregado — a contagem de "viewers únicos"
+/// quando precisar é uma `count()` direta.
+model StoryView {
+  mediaId   String   @map("media_id") @db.Uuid
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+
+  @@id([mediaId, userId])
+  @@index([userId, viewedAt(sort: Desc)])
+  @@map("story_views")
 }
 
 /// Comentário em uma `Media`. N por par `(media, user)` (Cliente
@@ -366,6 +401,50 @@ model LoginAttempt {
 
   @@index([email, createdAt])
   @@map("login_attempts")
+}
+
+/// Token de reset de senha. Cada usuário pode ter múltiplos tokens
+/// pendentes — todos viram inválidos quando um deles é consumido,
+/// e todos expiram passados 60 minutos do `createdAt`.
+///
+/// Armazena hash SHA-256 do token (em hex) no campo `tokenHash`,
+/// nunca o valor original — quem comprometer o banco não consegue
+/// usar tokens em aberto. O cliente recebe o valor original via
+/// email (a integração de envio é o próximo passo).
+///
+/// `usedAt` é gravado quando o token é consumido com sucesso pelo
+/// endpoint de troca de senha. Tokens com `usedAt != NULL` ou
+/// `expiresAt <= now()` são rejeitados.
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+/// Estatísticas diárias por perfil de Acompanhante.
+///
+/// Uma linha por dia. `day` é a meia-noite UTC do dia. Atualizadas
+/// pela função `incrementarStatDiaria` ao registrar visualização
+/// ou curtida. Permite o painel mostrar um gráfico dos últimos
+/// 30 dias sem agregar `MediaLike` / `views` na renderização.
+model ProfileDailyStat {
+  userId String   @map("user_id") @db.Uuid
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day    DateTime @map("day") @db.Date
+  views  Int      @default(0)
+  likes  Int      @default(0)
+
+  @@id([userId, day])
+  @@index([userId, day(sort: Desc)])
+  @@map("profile_daily_stats")
 }
 
 // ---------------------------------------------------------------------------
@@ -439,26 +518,53 @@ model BoostPayment {
 }
 
 /// Avaliação pública deixada por um Cliente em um perfil de
-/// Acompanhante. Cada par `(targetUserId, authorUserId)` é único —
-/// um Cliente só avalia uma Acompanhante uma vez. Reedição vira
-/// UPSERT.
+/// Acompanhante. É **apenas texto livre** (sem nota numérica).
+/// Cada par `(targetUserId, authorUserId)` é único — um Cliente
+/// só avalia uma Acompanhante uma vez. Reedição vira UPSERT.
 ///
-/// Os agregados (`reviews_count` / `reviews_average`) ficam em
-/// `acompanhante_profiles` e são atualizados via trigger
-/// `trg_reviews_agregado` no banco para garantir consistência sem
-/// depender de aplicação.
+/// O agregado `reviews_count` em `acompanhante_profiles` é
+/// atualizado via trigger `trg_reviews_agregado` no INSERT/DELETE
+/// pra garantir consistência sem depender da aplicação.
 model AcompanhanteReview {
   id           String   @id @default(uuid()) @db.Uuid
   targetUserId String   @map("target_user_id") @db.Uuid
   target       User     @relation("ReviewTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
   authorUserId String   @map("author_user_id") @db.Uuid
   author       User     @relation("ReviewAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
-  rating       Int      @db.SmallInt
-  comment      String?  @db.VarChar(2000)
+  comment      String   @db.VarChar(2000)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@unique([targetUserId, authorUserId])
   @@index([targetUserId, createdAt(sort: Desc)])
   @@map("acompanhante_reviews")
+}
+
+/// Perguntas e respostas (Q&A) públicas no perfil de uma
+/// Acompanhante. Apenas Cliente Fan pode perguntar e ver
+/// perguntas/respostas. Acompanhante (dona do perfil) responde no
+/// próprio painel. Resposta sobrescreve em UPDATE — uma pergunta
+/// tem 0 ou 1 resposta.
+///
+/// Por que **não** permitir várias respostas: simplifica a UX e
+/// não vimos caso real de necessitar múltiplas. Caso surja, vira
+/// tabela `question_answers` com chave composta.
+model AcompanhanteQuestion {
+  id           String   @id @default(uuid()) @db.Uuid
+  targetUserId String   @map("target_user_id") @db.Uuid
+  target       User     @relation("QuestionTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  authorUserId String   @map("author_user_id") @db.Uuid
+  author       User     @relation("QuestionAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+  question     String   @db.VarChar(500)
+  /// Resposta da Acompanhante. `NULL` enquanto pendente.
+  answer       String?  @db.VarChar(2000)
+  /// Quando a Acompanhante respondeu pela primeira vez. Editar a
+  /// resposta atualiza o `updatedAt` mas não o `answeredAt`.
+  answeredAt   DateTime? @map("answered_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([targetUserId, createdAt(sort: Desc)])
+  @@index([targetUserId, answeredAt])
+  @@map("acompanhante_questions")
 }

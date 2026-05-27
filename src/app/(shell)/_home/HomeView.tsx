@@ -13,6 +13,7 @@ import {
     CrownIcon,
     FlameIcon,
     LockIcon,
+    Paginator,
     ProfileFeedCard,
     RankBadge,
     SectionLink,
@@ -78,6 +79,15 @@ export function HomeView({
         if (value.name && value.uf) {
             params.set("cidade", value.name);
             params.set("uf", value.uf);
+            // Persiste pra `/acompanhantes` lembrar entre navegações.
+            try {
+                window.sessionStorage.setItem(
+                    "privello:ultima-cidade",
+                    JSON.stringify({ name: value.name, uf: value.uf }),
+                );
+            } catch {
+                // sessionStorage indisponível — segue silencioso.
+            }
         } else if (value.query.trim().length > 0) {
             params.set("q", value.query.trim());
         }
@@ -184,7 +194,7 @@ export function HomeView({
                             </RankBadge>
                         }
                         trailing={
-                            <SectionLink href="/acompanhantes?ordenar=boost">
+                            <SectionLink href="/acompanhantes?boost=1">
                                 Ver todos
                             </SectionLink>
                         }
@@ -207,7 +217,7 @@ export function HomeView({
                         </RankBadge>
                     }
                     trailing={
-                        <SectionLink href="/acompanhantes?ordenar=alta">
+                        <SectionLink href="/acompanhantes?ordenar=popular">
                             Ver todos
                         </SectionLink>
                     }
@@ -331,8 +341,32 @@ export function HomeView({
 /**
  * Grid responsivo de cards — variant `split` em todas as posições.
  * 1 col mobile, 2 col sm, 3 col lg.
+ *
+ * Em listas curtas (≤ pageSize) renderiza tudo de uma vez. Em listas
+ * maiores envolve no `Paginator` que mostra `pageSize` itens
+ * inicialmente e revela mais N a cada clique no botão "Mostrar mais".
  */
 function FeedGrid({
+    items,
+    pageSize = 5,
+}: {
+    items: ReadonlyArray<FeedItem>;
+    pageSize?: number;
+}): React.ReactElement {
+    if (items.length <= pageSize) {
+        return <FeedGridLayout items={items} />;
+    }
+    return (
+        <Paginator
+            items={items}
+            pageSize={pageSize}
+            loadMoreLabel={`Mostrar mais ${pageSize}`}
+            render={(visible) => <FeedGridLayout items={visible} />}
+        />
+    );
+}
+
+function FeedGridLayout({
     items,
 }: {
     items: ReadonlyArray<FeedItem>;

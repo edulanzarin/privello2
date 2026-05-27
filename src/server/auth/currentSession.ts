@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 
 import { db } from "@/lib/db";
+import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
 
 /**
@@ -56,7 +57,7 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
     if (!sessionId) {
         const cookieStore = await cookies();
         sessionId = await verifySessionCookie(
-            cookieStore.get("sessionId")?.value,
+            cookieStore.get(SESSION_COOKIE_NAME)?.value,
         );
     }
 

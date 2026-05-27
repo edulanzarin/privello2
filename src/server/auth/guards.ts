@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
+import { enforceCsrf } from "@/server/auth/csrf";
+import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
 import { obterVigente } from "@/server/planos";
 import type { PlanoDefinition } from "@/domain/plano/definitions";
@@ -38,12 +40,23 @@ type GuardResult<T> = GuardOk<T> | GuardFail;
 
 /**
  * Resolve a sessão atual via cookie. Retorna 401 quando o cookie está
- * ausente, inválido, expirado ou revogado.
+ * ausente, inválido, expirado ou revogado. Antes da resolução, valida
+ * a same-origin policy via {@link enforceCsrf} para mutações cross-
+ * origin serem rejeitadas com 403 (`ORIGEM_INVALIDA`).
  */
-export async function requireSession(): Promise<GuardResult<SessionResolved>> {
+export async function requireSession(
+    request?: Request,
+): Promise<GuardResult<SessionResolved>> {
+    if (request) {
+        const csrf = enforceCsrf(request);
+        if (csrf) {
+            return { ok: false, response: csrf };
+        }
+    }
+
     const cookieStore = await cookies();
     const sessionId = await verifySessionCookie(
-        cookieStore.get("sessionId")?.value,
+        cookieStore.get(SESSION_COOKIE_NAME)?.value,
     );
     if (!sessionId) {
         return {
@@ -75,10 +88,10 @@ export async function requireSession(): Promise<GuardResult<SessionResolved>> {
  * Resolve a sessão e exige que o usuário seja `ACOMPANHANTE`.
  * Retorna 403 (`TIPO_INVALIDO`) caso contrário.
  */
-export async function requireAcompanhante(): Promise<
-    GuardResult<{ userId: string }>
-> {
-    const auth = await requireSession();
+export async function requireAcompanhante(
+    request?: Request,
+): Promise<GuardResult<{ userId: string }>> {
+    const auth = await requireSession(request);
     if (!auth.ok) return auth;
     if (auth.userType !== "ACOMPANHANTE") {
         return {
@@ -98,10 +111,10 @@ export async function requireAcompanhante(): Promise<
  * Retorna 403 (`TIPO_INVALIDO`) quando o usuário autenticado é uma
  * Acompanhante.
  */
-export async function requireCliente(): Promise<
-    GuardResult<{ userId: string }>
-> {
-    const auth = await requireSession();
+export async function requireCliente(
+    request?: Request,
+): Promise<GuardResult<{ userId: string }>> {
+    const auth = await requireSession(request);
     if (!auth.ok) return auth;
     if (auth.userType !== "CLIENTE") {
         return {
@@ -122,10 +135,10 @@ export async function requireCliente(): Promise<
  * Cliente Grátis recebe 402 com `reason: "PLANO_REQUERIDO"` —
  * a UI redireciona pra `/cliente/selecao-plano` quando ver isso.
  */
-export async function requireClienteFan(): Promise<
-    GuardResult<{ userId: string }>
-> {
-    const auth = await requireCliente();
+export async function requireClienteFan(
+    request?: Request,
+): Promise<GuardResult<{ userId: string }>> {
+    const auth = await requireCliente(request);
     if (!auth.ok) return auth;
 
     const profile = await db.clientProfile.findUnique({
@@ -169,8 +182,9 @@ export type RequireAcompanhantePlanoOptions = {
  */
 export async function requireAcompanhanteWithPlano(
     options: RequireAcompanhantePlanoOptions = {},
+    request?: Request,
 ): Promise<GuardResult<{ userId: string; plano: PlanoDefinition }>> {
-    const auth = await requireAcompanhante();
+    const auth = await requireAcompanhante(request);
     if (!auth.ok) return auth;
 
     const plano = await obterVigente(auth.userId);

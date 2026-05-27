@@ -6,13 +6,13 @@ import Link from "next/link";
 import {
     ActivityFeed,
     ActivityFeedItem,
+    ChatIcon,
     DiamondIcon,
     EmptyState,
     FilterChips,
     HeartIcon,
     PlayCircleIcon,
     SparklesIcon,
-    StarIcon,
     UpgradeBanner,
     type FilterChipsOption,
 } from "@/components";
@@ -76,7 +76,7 @@ export function AtividadeTab({
         {
             value: "avaliacoes",
             label: "Avaliações",
-            icon: <StarIcon size={11} />,
+            icon: <ChatIcon size={11} />,
         },
         {
             value: "curtidas",
@@ -191,13 +191,11 @@ function ReviewRow({
     review: ReviewDoCliente;
 }): React.ReactElement {
     const href = `/acompanhantes/${review.targetIdentificador}`;
-    const subtitle = review.comment
-        ? truncate(review.comment, 90)
-        : `Nota ${review.rating} de 5`;
+    const subtitle = truncate(review.comment, 90);
     return (
         <Link href={href} className="block focus:outline-none">
             <ActivityFeedItem
-                icon={<StarIcon size={14} />}
+                icon={<ChatIcon size={14} />}
                 title={
                     <span className="text-text-primary">
                         Você avaliou{" "}
@@ -208,15 +206,8 @@ function ReviewRow({
                 }
                 subtitle={subtitle}
                 trailing={
-                    <span className="flex items-center gap-2 text-xs text-text-secondary">
-                        <span className="inline-flex items-center gap-0.5 text-amber-500">
-                            <StarIcon size={11} />
-                            <span className="font-medium tabular-nums">
-                                {review.rating}
-                            </span>
-                        </span>
-                        <span>·</span>
-                        <span>{formatRelative(review.createdAt)}</span>
+                    <span className="text-xs text-text-secondary">
+                        {formatRelative(review.createdAt)}
                     </span>
                 }
             />
@@ -322,7 +313,7 @@ const empties: Record<
     avaliacoes: {
         title: "Você ainda não avaliou nenhuma Acompanhante",
         description: "Ao publicar avaliações, elas ficam disponíveis aqui.",
-        icon: <StarIcon size={20} />,
+        icon: <ChatIcon size={20} />,
     },
     curtidas: {
         title: "Sem curtidas por enquanto",

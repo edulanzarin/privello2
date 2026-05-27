@@ -1,5 +1,6 @@
 import {
     HeartIcon,
+    ChatIcon,
     LogoutButton,
     MetricPill,
     MicIcon,
@@ -17,11 +18,23 @@ import { getCurrentSession } from "@/server/auth/currentSession";
 import { obterPerfilAcompanhante } from "@/server/acompanhante-profile";
 import { obterStatusBoost } from "@/server/boost";
 import { obterVigente } from "@/server/planos";
+import { contarLikesTotais } from "@/server/acompanhante-profile/likesTotal";
+import { listarStatsDiarias } from "@/server/acompanhante-profile/stats";
+import {
+    contarPerguntasPendentes,
+    listarPerguntasPublicas,
+} from "@/server/questions";
 import { listarGaleria, toMediaItem } from "@/server/storage/galleryMedia";
+import {
+    listarStories,
+    toMediaItem as toStoryMediaItem,
+} from "@/server/storage/storyMedia";
 
 import { PerfilTab } from "./_painel/PerfilTab";
 import { MidiasTab } from "./_painel/MidiasTab";
 import { AudioTab } from "./_painel/AudioTab";
+import { PerguntasTab } from "./_painel/PerguntasTab";
+import { EstatisticasTab } from "./_painel/EstatisticasTab";
 import { ConfiguracoesTab } from "./_painel/ConfiguracoesTab";
 import { PerfilOcultoBanner } from "./_painel/PerfilOcultoBanner";
 import type { MediaItem } from "@/components";
@@ -76,7 +89,39 @@ export default async function AcompanhantePainelPage() {
 
     const galeria = await listarGaleria(session.userId);
     const galeriaItems: ReadonlyArray<MediaItem> = galeria.map(toMediaItem);
-    const boost = await obterStatusBoost(session.userId);
+
+    // Stories: ativos e arquivados (histórico). Carrega só se o
+    // plano permite — Básico não tem Stories, evita query.
+    const [storiesAtivos, storiesArquivados] = planoVigente.permiteStories
+        ? await Promise.all([
+            listarStories(session.userId, "ativos"),
+            listarStories(session.userId, "arquivados"),
+        ])
+        : [[], []];
+    const storiesAtivosItems: ReadonlyArray<MediaItem> = storiesAtivos.map(
+        toStoryMediaItem,
+    );
+    const storiesArquivadosItems: ReadonlyArray<MediaItem> =
+        storiesArquivados.map(toStoryMediaItem);
+
+    // Métricas reais: visualizações + curtidas totais (foto + galeria
+    // + stories) + perguntas pendentes a responder + lista completa
+    // de perguntas (pra aba dedicada) + série diária pra gráfico.
+    const [
+        likesTotal,
+        perguntasPendentes,
+        perguntas,
+        boost,
+        statsDiarias,
+    ] = await Promise.all([
+        contarLikesTotais(session.userId),
+        contarPerguntasPendentes(session.userId),
+        listarPerguntasPublicas(session.userId, {
+            viewerUserId: session.userId,
+        }),
+        obterStatusBoost(session.userId),
+        listarStatsDiarias(session.userId, { dias: 30 }),
+    ]);
 
     const isPremium = planoVigente.tipo === "PREMIUM";
 
@@ -102,9 +147,10 @@ export default async function AcompanhantePainelPage() {
 
             {/* Linha de métricas — 3 pills sempre na mesma linha
                 (grid 3 colunas). Visualizações = total acumulado de
-                aberturas do perfil; curtidas = soma das curtidas em
-                todas as mídias e Stories; mídias = uso atual versus
-                limite do plano. */}
+                aberturas do perfil; curtidas = soma de curtidas em
+                todas as mídias publicadas (foto, capa, galeria,
+                stories ativos); mídias = uso atual versus limite
+                do plano. */}
             <div
                 role="group"
                 aria-label="Resumo do perfil"
@@ -112,12 +158,20 @@ export default async function AcompanhantePainelPage() {
             >
                 <MetricPill
                     icon={<UsersIcon size={11} />}
-                    value="—"
+                    value={
+                        perfil.viewsCount > 0
+                            ? perfil.viewsCount.toLocaleString("pt-BR")
+                            : "—"
+                    }
                     label="visualizações"
                 />
                 <MetricPill
                     icon={<HeartIcon size={11} />}
-                    value="—"
+                    value={
+                        likesTotal > 0
+                            ? likesTotal.toLocaleString("pt-BR")
+                            : "—"
+                    }
                     label="curtidas"
                 />
                 <MetricPill
@@ -131,6 +185,21 @@ export default async function AcompanhantePainelPage() {
                 <TabList aria-label="Áreas do painel">
                     <TabTrigger value="perfil">Perfil</TabTrigger>
                     <TabTrigger value="midias">Mídias</TabTrigger>
+                    <TabTrigger value="perguntas">
+                        <ChatIcon size={14} />
+                        Perguntas
+                        {perguntasPendentes > 0 ? (
+                            <span
+                                aria-label={`${perguntasPendentes} pendentes`}
+                                className="ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary-600 px-1 text-[0.6rem] font-semibold text-white"
+                            >
+                                {perguntasPendentes}
+                            </span>
+                        ) : null}
+                    </TabTrigger>
+                    <TabTrigger value="estatisticas">
+                        Estatísticas
+                    </TabTrigger>
                     {planoVigente.permiteAudio ? (
                         <TabTrigger value="audio">
                             <MicIcon size={14} />
@@ -144,7 +213,22 @@ export default async function AcompanhantePainelPage() {
                     <PerfilTab perfil={perfil} />
                 </TabPanel>
                 <TabPanel value="midias">
-                    <MidiasTab plano={planoVigente} items={galeriaItems} />
+                    <MidiasTab
+                        plano={planoVigente}
+                        items={galeriaItems}
+                        storiesAtivos={storiesAtivosItems}
+                        storiesExpirados={storiesArquivadosItems}
+                    />
+                </TabPanel>
+                <TabPanel value="perguntas">
+                    <PerguntasTab perguntas={perguntas} />
+                </TabPanel>
+                <TabPanel value="estatisticas">
+                    <EstatisticasTab
+                        stats={statsDiarias}
+                        totalViews={perfil.viewsCount}
+                        totalLikes={likesTotal}
+                    />
                 </TabPanel>
                 {planoVigente.permiteAudio ? (
                     <TabPanel value="audio">

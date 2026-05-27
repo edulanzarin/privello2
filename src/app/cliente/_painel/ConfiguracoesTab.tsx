@@ -4,6 +4,8 @@ import * as React from "react";
 
 import {
     Badge,
+    Button,
+    Card,
     DiamondIcon,
     InfoList,
     InfoRow,
@@ -12,10 +14,13 @@ import {
     PasswordChangeModal,
     SectionHeader,
     SparklesIcon,
+    TrashIcon,
     useModal,
 } from "@/components";
 
 import type { PerfilClienteResumo } from "@/server/cliente-profile";
+
+import { ExcluirContaModal } from "./ExcluirContaModal";
 
 /**
  * Aba "Configurações" do painel do Cliente.
@@ -43,6 +48,7 @@ export function ConfiguracoesTab({
     const isFan = perfil.planoVigente === "FAN";
     const semPlano = perfil.planoVigente === null;
     const senhaModal = useModal();
+    const excluirModal = useModal();
 
     return (
         <div className="flex flex-col gap-5">
@@ -107,9 +113,42 @@ export function ConfiguracoesTab({
                 </InfoList>
             </section>
 
+            <section className="flex flex-col gap-3">
+                <SectionHeader
+                    title="Zona de risco"
+                    subtitle="Ações permanentes. Sem volta."
+                />
+                <Card>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-medium text-text-primary">
+                                Excluir minha conta
+                            </span>
+                            <span className="text-xs text-text-secondary">
+                                Apaga seu perfil, atividade e mídia. Não
+                                pode ser desfeito.
+                            </span>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            onClick={excluirModal.open}
+                        >
+                            <TrashIcon size={14} />
+                            Excluir conta
+                        </Button>
+                    </div>
+                </Card>
+            </section>
+
             <PasswordChangeModal
                 open={senhaModal.isOpen}
                 onClose={senhaModal.close}
+            />
+            <ExcluirContaModal
+                open={excluirModal.isOpen}
+                onClose={excluirModal.close}
             />
         </div>
     );

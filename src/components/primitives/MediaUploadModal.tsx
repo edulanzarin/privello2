@@ -79,6 +79,10 @@ export interface MediaUploadModalProps {
      * (ex.: `GALERIA_DESCRICAO_MAX` para galeria de mídia).
      */
     maxDescription?: number;
+    /** Rótulo exibido acima do textarea de descrição. Padrão: `"Descrição"`. */
+    descriptionLabel?: React.ReactNode;
+    /** Placeholder do textarea de descrição. */
+    descriptionPlaceholder?: string;
 }
 
 const MAX_DESCRIPTION_DEFAULT = 50;
@@ -110,6 +114,8 @@ export function MediaUploadModal({
     submitLabel = "Publicar",
     submitting = false,
     maxDescription = MAX_DESCRIPTION_DEFAULT,
+    descriptionLabel = "Descrição",
+    descriptionPlaceholder = "Conte algo sobre essa mídia. Opcional.",
 }: MediaUploadModalProps): React.ReactElement {
     const [selection, setSelection] = React.useState<MediaSelection | null>(
         null,
@@ -164,7 +170,7 @@ export function MediaUploadModal({
                             htmlFor="media-upload-description"
                             className="flex items-center justify-between text-xs font-medium text-text-secondary"
                         >
-                            <span>Descrição</span>
+                            <span>{descriptionLabel}</span>
                             <span
                                 className={
                                     description.length > maxDescription
@@ -181,7 +187,7 @@ export function MediaUploadModal({
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             disabled={submitting}
-                            placeholder="Conte algo sobre essa mídia. Opcional."
+                            placeholder={descriptionPlaceholder}
                             className={[
                                 "block w-full resize-none rounded-md border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-text-disabled",
                                 description.length > maxDescription

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
     AttributeTile,
@@ -16,6 +16,7 @@ import {
     FlameIcon,
     FootprintIcon,
     GlobeIcon,
+    HeartIcon,
     IconSegmented,
     ImageIcon,
     MapPinIcon,
@@ -26,18 +27,17 @@ import {
     PlayIcon,
     ProfileHeader,
     RankBadge,
-    RatingStars,
     RulerIcon,
     ScissorsIcon,
     SectionHeader,
     SparklesIcon,
-    StarIcon,
     StatCard,
     TagChip,
     WeekCalendar,
     WeightIcon,
     WhatsappIcon,
     useMediaCarousel,
+    useModal,
     type IconSegmentedOption,
     type MediaComment,
     type MediaItem,
@@ -64,9 +64,11 @@ import type {
     PerfilAcompanhantePublico,
     PlanoExibicao,
 } from "@/server/acompanhante-profile";
+import type { QuestionPublica } from "@/server/questions";
 import type { ReviewPublico } from "@/server/reviews";
 
 import { AvaliacoesSection } from "./AvaliacoesSection";
+import { PerguntasSection } from "./PerguntasSection";
 
 /**
  * "Tipo de viewer" — quem está abrindo o perfil. Determina UX:
@@ -107,8 +109,24 @@ export interface PerfilPublicoViewProps {
     slug: string;
     perfil: PerfilAcompanhantePublico;
     galeriaItems: ReadonlyArray<MediaItem>;
-    /** Avaliações públicas mais recentes. */
+    /** Avaliações públicas mais recentes (apenas texto). */
     reviews: ReadonlyArray<ReviewPublico>;
+    /** Perguntas e respostas públicas. */
+    perguntas: ReadonlyArray<QuestionPublica>;
+    /** Total de curtidas (foto perfil + galeria + stories ativos). */
+    likesTotal: number;
+    /** Stories ativos para exibição no carrossel. */
+    storiesAtivos: ReadonlyArray<MediaItem & { viewed: boolean }>;
+    /**
+     * Estado do anel de Story ao redor do avatar:
+     *
+     * - `"unseen"`: há story ativo que o viewer não viu (anel
+     *   colorido).
+     * - `"seen"`: tem stories ativos mas todos já vistos (anel
+     *   cinza).
+     * - `"none"`: nenhum story ativo (sem anel).
+     */
+    storyRing: "unseen" | "seen" | "none";
     /** Tipo de viewer — alimenta UI condicional do bloco de
      *  avaliação. */
     viewerKind: ViewerKind;
@@ -125,10 +143,10 @@ export interface PerfilPublicoViewProps {
     /** URL da foto do viewer Cliente, pra avatar no `CommentInput`. */
     viewerFotoUrl: string | null;
     /**
-     * Avaliação que o Cliente autenticado já deixou (ou `null`).
-     * Usado pra pré-popular o formulário "Sua avaliação".
+     * Avaliação (apenas texto) que o Cliente autenticado já deixou
+     * (ou `null`). Usado pra pré-popular o textarea "Sua avaliação".
      */
-    minhaReview: { rating: number; comment: string | null } | null;
+    minhaReview: { comment: string } | null;
 }
 
 const FORMA_PAGAMENTO_ICONS: Record<FormaPagamento, React.ReactElement> = {
@@ -157,6 +175,10 @@ export function PerfilPublicoView({
     perfil,
     galeriaItems: galeriaItemsProp,
     reviews,
+    perguntas,
+    likesTotal,
+    storiesAtivos,
+    storyRing,
     viewerKind,
     viewerIsOwner,
     viewerIsFan,
@@ -167,8 +189,129 @@ export function PerfilPublicoView({
     const router = useRouter();
     const pathname = usePathname();
     const carousel = useMediaCarousel();
+    const storyCarousel = useMediaCarousel();
     const [filtroGaleria, setFiltroGaleria] =
         React.useState<FiltroGaleria>("tudo");
+
+    // Stories ativos do dono — estado local pra refletir mudanças
+    // de `viewed` e `liked` sem reload completo.
+    const [storiesState, setStoriesState] = React.useState(storiesAtivos);
+    React.useEffect(() => {
+        setStoriesState(storiesAtivos);
+    }, [storiesAtivos]);
+
+    const [storyRingState, setStoryRingState] = React.useState(storyRing);
+    React.useEffect(() => {
+        setStoryRingState(storyRing);
+    }, [storyRing]);
+
+    /**
+     * Abre o carrossel de Stories no primeiro não visto, ou no
+     * primeiro caso todos já tenham sido vistos. Marca como visto
+     * imediatamente (otimista) e dispara o POST.
+     */
+    function abrirStories(): void {
+        if (storiesState.length === 0) return;
+        const primeiroNaoVisto = storiesState.find((s) => !s.viewed);
+        const target = primeiroNaoVisto ?? storiesState[0];
+        if (!target) return;
+        storyCarousel.openAt(target.id);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Auto-abertura quando vem `?stories=1`
+    //
+    // Usado pela tira de Stories da página de busca: clicar num
+    // avatar leva para `/acompanhantes/<slug>?stories=1`. Aqui
+    // detectamos o flag, abrimos o viewer e limpamos a query
+    // string com `router.replace` pra não disparar de novo em
+    // navegação subsequente.
+    // ─────────────────────────────────────────────────────────────
+    const searchParams = useSearchParams();
+    const stillOpenedFromQueryRef = React.useRef(false);
+    React.useEffect(() => {
+        if (stillOpenedFromQueryRef.current) return;
+        if (searchParams.get("stories") !== "1") return;
+        if (storiesState.length === 0) return;
+        stillOpenedFromQueryRef.current = true;
+        abrirStories();
+        // Limpa o flag da URL pra que recarregar a página não abra
+        // novamente.
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("stories");
+        const qs = params.toString();
+        router.replace(`${pathname}${qs ? `?${qs}` : ""}`);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams, storiesState.length]);
+
+    /**
+     * Marca um Story como visto. Disparado quando o
+     * `onActiveChange` do carrossel apontar pra um story ainda
+     * não visto. Atualiza estado local + ring + persiste.
+     */
+    function handleStoryViewed(storyId: string): void {
+        const target = storiesState.find((s) => s.id === storyId);
+        if (!target || target.viewed) return;
+
+        // Atualiza estado local (otimista) — flag viewed.
+        setStoriesState((prev) =>
+            prev.map((s) =>
+                s.id === storyId ? { ...s, viewed: true } : s,
+            ),
+        );
+        // Recalcula ring local: se todos `viewed`, vira "seen".
+        setStoryRingState((prev) => {
+            if (prev === "none") return prev;
+            const allViewed = storiesState.every(
+                (s) => s.id === storyId || s.viewed,
+            );
+            return allViewed ? "seen" : "unseen";
+        });
+        // Persiste no backend (best-effort).
+        if (viewerKind === "anonimo") return;
+        void fetch(
+            `/api/stories/${encodeURIComponent(storyId)}/view`,
+            { method: "POST" },
+        ).catch(() => undefined);
+    }
+
+    /**
+     * Toggle de like em Story. Reusa o endpoint da galeria —
+     * `MediaLike` é independente do `role`. Apenas Cliente Fan
+     * persiste no backend; outros recebem rejeição (UI também
+     * desabilita o botão pra esses).
+     */
+    function handleStoryToggleLike(storyId: string, desired: boolean): void {
+        // Otimista no estado local — atualiza `liked` e `likes`.
+        setStoriesState((prev) =>
+            prev.map((s) =>
+                s.id === storyId
+                    ? {
+                        ...s,
+                        liked: desired,
+                        likes: Math.max(
+                            0,
+                            (s.likes ?? 0) + (desired ? 1 : -1),
+                        ),
+                    }
+                    : s,
+            ),
+        );
+        if (viewerKind !== "cliente" || !viewerIsFan) return;
+        void fetch(`/api/medias/${encodeURIComponent(storyId)}/likes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ liked: desired }),
+        }).catch(() => undefined);
+    }
+
+    // Quando o usuário troca de story dentro do carrossel,
+    // marcamos como visto (se ainda não foi).
+    React.useEffect(() => {
+        if (!storyCarousel.open || storyCarousel.activeId === null) return;
+        handleStoryViewed(storyCarousel.activeId);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storyCarousel.open, storyCarousel.activeId]);
 
     // Estado local da galeria — permite atualização otimista de
     // likes (toggle) e comments (count) sem reload completo. Resync
@@ -420,11 +563,18 @@ export function PerfilPublicoView({
                 name={perfil.nome}
                 identifier={`@${perfil.identificador}`}
                 badge={<PlanoBadge plano={perfil.planoExibicao} />}
+                storyRing={storyRingState}
+                onStoryClick={
+                    storyRingState !== "none" && storiesState.length > 0
+                        ? () => abrirStories()
+                        : undefined
+                }
             />
 
-            {/* Meta-row compacta. Visualizações + nota agregada (se
-                houver). Localização sai daqui — já aparece em
-                destaque no StatCard "Localização" abaixo. */}
+            {/* Meta-row compacta. Visualizações + curtidas totais
+                (foto perfil + galeria + stories ativos). Localização
+                sai daqui — já aparece em destaque no StatCard
+                "Localização" abaixo. */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-text-secondary">
                 <span className="inline-flex items-center gap-1.5">
                     <EyeIcon size={12} />
@@ -435,25 +585,18 @@ export function PerfilPublicoView({
                         visualizações
                     </span>
                 </span>
-                {perfil.reviewsCount > 0 && viewerKind !== "anonimo" ? (
-                    <>
-                        <span aria-hidden="true" className="text-text-disabled">
-                            ·
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                            <RatingStars
-                                value={perfil.reviewsAverage}
-                                size="sm"
-                            />
-                            <span>
-                                <span className="font-medium text-text-primary">
-                                    {perfil.reviewsAverage.toFixed(1)}
-                                </span>{" "}
-                                ({perfil.reviewsCount})
-                            </span>
-                        </span>
-                    </>
-                ) : null}
+                <span aria-hidden="true" className="text-text-disabled">
+                    ·
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                    <HeartIcon size={12} />
+                    <span>
+                        <span className="font-medium text-text-primary">
+                            {formatViews(likesTotal)}
+                        </span>{" "}
+                        {likesTotal === 1 ? "curtida" : "curtidas"}
+                    </span>
+                </span>
             </div>
 
             {/* CTA principal: WhatsApp */}
@@ -727,12 +870,22 @@ export function PerfilPublicoView({
                 </section>
             ) : null}
 
-            {/* Avaliações */}
+            {/* Perguntas e respostas (Q&A). Vem antes das avaliações
+                porque cliente pergunta antes de decidir avaliar. */}
+            <PerguntasSection
+                slug={slug}
+                perguntas={perguntas}
+                perguntasCount={perguntas.length}
+                viewerKind={viewerKind}
+                viewerIsOwner={viewerIsOwner}
+                viewerIsFan={viewerIsFan}
+            />
+
+            {/* Avaliações (apenas texto — sem nota numérica) */}
             <AvaliacoesSection
                 slug={slug}
                 reviews={reviews}
                 reviewsCount={perfil.reviewsCount}
-                reviewsAverage={perfil.reviewsAverage}
                 viewerKind={viewerKind}
                 viewerIsOwner={viewerIsOwner}
                 viewerIsFan={viewerIsFan}
@@ -797,6 +950,27 @@ export function PerfilPublicoView({
                             : undefined
                 }
             />
+
+            {/* Carrossel de Stories. Reusa o mesmo MediaCarousel
+                da galeria com `storyMode`: sem painel branco
+                lateral, com progress bar segmentada no topo,
+                toolbar overlay sobre a mídia, auto-advance e
+                caption sobreposta. Marca como visto ao trocar
+                de item, dispara like via endpoint compartilhado
+                de mídia. */}
+            <MediaCarousel
+                items={storiesState}
+                activeId={storyCarousel.activeId}
+                onActiveChange={storyCarousel.openAt}
+                open={storyCarousel.open}
+                onClose={storyCarousel.close}
+                storyMode
+                onToggleLike={
+                    viewerKind === "cliente" && viewerIsFan
+                        ? handleStoryToggleLike
+                        : undefined
+                }
+            />
         </div>
     );
 }
@@ -836,7 +1010,7 @@ function PlanoBadge({
         },
         BASICO: {
             tone: "standard",
-            icon: <StarIcon size={11} />,
+            icon: <SparklesIcon size={11} />,
             label: "Básico",
         },
     };

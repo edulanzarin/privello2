@@ -40,6 +40,14 @@ export interface LikeButtonProps {
     onChange?: (next: boolean) => void;
     /** Tamanho. Padrão: `"md"`. */
     size?: LikeButtonSize;
+    /**
+     * Tom do botão. Padrão: `"default"` (cores neutras pra fundos
+     * claros). Use `"onDark"` quando o botão fica sobre uma mídia
+     * (carrossel/Story) — texto e ícone ficam brancos quando não
+     * curtido, e o coração fica salmão quente quando curtido,
+     * legível sobre qualquer foto.
+     */
+    tone?: "default" | "onDark";
     /** Quando `true`, desabilita o botão. */
     disabled?: boolean;
     /** Classes extras aplicadas ao container. */
@@ -72,6 +80,7 @@ export function LikeButton({
     count,
     onChange,
     size = "md",
+    tone = "default",
     disabled = false,
     className,
     "aria-label": ariaLabel,
@@ -94,9 +103,14 @@ export function LikeButton({
             aria-label={ariaLabel ?? (liked ? "Descurtir" : "Curtir")}
             className={[
                 "inline-flex items-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:rounded-full disabled:opacity-60 disabled:cursor-not-allowed",
-                liked
-                    ? "text-danger-600"
-                    : "text-text-secondary hover:text-danger-600",
+                tone === "onDark"
+                    ? [
+                        "rounded-full bg-black/55 px-3 py-1.5 backdrop-blur-sm",
+                        liked ? "text-primary-400" : "text-white hover:text-primary-300",
+                    ].join(" ")
+                    : liked
+                        ? "text-danger-600"
+                        : "text-text-secondary hover:text-danger-600",
                 dims.gap,
                 className ?? "",
             ]

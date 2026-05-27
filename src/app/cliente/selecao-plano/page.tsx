@@ -1,11 +1,11 @@
 import {
     Badge,
+    ChatIcon,
     DiamondIcon,
     HeartIcon,
     OfferCard,
     OfferLayout,
     SparklesIcon,
-    StarIcon,
     type OfferBenefit,
 } from "@/components";
 import {
@@ -69,14 +69,14 @@ function beneficios(plano: PlanoClienteDefinition): readonly OfferBenefit[] {
     if (plano.podeAvaliar) {
         items.push({
             label: "Publique avaliações sobre quem você conheceu",
-            icon: StarIcon,
+            icon: ChatIcon,
             highlight: isFan,
         });
     }
     if (plano.podeVerAvaliacoes) {
         items.push({
             label: "Leia avaliações de outros Clientes",
-            icon: StarIcon,
+            icon: ChatIcon,
             highlight: isFan,
         });
     }

@@ -31,7 +31,7 @@ import {
  */
 
 export async function POST(request: Request): Promise<NextResponse> {
-    const auth = await requireAcompanhanteWithPlano({ permiteAudio: true });
+    const auth = await requireAcompanhanteWithPlano({ permiteAudio: true }, request);
     if (!auth.ok) return auth.response;
 
     const fileGuard = await requireFile(request, "audio");
@@ -57,8 +57,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json(result, { status: 500 });
 }
 
-export async function DELETE(): Promise<NextResponse> {
-    const auth = await requireAcompanhanteWithPlano({ permiteAudio: true });
+export async function DELETE(request: Request): Promise<NextResponse> {
+    const auth = await requireAcompanhanteWithPlano({ permiteAudio: true }, request);
     if (!auth.ok) return auth.response;
 
     const result = await excluirAudioApresentacao(auth.userId);

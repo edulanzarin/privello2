@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 
 import {
     Badge,
+    Button,
+    Card,
     FlameIcon,
     HeartIcon,
     InfoList,
@@ -16,10 +18,13 @@ import {
     SectionHeader,
     SparklesIcon,
     Switch,
+    TrashIcon,
     useModal,
 } from "@/components";
 
 import type { PlanoDefinition } from "@/domain/plano/definitions";
+
+import { ExcluirContaModal } from "./ExcluirContaModal";
 
 /**
  * Aba "Configurações" do painel da Acompanhante.
@@ -61,6 +66,7 @@ export function ConfiguracoesTab({
     const router = useRouter();
     const isPremium = planoTipo === "PREMIUM";
     const senhaModal = useModal();
+    const excluirModal = useModal();
 
     // Estado otimista do toggle: troca imediato no UI, reverte se o
     // servidor recusar. Evita "click → spinner → confirma" em uma
@@ -211,9 +217,43 @@ export function ConfiguracoesTab({
                 </InfoList>
             </section>
 
+            <section className="flex flex-col gap-3">
+                <SectionHeader
+                    title="Zona de risco"
+                    subtitle="Ações permanentes. Sem volta."
+                />
+                <Card>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-medium text-text-primary">
+                                Excluir minha conta
+                            </span>
+                            <span className="text-xs text-text-secondary">
+                                Apaga seu perfil, mídias, áudios, stories,
+                                avaliações e perguntas. Não pode ser
+                                desfeito.
+                            </span>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            onClick={excluirModal.open}
+                        >
+                            <TrashIcon size={14} />
+                            Excluir conta
+                        </Button>
+                    </div>
+                </Card>
+            </section>
+
             <PasswordChangeModal
                 open={senhaModal.isOpen}
                 onClose={senhaModal.close}
+            />
+            <ExcluirContaModal
+                open={excluirModal.isOpen}
+                onClose={excluirModal.close}
             />
         </div>
     );

@@ -27,6 +27,8 @@
 
 import { db } from "@/lib/db";
 
+import { incrementarStatDiaria } from "@/server/acompanhante-profile/stats";
+
 // ---------------------------------------------------------------------------
 // Curtidas
 // ---------------------------------------------------------------------------
@@ -77,8 +79,18 @@ export async function toggleLike(
 
     const media = await db.media.findUnique({
         where: { id: mediaId },
-        select: { likesCount: true },
+        select: { likesCount: true, ownerId: true },
     });
+
+    // Incrementa série diária do dono da mídia (Acompanhante).
+    // Best-effort — falha aqui não bloqueia a interação.
+    if (media?.ownerId !== undefined && media.ownerId !== userId) {
+        await incrementarStatDiaria({
+            userId: media.ownerId,
+            field: "likes",
+            delta: desired ? 1 : -1,
+        }).catch(() => undefined);
+    }
 
     return {
         liked: desired,

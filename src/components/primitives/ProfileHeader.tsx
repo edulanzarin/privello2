@@ -59,6 +59,18 @@ export interface ProfileHeaderProps {
      * Foto_de_Perfil.
      */
     onPhotoClick?: () => void;
+    /**
+     * Estado do anel de Story ao redor do avatar. Quando `"unseen"`
+     * ou `"seen"`, o avatar recebe o ring colorido/cinza. Quando
+     * `"none"` (padrão) ou ausente, sem anel.
+     */
+    storyRing?: "unseen" | "seen" | "none";
+    /**
+     * Callback do avatar quando há Story (`storyRing !== "none"`).
+     * Tem precedência sobre `onPhotoClick` — quando ambos forem
+     * passados, este abre o viewer e o `onPhotoClick` é ignorado.
+     */
+    onStoryClick?: () => void;
     /** Tamanho do {@link Avatar}. Padrão: `"lg"`. */
     avatarSize?: AvatarSize;
     /** Classes extras aplicadas ao container. */
@@ -82,6 +94,8 @@ export function ProfileHeader({
     actions,
     extras,
     onPhotoClick,
+    storyRing = "none",
+    onStoryClick,
     avatarSize = "lg",
     className,
 }: ProfileHeaderProps): React.ReactElement {
@@ -96,18 +110,47 @@ export function ProfileHeader({
         .filter(Boolean)
         .join(" ");
 
-    return (
-        <div className={composed}>
-            <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+    const hasStoryRing = storyRing === "unseen" || storyRing === "seen";
+
+    // Quando há ring de Story e `onStoryClick`, o avatar não usa o
+    // overlay de "trocar foto" do Avatar interativo — em vez disso
+    // envolvemos num botão externo que abre o viewer. `onPhotoClick`
+    // só é honrado quando NÃO há ring (ou quando o caller não
+    // passou onStoryClick).
+    const avatarRender =
+        hasStoryRing && onStoryClick !== undefined ? (
+            <button
+                type="button"
+                onClick={onStoryClick}
+                aria-label="Ver Stories"
+                className="inline-flex shrink-0 rounded-full transition-transform hover:scale-[1.03] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+            >
                 <Avatar
                     src={photoUrl}
                     name={name}
                     size={avatarSize}
-                    onClick={onPhotoClick}
-                    aria-label="Trocar foto de perfil"
+                    storyRing={storyRing}
                     cornerBadge={avatarCornerBadge}
                     cornerBadgeTone={avatarCornerBadgeTone}
                 />
+            </button>
+        ) : (
+            <Avatar
+                src={photoUrl}
+                name={name}
+                size={avatarSize}
+                onClick={onPhotoClick}
+                aria-label="Trocar foto de perfil"
+                cornerBadge={avatarCornerBadge}
+                cornerBadgeTone={avatarCornerBadgeTone}
+                storyRing={storyRing}
+            />
+        );
+
+    return (
+        <div className={composed}>
+            <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                {avatarRender}
                 <div className="flex min-w-0 flex-col gap-0.5">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="truncate text-lg font-semibold tracking-tight text-text-primary sm:text-xl">

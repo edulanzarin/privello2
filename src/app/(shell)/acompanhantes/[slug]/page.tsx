@@ -10,6 +10,7 @@ import {
     UsersIcon,
 } from "@/components";
 import { obterPerfilPublico } from "@/server/acompanhante-profile";
+import { contarLikesTotais } from "@/server/acompanhante-profile/likesTotal";
 import { getCurrentSession } from "@/server/auth/currentSession";
 import { obterPerfilCliente } from "@/server/cliente-profile";
 import { obterLikesDoViewer } from "@/server/media-interactions";
@@ -17,6 +18,11 @@ import {
     listarGaleria,
     toMediaItem,
 } from "@/server/storage/galleryMedia";
+import {
+    listarStoriesAtivosDoPerfil,
+    obterStoryRingState,
+} from "@/server/storage/storyMedia";
+import { listarPerguntasPublicas } from "@/server/questions";
 import {
     listarReviewsPublicos,
     obterMinhaReview,
@@ -107,10 +113,26 @@ export default async function PerfilPublicoPage({
     //   - galeria pública (com agregados de likes/comments)
     //   - sessão atual (pra pré-popular form de avaliação do Cliente)
     //   - lista de reviews públicas
-    const [galeria, session, reviewsAll] = await Promise.all([
-        listarGaleria(result.userId),
-        getCurrentSession(),
-        listarReviewsPublicos(result.userId),
+    //   - lista de perguntas públicas
+    //   - total de curtidas (foto + galeria + stories)
+    const [galeria, session, reviewsAll, perguntasAll, likesTotal] =
+        await Promise.all([
+            listarGaleria(result.userId),
+            getCurrentSession(),
+            listarReviewsPublicos(result.userId),
+            listarPerguntasPublicas(result.userId),
+            contarLikesTotais(result.userId),
+        ]);
+
+    // Stories ativos pra alimentar o ring + o viewer. O ring state
+    // (total / não vistos) discrimina se o anel é colorido ou cinza.
+    const [storiesAtivos, storyRing] = await Promise.all([
+        listarStoriesAtivosDoPerfil(result.userId, {
+            viewerUserId: session?.userId ?? null,
+        }),
+        obterStoryRingState(result.userId, {
+            viewerUserId: session?.userId ?? null,
+        }),
     ]);
 
     // Plano do viewer Cliente — define se ele pode curtir/comentar.
@@ -122,27 +144,29 @@ export default async function PerfilPublicoPage({
     const viewerIsFan = viewerClienteProfile?.planoVigente === "FAN";
 
     // Anônimo OU Cliente Grátis não veem avaliações/comentários
-    // detalhados. Recebem lista vazia no payload RSC. Os contadores
-    // agregados (`reviewsCount`/`reviewsAverage`) também são zerados
-    // pra não vazar a média do perfil pra quem não tem plano.
+    // detalhados nem perguntas. Recebem lista vazia no payload RSC.
+    // O contador `reviewsCount` também é zerado pra evitar vazar
+    // métricas pra quem não tem plano.
     //
-    // Acompanhante (Owner ou outra) vê normal: precisa enxergar o
-    // que estão dizendo dela.
-    const canSeeReviews =
+    // Acompanhante (Owner ou outra) vê normal.
+    const canSeeFanContent =
         session?.userType === "ACOMPANHANTE" || viewerIsFan;
-    const reviews = canSeeReviews ? reviewsAll : [];
+    const reviews = canSeeFanContent ? reviewsAll : [];
+    const perguntas = canSeeFanContent
+        ? await listarPerguntasPublicas(result.userId, {
+            viewerUserId: session?.userId ?? null,
+        })
+        : [];
 
-    const perfilSafe = canSeeReviews
+    const perfilSafe = canSeeFanContent
         ? result.perfil
         : {
             ...result.perfil,
             reviewsCount: 0,
-            reviewsAverage: 0,
         };
 
-    // Cliente autenticado vê o estado da própria avaliação para
-    // pré-popular o formulário "Sua avaliação". Acompanhantes e
-    // anônimos não acessam este caminho.
+    // Re-popular minhaReview agora vira uma busca por comentário (sem
+    // nota numérica).
     const minhaReview =
         session?.userType === "CLIENTE" && viewerIsFan
             ? await obterMinhaReview(result.userId, session.userId)
@@ -165,12 +189,40 @@ export default async function PerfilPublicoPage({
         <PageSurface
             banner={<ProfileBanner photoUrl={result.perfil.coverUrl} />}
         >
+            <ProfileJsonLd
+                slug={slug}
+                nome={result.perfil.nome}
+                cidadeNome={result.perfil.cidadeNome}
+                estadoSigla={result.perfil.estadoSigla}
+                descricao={result.perfil.descricao}
+                fotoUrl={result.perfil.fotoUrl}
+                reviewsCount={result.perfil.reviewsCount}
+            />
             <ViewTracker slug={slug} />
             <PerfilPublicoView
                 slug={slug}
                 perfil={perfilSafe}
                 galeriaItems={galeriaItems}
                 reviews={reviews}
+                perguntas={perguntas}
+                likesTotal={likesTotal}
+                storiesAtivos={storiesAtivos.map((s) => ({
+                    id: s.id,
+                    type: s.kind === "VIDEO" ? "video" : "photo",
+                    url: `/api/storage/${s.storageKey}`,
+                    description: s.caption,
+                    createdAt: s.createdAt,
+                    likes: s.likesCount,
+                    liked: s.liked,
+                    viewed: s.viewed,
+                }))}
+                storyRing={
+                    storyRing.total === 0
+                        ? "none"
+                        : storyRing.naoVistos > 0
+                            ? "unseen"
+                            : "seen"
+                }
                 viewerKind={
                     session === null
                         ? "anonimo"
@@ -193,8 +245,11 @@ export default async function PerfilPublicoPage({
 
 /**
  * Metadata dinâmica baseada no perfil. Quando o perfil está oculto
- * ou não existe, devolvemos um título genérico para evitar leak de
- * conteúdo via OG tags.
+ * ou não existe, devolvemos um título genérico **com `noindex`** —
+ * páginas indisponíveis não devem aparecer no Google. Quando OK,
+ * geramos title + description otimizados pra busca local
+ * ("[nome] em [cidade], [UF]"), com OG image apontando pra foto
+ * de perfil e canonical absoluta.
  */
 export async function generateMetadata({
     params,
@@ -207,23 +262,152 @@ export async function generateMetadata({
     if (result.state !== "OK") {
         return {
             title: "Perfil indisponível",
+            robots: { index: false, follow: false },
         };
     }
 
     const { perfil } = result;
     const localizacao = `${perfil.cidadeNome}, ${perfil.estadoSigla}`;
+    const titleShort = `${perfil.nome} em ${localizacao}`;
     const description = perfil.descricao
-        ? perfil.descricao.slice(0, 160)
-        : `Perfil de ${perfil.nome} em ${localizacao}.`;
+        ? `${perfil.descricao.slice(0, 155)}…`
+        : `Conheça ${perfil.nome}, acompanhante em ${localizacao}. Perfil verificado com fotos, vídeos e avaliações.`;
+
+    // URL absoluta da foto de perfil pra OG/Twitter cards.
+    const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const ogImage = perfil.fotoUrl
+        ? perfil.fotoUrl.startsWith("http")
+            ? perfil.fotoUrl
+            : `${siteUrl}${perfil.fotoUrl}`
+        : `${siteUrl}/icon.png`;
 
     return {
-        title: `${perfil.nome} (@${perfil.identificador})`,
+        title: titleShort,
         description,
+        alternates: {
+            canonical: `/acompanhantes/${perfil.identificador}`,
+        },
         openGraph: {
             title: `${perfil.nome} · ${localizacao}`,
             description,
-            images: perfil.fotoUrl ? [{ url: perfil.fotoUrl }] : undefined,
+            url: `${siteUrl}/acompanhantes/${perfil.identificador}`,
+            images: [{ url: ogImage, width: 600, height: 800, alt: perfil.nome }],
             type: "profile",
+            locale: "pt_BR",
+            siteName: "Privello",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: `${perfil.nome} · ${localizacao}`,
+            description,
+            images: [ogImage],
         },
     };
+}
+
+
+/**
+ * JSON-LD `Person` + `BreadcrumbList` para o perfil público.
+ *
+ * - **Person**: Google entende que aquela página representa uma
+ *   pessoa real. Quando indexar, pode mostrar como knowledge card
+ *   (foto, localização). Não declaramos `aggregateRating` porque
+ *   removemos a nota numérica do produto.
+ * - **BreadcrumbList**: gera a trilha "Home > Acompanhantes > Nome"
+ *   no SERP, melhorando CTR.
+ *
+ * Renderizado server-side direto no HTML — Google parser pega na
+ * primeira passada.
+ */
+function ProfileJsonLd({
+    slug,
+    nome,
+    cidadeNome,
+    estadoSigla,
+    descricao,
+    fotoUrl,
+    reviewsCount,
+}: {
+    slug: string;
+    nome: string;
+    cidadeNome: string;
+    estadoSigla: string;
+    descricao: string;
+    fotoUrl: string | null;
+    reviewsCount: number;
+}): React.ReactElement {
+    const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const url = `${siteUrl}/acompanhantes/${slug}`;
+    const image = fotoUrl
+        ? fotoUrl.startsWith("http")
+            ? fotoUrl
+            : `${siteUrl}${fotoUrl}`
+        : undefined;
+
+    const person = {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        name: nome,
+        url,
+        image,
+        description: descricao.slice(0, 500),
+        address: {
+            "@type": "PostalAddress",
+            addressLocality: cidadeNome,
+            addressRegion: estadoSigla,
+            addressCountry: "BR",
+        },
+        // Quando reviews textuais existem, o Google mostra o
+        // contador. Não inclui `aggregateRating` (sem nota numérica).
+        ...(reviewsCount > 0
+            ? {
+                review: {
+                    "@type": "Review",
+                    reviewBody: `${reviewsCount} avaliações verificadas.`,
+                },
+            }
+            : {}),
+    };
+
+    const breadcrumb = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Início",
+                item: siteUrl,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "Acompanhantes",
+                item: `${siteUrl}/acompanhantes`,
+            },
+            {
+                "@type": "ListItem",
+                position: 3,
+                name: `${nome} em ${cidadeNome}, ${estadoSigla}`,
+                item: url,
+            },
+        ],
+    };
+
+    return (
+        <>
+            <script
+                type="application/ld+json"
+                // eslint-disable-next-line react/no-danger
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(person) }}
+            />
+            <script
+                type="application/ld+json"
+                // eslint-disable-next-line react/no-danger
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+            />
+        </>
+    );
 }

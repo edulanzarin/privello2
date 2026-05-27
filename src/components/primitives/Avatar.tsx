@@ -57,6 +57,19 @@ export interface AvatarProps {
      */
     cornerBadgeTone?: "primary" | "info" | "neutral";
     /**
+     * Quando passado, adiciona um anel ao redor do avatar indicando
+     * a presença de Story.
+     *
+     * - `"unseen"`: anel colorido (gradiente primary→secondary) —
+     *   há Story que o viewer ainda não viu.
+     * - `"seen"`: anel cinza neutro — todos os Stories ativos já
+     *   foram vistos.
+     * - `"none"` ou ausente: sem anel.
+     *
+     * Acompanhantes que não têm Story ativo não recebem anel.
+     */
+    storyRing?: "unseen" | "seen" | "none";
+    /**
      * Rótulo acessível usado quando `onClick` está presente.
      * Default: `"Trocar foto"`.
      */
@@ -106,6 +119,7 @@ export function Avatar({
     onClick,
     cornerBadge,
     cornerBadgeTone = "primary",
+    storyRing = "none",
     "aria-label": ariaLabel,
     className,
 }: AvatarProps): React.ReactElement {
@@ -115,19 +129,39 @@ export function Avatar({
     const initials = computeInitials(name);
 
     // Wrapper externo: relative para ancorar o cornerBadge fora do
-    // disco. Não tem overflow-hidden — só o disco interno tem.
+    // disco. Quando há ring de Story, aplicamos `border` colorida +
+    // `padding` no wrapper externo (forma um "anel" com gap entre
+    // borda e disco — visual estilo Instagram). Cores:
+    //
+    //   - `unseen`: border salmão sólido (primary-500).
+    //   - `seen`: border cinza neutro.
+    //
+    // Por que `border` e não `ring`: ring usa box-shadow que pode
+    // ser cortado por `overflow-hidden` em ancestrais e às vezes
+    // não pinta consistente com `ring-offset` arbitrário. Border
+    // sempre renderiza.
+    const hasRing = storyRing === "unseen" || storyRing === "seen";
+    const ringClasses = hasRing
+        ? storyRing === "unseen"
+            ? "rounded-full border-2 border-primary-500 p-[3px]"
+            : "rounded-full border-2 border-neutral-300 p-[3px]"
+        : "";
+
     const outerComposed = [
         "relative inline-flex flex-none",
         dims.box,
+        ringClasses,
         className ?? "",
     ]
         .filter(Boolean)
         .join(" ");
 
-    // Disco interno: aplica overflow-hidden e ring. Quando interativo,
-    // recebe os comportamentos de botão.
+    // Disco: o ring sutil cinza só aparece quando NÃO há story ring
+    // (pra não acumular dois anéis). Em story mode o gap entre disco
+    // e border externa fica pelo padding.
     const discComposed = [
-        "group relative inline-flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-primary-100 text-primary-700 ring-1 ring-neutral-200",
+        "group relative inline-flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-primary-100 text-primary-700",
+        hasRing ? "" : "ring-1 ring-neutral-200",
         onClick !== undefined
             ? "cursor-pointer transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
             : "",

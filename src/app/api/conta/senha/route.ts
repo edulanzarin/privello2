@@ -30,7 +30,7 @@ import { requireSession } from "@/server/auth/guards";
  * - `500`: `{ ok: false, reason: "PERSISTENCIA" }`.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-    const auth = await requireSession();
+    const auth = await requireSession(request);
     if (!auth.ok) return auth.response;
 
     let body: unknown;
