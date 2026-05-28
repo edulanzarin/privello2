@@ -106,7 +106,7 @@ export function AvatarUpload({
     const ringColor = error
         ? "ring-danger-400"
         : preview
-            ? "ring-primary-300"
+            ? "ring-[color:var(--accent)]/35"
             : "ring-neutral-200";
 
     return (
@@ -129,7 +129,7 @@ export function AvatarUpload({
                 aria-label="Escolher foto de perfil"
                 className={[
                     "relative flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-full ring-2 transition-all duration-150",
-                    "hover:ring-primary-400 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30",
+                    "hover:ring-[color:var(--accent)]/50 focus:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--accent)]/30",
                     disabled && "cursor-not-allowed opacity-50",
                     ringColor,
                     preview ? "bg-neutral-900" : "bg-neutral-100",

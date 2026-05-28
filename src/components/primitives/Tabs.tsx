@@ -135,7 +135,7 @@ export function TabList({
         // `scrollbar-none` esconde a scrollbar horizontal nativa em
         // Windows (que aparece com setinhas e polui o layout) sem
         // prejudicar o scroll por wheel/swipe.
-        "flex items-center gap-1 overflow-x-auto overflow-y-hidden scrollbar-none border-b border-neutral-200",
+        "flex items-center gap-1 overflow-x-auto overflow-y-hidden scrollbar-none border-b border-[color:var(--hairline)]",
         className ?? "",
     ]
         .filter(Boolean)

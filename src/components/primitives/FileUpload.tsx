@@ -78,8 +78,8 @@ export function FileUpload({
     const borderColor = error
         ? "border-danger-400"
         : fileName
-            ? "border-secondary-300"
-            : "border-neutral-200 border-dashed";
+            ? "border-[color:var(--accent)]/35"
+            : "border-border border-dashed";
 
     return (
         <div className="flex flex-col gap-1.5">
@@ -99,8 +99,8 @@ export function FileUpload({
                 onKeyDown={handleKeyDown}
                 aria-disabled={disabled || undefined}
                 className={[
-                    "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 bg-surface px-4 py-6 text-center transition-colors duration-150",
-                    "hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30",
+                    "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 bg-surface px-4 py-7 text-center transition-all duration-150",
+                    "hover:border-[color:var(--accent)]/40 hover:bg-[color:var(--accent-soft)]/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/30",
                     disabled && "cursor-not-allowed opacity-50",
                     borderColor,
                 ]

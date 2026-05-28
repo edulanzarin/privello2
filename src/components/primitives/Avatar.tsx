@@ -89,7 +89,8 @@ const CORNER_BADGE_TONE_CLASSES: Record<
     NonNullable<AvatarProps["cornerBadgeTone"]>,
     string
 > = {
-    primary: "bg-primary-600 text-white",
+    primary:
+        "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white",
     info: "bg-info-600 text-white",
     neutral: "bg-neutral-700 text-white",
 };
@@ -143,7 +144,7 @@ export function Avatar({
     const hasRing = storyRing === "unseen" || storyRing === "seen";
     const ringClasses = hasRing
         ? storyRing === "unseen"
-            ? "rounded-full border-2 border-primary-500 p-[3px]"
+            ? "rounded-full p-[3px] bg-gradient-to-tr from-[color:var(--accent)] via-[#e0506b] to-[color:var(--accent-deep)]"
             : "rounded-full border-2 border-neutral-300 p-[3px]"
         : "";
 
@@ -160,10 +161,10 @@ export function Avatar({
     // (pra não acumular dois anéis). Em story mode o gap entre disco
     // e border externa fica pelo padding.
     const discComposed = [
-        "group relative inline-flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-primary-100 text-primary-700",
-        hasRing ? "" : "ring-1 ring-neutral-200",
+        "group relative inline-flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]",
+        hasRing ? "ring-2 ring-surface" : "ring-1 ring-neutral-200",
         onClick !== undefined
-            ? "cursor-pointer transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+            ? "cursor-pointer transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
             : "",
     ]
         .filter(Boolean)

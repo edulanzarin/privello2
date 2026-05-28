@@ -62,9 +62,9 @@ export interface LinkButtonProps {
 
 const TONE_CLASSES: Record<LinkButtonTone, string> = {
     neutral:
-        "border-neutral-200 bg-surface text-text-secondary shadow-sm hover:border-primary-300 hover:text-text-primary focus-visible:ring-primary-500/40",
+        "border-border bg-surface text-text-secondary hover:border-[color:var(--accent)]/35 hover:text-[color:var(--accent-deep)] focus-visible:ring-[color:var(--accent)]/40",
     danger:
-        "border-neutral-200 bg-surface text-text-secondary shadow-sm hover:border-danger-300 hover:bg-danger-50 hover:text-danger-700 focus-visible:ring-danger-500/40",
+        "border-border bg-surface text-text-secondary hover:border-danger-300 hover:bg-danger-50 hover:text-danger-700 focus-visible:ring-danger-500/40",
 };
 
 /**
@@ -87,7 +87,7 @@ export function LinkButton({
     disabled = false,
 }: LinkButtonProps): React.ReactElement {
     const composed = [
-        "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium tracking-tight transition-colors duration-150 focus:outline-none focus-visible:ring-2 disabled:opacity-60 disabled:cursor-not-allowed",
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium tracking-tight transition-all duration-150 focus:outline-none focus-visible:ring-2 disabled:opacity-60 disabled:cursor-not-allowed",
         TONE_CLASSES[tone],
         className ?? "",
     ]

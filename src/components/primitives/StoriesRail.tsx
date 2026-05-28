@@ -131,7 +131,7 @@ function RailButton({
     );
 
     const composed =
-        "flex w-[5rem] flex-col items-center gap-2 rounded-xl px-1 py-1 transition-colors hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40";
+        "flex w-[5rem] flex-col items-center gap-2 rounded-2xl px-1 py-1 transition-colors hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40";
 
     if (onItemClick !== undefined) {
         return (

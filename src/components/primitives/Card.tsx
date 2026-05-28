@@ -77,15 +77,14 @@ const VARIANT_CLASSES: Record<
     },
     glass: {
         default:
-            "rounded-3xl border border-border bg-surface p-6 transition-colors duration-200",
-        none:
-            "rounded-3xl border border-border bg-surface transition-colors duration-200",
+            "glass-surface rounded-3xl p-6 transition-all duration-200",
+        none: "glass-surface rounded-3xl transition-all duration-200",
     },
     elevated: {
         default:
-            "rounded-3xl border border-border bg-surface p-6 transition-all duration-200 hover:-translate-y-0.5",
+            "rounded-3xl border border-border bg-surface p-6 shadow-[0_18px_36px_-22px_rgba(26,20,16,0.18)] transition-all duration-200 lift",
         none:
-            "rounded-3xl border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5",
+            "rounded-3xl border border-border bg-surface shadow-[0_18px_36px_-22px_rgba(26,20,16,0.18)] transition-all duration-200 lift",
     },
 };
 
@@ -108,7 +107,7 @@ export function Card({
 }: CardProps): React.ReactElement {
     const tone = disabled ? "opacity-60 pointer-events-none" : "";
     const accent = featured
-        ? "ring-1 ring-primary-300/60 shadow-glassLg"
+        ? "ring-2 ring-[color:var(--accent)]/35 ring-offset-2 ring-offset-[color:var(--canvas)]"
         : "";
     const composed = [
         VARIANT_CLASSES[variant][padding],

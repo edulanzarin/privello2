@@ -117,7 +117,7 @@ export function HomeView({
                         </Badge>
                         <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl lg:text-6xl lg:leading-[1.05]">
                             Encontros com{" "}
-                            <span className="text-primary-700">respeito,</span>
+                            <span className="text-[color:var(--accent-deep)]">respeito,</span>
                             <br className="hidden sm:inline" />
                             privacidade e atitude.
                         </h1>
@@ -281,7 +281,7 @@ export function HomeView({
                 <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
                     <div className="flex flex-col gap-5">
                         <h2 className="text-3xl font-bold leading-tight tracking-tight text-text-primary sm:text-4xl">
-                            Privacidade <span className="text-primary-700">de verdade.</span>
+                            Privacidade <span className="text-[color:var(--accent-deep)]">de verdade.</span>
                             <br />
                             Sem rodeios.
                         </h2>
@@ -293,15 +293,15 @@ export function HomeView({
                         </p>
                         <ul className="flex flex-col gap-2 text-sm text-text-secondary">
                             <li className="inline-flex items-center gap-2">
-                                <CheckIcon size={14} className="text-primary-600" />
+                                <CheckIcon size={14} className="text-[color:var(--accent-deep)]" />
                                 Marca d&apos;água nas suas mídias.
                             </li>
                             <li className="inline-flex items-center gap-2">
-                                <CheckIcon size={14} className="text-primary-600" />
+                                <CheckIcon size={14} className="text-[color:var(--accent-deep)]" />
                                 Só clientes pagantes podem avaliar e comentar.
                             </li>
                             <li className="inline-flex items-center gap-2">
-                                <CheckIcon size={14} className="text-primary-600" />
+                                <CheckIcon size={14} className="text-[color:var(--accent-deep)]" />
                                 Toggle de visibilidade pública a qualquer
                                 momento.
                             </li>
@@ -490,12 +490,12 @@ function Step({
     return (
         <li className="flex gap-4">
             <div className="flex shrink-0 flex-col items-center gap-2">
-                <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-primary-700">
+                <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[color:var(--accent-deep)]">
                     {n}
                 </span>
                 <span
                     aria-hidden="true"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-primary-600"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-[color:var(--accent-deep)]"
                 >
                     {icon}
                 </span>

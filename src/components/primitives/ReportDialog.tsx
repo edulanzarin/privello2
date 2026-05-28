@@ -199,16 +199,16 @@ export function ReportDialog({
                                     <label
                                         key={opt.valor}
                                         className={[
-                                            "flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors",
+                                            "flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition-colors",
                                             checked
-                                                ? "border-primary-500 bg-primary-50"
+                                                ? "border-[color:var(--accent)]/40 bg-[color:var(--accent-soft)]"
                                                 : "border-border bg-surface hover:bg-surface-muted",
                                         ].join(" ")}
                                     >
                                         <input
                                             type="radio"
                                             name="motivo-denuncia"
-                                            className="mt-1 h-4 w-4 flex-none text-primary-600 focus:ring-primary-500"
+                                            className="mt-1 h-4 w-4 flex-none accent-[color:var(--accent)]"
                                             checked={checked}
                                             onChange={() =>
                                                 setMotivo(opt.valor)
@@ -239,7 +239,7 @@ export function ReportDialog({
                                 maxLength={500}
                                 disabled={enviando}
                                 placeholder="Explique brevemente, se necessário."
-                                className="resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                                className="resize-none rounded-2xl border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-[color:var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]/25"
                             />
                             <span className="text-right text-[10px] text-text-secondary">
                                 {descricao.length}/500

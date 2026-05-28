@@ -47,7 +47,8 @@ export interface StatCardProps {
 }
 
 const TONE_CLASSES: Record<StatCardTone, string> = {
-    primary: "bg-primary-100 text-primary-700",
+    primary:
+        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-2 ring-[color:var(--accent)]/15",
     neutral: "bg-neutral-100 text-text-secondary",
 };
 
@@ -68,7 +69,7 @@ export function StatCard({
     className,
 }: StatCardProps): React.ReactElement {
     const composed = [
-        "flex flex-col rounded-3xl border border-neutral-200 bg-surface",
+        "flex flex-col rounded-3xl border border-border bg-surface transition-shadow duration-200 hover:shadow-[0_18px_36px_-22px_rgba(26,20,16,0.18)]",
         className ?? "",
     ]
         .filter(Boolean)
@@ -76,7 +77,7 @@ export function StatCard({
 
     return (
         <div className={composed}>
-            <div className="flex items-center justify-between gap-2 border-b border-neutral-200/70 px-4 py-3">
+            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--hairline)] px-4 py-3">
                 <div className="flex min-w-0 items-center gap-2">
                     <span
                         aria-hidden="true"

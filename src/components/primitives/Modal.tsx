@@ -188,7 +188,7 @@ export function Modal({
             {/* Card principal */}
             <div
                 className={[
-                    "relative z-0 flex w-full flex-col overflow-hidden rounded-3xl bg-surface shadow-xl shadow-text-primary/10",
+                    "relative z-0 flex w-full flex-col overflow-hidden rounded-3xl glass-surface-strong",
                     isFull
                         ? "h-full"
                         // Desconta o espaço da TopBar (h-14 = 56px) +
@@ -203,7 +203,7 @@ export function Modal({
                     .join(" ")}
             >
                 {title != null ? (
-                    <header className="flex items-start justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+                    <header className="flex items-start justify-between gap-3 border-b border-[color:var(--hairline)] px-5 py-4">
                         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                             <h2 className="truncate text-base font-semibold tracking-tight text-text-primary">
                                 {title}
@@ -218,7 +218,7 @@ export function Modal({
                             type="button"
                             onClick={onClose}
                             aria-label="Fechar"
-                            className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-neutral-100 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                            className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-neutral-100 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
                         >
                             <XIcon size={16} />
                         </button>

@@ -55,7 +55,7 @@ export function ActivityFeedItem({
     const composed = [
         "flex items-start gap-3 px-4 py-3 transition-colors duration-150",
         href !== undefined
-            ? "hover:bg-primary-100/60 focus-visible:bg-primary-100/70 focus-visible:outline-none"
+            ? "hover:bg-[color:var(--accent-soft)]/60 focus-visible:bg-[color:var(--accent-soft)]/70 focus-visible:outline-none"
             : "",
         className ?? "",
     ]
@@ -67,7 +67,7 @@ export function ActivityFeedItem({
             {icon != null ? (
                 <span
                     aria-hidden="true"
-                    className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-primary-50 text-primary-600"
+                    className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
                 >
                     {icon}
                 </span>

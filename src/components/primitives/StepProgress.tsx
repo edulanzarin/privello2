@@ -70,7 +70,7 @@ export function StepProgress({
                         className={[
                             "h-1 flex-1 rounded-sm transition-colors duration-200",
                             i < safeCurrent
-                                ? "bg-primary-600"
+                                ? "bg-[color:var(--accent)]"
                                 : "bg-neutral-200",
                         ].join(" ")}
                     />

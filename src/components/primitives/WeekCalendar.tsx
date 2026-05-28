@@ -68,9 +68,9 @@ export function WeekCalendar({
             {days.map((day) => {
                 const isActive = activeSet.has(day.value);
                 const cellClasses = [
-                    "flex aspect-square items-center justify-center rounded-md text-[0.7rem] font-semibold uppercase tracking-wider transition-colors",
+                    "flex aspect-square items-center justify-center rounded-2xl text-[0.7rem] font-semibold uppercase tracking-wider transition-all",
                     isActive
-                        ? "bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-sm"
+                        ? "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_6px_16px_-6px_rgba(197,82,58,0.45)]"
                         : "bg-neutral-100 text-text-disabled",
                 ].join(" ");
                 return (

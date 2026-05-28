@@ -55,15 +55,16 @@ const TONE_CLASSES: Record<
     { accent: string; ring: string }
 > = {
     primary: {
-        accent: "bg-primary-100 text-primary-700",
-        ring: "hover:border-primary-300 hover:bg-primary-50/40",
+        accent:
+            "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-2 ring-[color:var(--accent)]/15",
+        ring: "hover:border-[color:var(--accent)]/35 hover:bg-[color:var(--accent-soft)]/40",
     },
     info: {
-        accent: "bg-info-100 text-info-700",
+        accent: "bg-info-100 text-info-700 ring-2 ring-info-200",
         ring: "hover:border-info-300 hover:bg-info-50/40",
     },
     neutral: {
-        accent: "bg-neutral-100 text-neutral-700",
+        accent: "bg-neutral-100 text-neutral-700 ring-2 ring-neutral-200",
         ring: "hover:border-neutral-300 hover:bg-neutral-50",
     },
 };
@@ -87,7 +88,7 @@ export function OptionCard({
 }: OptionCardProps): React.ReactElement {
     const tones = TONE_CLASSES[tone];
     const composed = [
-        "group flex items-start gap-3 rounded-lg border border-neutral-200 bg-surface p-4 text-left shadow-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40",
+        "group flex items-start gap-3 rounded-3xl border border-border bg-surface p-4 text-left transition-all duration-200 lift focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40",
         tones.ring,
         className ?? "",
     ]

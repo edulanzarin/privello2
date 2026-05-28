@@ -49,7 +49,7 @@ export default async function AdminPage() {
                     <TabTrigger value="verificacoes">
                         Verificações
                         {verificacoes.length > 0 ? (
-                            <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary-600 px-1 text-[0.6rem] font-semibold text-white">
+                            <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white">
                                 {verificacoes.length}
                             </span>
                         ) : null}
@@ -57,7 +57,7 @@ export default async function AdminPage() {
                     <TabTrigger value="reports">
                         Denúncias
                         {reports.length > 0 ? (
-                            <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary-600 px-1 text-[0.6rem] font-semibold text-white">
+                            <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white">
                                 {reports.length}
                             </span>
                         ) : null}

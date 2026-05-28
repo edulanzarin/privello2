@@ -81,7 +81,7 @@ export function ConfirmDialog({
                     </p>
                 </div>
             ) : null}
-            <footer className="flex flex-none flex-col-reverse items-stretch gap-2 border-t border-neutral-200 px-5 py-3 sm:flex-row sm:items-center sm:justify-end">
+            <footer className="flex flex-none flex-col-reverse items-stretch gap-2 border-t border-[color:var(--hairline)] px-5 py-3 sm:flex-row sm:items-center sm:justify-end">
                 <Button
                     type="button"
                     variant="ghost"

@@ -85,19 +85,21 @@ export function Switch({
     const showError = Boolean(error) && Boolean(errorMessage);
 
     const cardBase =
-        "flex items-center gap-3 rounded-md border bg-surface px-3 py-3 shadow-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-primary-500/30 focus-within:border-primary-400";
+        "flex items-center gap-3 rounded-2xl border bg-surface px-4 py-3 transition-all duration-150 focus-within:ring-2 focus-within:ring-[color:var(--accent)]/30 focus-within:border-[color:var(--accent)]/50";
     const cardTone = error
         ? "border-danger-400"
         : value
-            ? "border-primary-300 bg-primary-50/40"
-            : "border-neutral-200 hover:bg-neutral-50";
+            ? "border-[color:var(--accent)]/40 bg-[color:var(--accent-soft)]/40"
+            : "border-border hover:border-[color:var(--accent)]/30";
     const cardDisabled = disabled
         ? "cursor-not-allowed opacity-60"
         : "cursor-pointer";
 
     const trackBase =
-        "relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors duration-200";
-    const trackTone = value ? "bg-primary-600" : "bg-neutral-300";
+        "relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-all duration-200";
+    const trackTone = value
+        ? "bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-deep)] shadow-[0_4px_12px_-4px_rgba(197,82,58,0.55)]"
+        : "bg-neutral-300";
 
     const thumbBase =
         "inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200";

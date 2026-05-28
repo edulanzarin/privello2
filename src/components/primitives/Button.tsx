@@ -25,11 +25,11 @@ export type ButtonSize = "sm" | "md" | "lg";
  */
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     primary:
-        "text-white bg-gradient-to-br from-primary-500 to-primary-700 hover:from-primary-600 hover:to-primary-700 shadow-[0_8px_24px_-8px_rgba(197,82,58,0.55),inset_0_1px_0_rgba(255,255,255,0.4)] focus-visible:ring-primary-500/40 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none",
+        "text-white bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] hover:brightness-105 active:brightness-95 shadow-[0_8px_24px_-8px_rgba(197,82,58,0.55),inset_0_1px_0_rgba(255,255,255,0.4)] focus-visible:ring-[color:var(--accent)]/40 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none",
     secondary:
-        "text-text-primary bg-surface border border-border hover:bg-surface-muted focus-visible:ring-text-primary/20 disabled:opacity-40",
+        "text-text-primary bg-surface border border-border hover:border-[color:var(--accent)]/30 hover:bg-[color:var(--accent-soft)]/50 focus-visible:ring-text-primary/20 disabled:opacity-40",
     ghost:
-        "text-text-secondary bg-transparent hover:bg-surface-muted focus-visible:ring-text-primary/15 disabled:text-text-disabled",
+        "text-text-secondary bg-transparent hover:bg-[color:var(--accent-soft)]/40 hover:text-[color:var(--accent-deep)] focus-visible:ring-[color:var(--accent)]/30 disabled:text-text-disabled",
     danger:
         "text-white bg-danger-600 hover:bg-danger-700 focus-visible:ring-danger-500/40 disabled:opacity-40",
 };

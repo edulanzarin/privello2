@@ -533,13 +533,13 @@ export function BuscaView({
                     <button
                         type="button"
                         onClick={limparCidade}
-                        className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+                        className="inline-flex max-w-full items-center gap-2 rounded-full border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)] px-3 py-1.5 text-sm font-semibold text-[color:var(--accent-deep)] transition-colors hover:bg-[color:var(--accent-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
                     >
                         <MapPinIcon size={14} />
                         <span className="truncate">
                             {filtros.cidadeNome}, {filtros.estadoSigla}
                         </span>
-                        <span className="text-xs text-primary-600">
+                        <span className="text-xs text-[color:var(--accent-deep)]">
                             trocar
                         </span>
                     </button>
@@ -568,7 +568,7 @@ export function BuscaView({
                 >
                     Filtros{" "}
                     {ativosUrl > 0 ? (
-                        <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary-600 px-1 text-[0.6rem] font-semibold text-white">
+                        <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white">
                             {ativosUrl}
                         </span>
                     ) : null}
@@ -1113,8 +1113,8 @@ function ChipsFilter({
                             className={[
                                 "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                                 active
-                                    ? "border-primary-600 bg-primary-600 text-white"
-                                    : "border-neutral-200 bg-surface text-text-secondary hover:border-primary-300 hover:text-text-primary",
+                                    ? "border-primary-600 bg-[color:var(--accent)] text-white"
+                                    : "border-neutral-200 bg-surface text-text-secondary hover:border-[color:var(--accent)]/40 hover:text-text-primary",
                             ].join(" ")}
                         >
                             {opt.label}

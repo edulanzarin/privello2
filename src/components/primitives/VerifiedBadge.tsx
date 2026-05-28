@@ -56,7 +56,7 @@ export function VerifiedBadge({
     ...rest
 }: VerifiedBadgeProps): React.ReactElement {
     const composed = [
-        "inline-flex flex-none items-center justify-center text-primary-500",
+        "inline-flex flex-none items-center justify-center text-[color:var(--accent)]",
         className ?? "",
     ]
         .filter(Boolean)

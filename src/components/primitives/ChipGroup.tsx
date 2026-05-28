@@ -134,14 +134,14 @@ export function ChipGroup({
                             disabled={disabled}
                             onClick={() => toggle(opt.value)}
                             className={[
-                                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-150",
-                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40",
+                                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-150",
+                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40",
                                 disabled
                                     ? "cursor-not-allowed opacity-50"
                                     : "cursor-pointer",
                                 isSelected
-                                    ? "border-primary-300 bg-primary-100 text-primary-700"
-                                    : "border-neutral-200 bg-surface text-text-primary hover:bg-neutral-50",
+                                    ? "border-[color:var(--accent)]/40 bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] shadow-[0_2px_8px_-3px_rgba(197,82,58,0.3)]"
+                                    : "border-border bg-surface text-text-primary hover:border-[color:var(--accent)]/30 hover:bg-[color:var(--accent-soft)]/40",
                             ].join(" ")}
                         >
                             {isSelected ? (

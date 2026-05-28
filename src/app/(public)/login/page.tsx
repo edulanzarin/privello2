@@ -60,7 +60,7 @@ function LoginFallback(): React.ReactElement {
             >
                 <div className="h-10 rounded-2xl bg-neutral-100" />
                 <div className="h-10 rounded-2xl bg-neutral-100" />
-                <div className="h-10 rounded-2xl bg-primary-100" />
+                <div className="h-10 rounded-2xl bg-[color:var(--accent-soft)]" />
             </div>
         </AuthCard>
     );
@@ -181,7 +181,7 @@ function LoginForm(): React.ReactElement {
                         Sem conta ainda?{" "}
                         <a
                             href={buildAuthUrl("/cadastro", safeNext)}
-                            className="font-medium text-primary-700 hover:text-primary-800"
+                            className="font-medium text-[color:var(--accent-deep)] hover:text-primary-800"
                         >
                             Criar conta
                         </a>

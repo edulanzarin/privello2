@@ -62,13 +62,13 @@ export interface IconButtonProps {
 
 const TONE_CLASSES: Record<IconButtonTone, string> = {
     primary:
-        "bg-primary-600 text-white shadow-sm hover:bg-primary-700 focus-visible:ring-primary-500/40",
+        "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)] hover:scale-105 transition-transform focus-visible:ring-[color:var(--accent)]/40",
     neutral:
-        "border border-neutral-200 bg-surface text-text-secondary shadow-sm hover:border-primary-300 hover:text-primary-700 focus-visible:ring-primary-500/40",
+        "border border-border bg-surface text-text-secondary hover:border-[color:var(--accent)]/35 hover:text-[color:var(--accent-deep)] focus-visible:ring-[color:var(--accent)]/40",
     danger:
-        "border border-neutral-200 bg-surface text-text-secondary shadow-sm hover:border-danger-300 hover:bg-danger-50 hover:text-danger-700 focus-visible:ring-danger-500/40",
+        "border border-border bg-surface text-text-secondary hover:border-danger-300 hover:bg-danger-50 hover:text-danger-700 focus-visible:ring-danger-500/40",
     ghost:
-        "text-text-secondary hover:bg-neutral-100 hover:text-text-primary focus-visible:ring-primary-500/40",
+        "text-text-secondary hover:bg-neutral-100 hover:text-text-primary focus-visible:ring-[color:var(--accent)]/40",
 };
 
 const SIZE_CLASSES: Record<IconButtonSize, string> = {

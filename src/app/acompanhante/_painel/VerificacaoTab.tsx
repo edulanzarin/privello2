@@ -284,8 +284,8 @@ function FotoInput({
                 className={[
                     "relative flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed",
                     value
-                        ? "border-primary-300 bg-primary-50/30"
-                        : "border-border bg-surface-muted hover:border-primary-300",
+                        ? "border-[color:var(--accent)]/40 bg-[color:var(--accent-soft)]/30"
+                        : "border-border bg-surface-muted hover:border-[color:var(--accent)]/40",
                     disabled ? "pointer-events-none opacity-60" : "",
                 ].join(" ")}
             >

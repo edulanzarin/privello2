@@ -340,7 +340,7 @@ export function AudioRecorder({
 
     if (state === "recording") {
         return (
-            <div className="flex flex-col items-center gap-5 rounded-2xl border border-neutral-200 bg-gradient-to-br from-primary-50/50 via-surface to-surface px-4 py-6">
+            <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-gradient-to-br from-[color:var(--accent-soft)]/40 via-surface to-surface px-4 py-6">
                 <LiveWave bars={bars} />
                 <button
                     type="button"
@@ -354,7 +354,7 @@ export function AudioRecorder({
                     className={[
                         "inline-flex h-16 w-16 items-center justify-center rounded-full shadow-md transition-all",
                         reachedMin
-                            ? "bg-primary-600 text-white hover:bg-primary-700"
+                            ? "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white hover:scale-105"
                             : "bg-neutral-200 text-neutral-400 cursor-not-allowed",
                     ].join(" ")}
                 >
@@ -399,7 +399,7 @@ export function AudioRecorder({
                 onClick={() => void startRecording()}
                 disabled={disabled}
                 aria-label="Iniciar gravação"
-                className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary-600 text-white shadow-md transition-all hover:bg-primary-700 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_8px_24px_-8px_rgba(197,82,58,0.55)] transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
             >
                 <MicIcon size={26} />
             </button>
@@ -424,7 +424,7 @@ function LiveWave({ bars }: { bars: ReadonlyArray<number> }): React.ReactElement
                         key={i}
                         aria-hidden="true"
                         style={{ height: `${heightPct}%` }}
-                        className="w-[3px] flex-1 rounded-full bg-primary-500/85"
+                        className="w-[3px] flex-1 rounded-full bg-[color:var(--accent)]/85"
                     />
                 );
             })}

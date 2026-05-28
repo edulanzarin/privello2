@@ -79,7 +79,7 @@ export function MediaThumbnail({
             onClick={handleClick}
             aria-label={item.description ?? `Abrir ${isVideo ? "vídeo" : "foto"}`}
             className={[
-                "group relative block w-full overflow-hidden rounded-lg bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40",
+                "group relative block w-full overflow-hidden rounded-2xl bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40",
                 ASPECT_CLASSES[aspect],
                 className ?? "",
             ]

@@ -1149,7 +1149,7 @@ function PaymentTile({
         <div className="flex items-center gap-2.5 rounded-xl border border-neutral-200 bg-surface px-3 py-2.5">
             <span
                 aria-hidden="true"
-                className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-primary-100 text-primary-700"
+                className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
             >
                 {icon}
             </span>

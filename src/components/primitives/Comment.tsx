@@ -173,7 +173,7 @@ export function CommentInput({
                     className="mt-1"
                 />
             ) : null}
-            <div className="flex min-w-0 flex-1 items-end gap-2 rounded-full border border-neutral-200 bg-surface px-3 py-1.5 focus-within:border-primary-300 focus-within:ring-2 focus-within:ring-primary-500/30">
+            <div className="flex min-w-0 flex-1 items-end gap-2 rounded-full border border-border bg-surface px-3 py-1.5 transition-all focus-within:border-[color:var(--accent)]/40 focus-within:ring-2 focus-within:ring-[color:var(--accent)]/25">
                 <textarea
                     rows={1}
                     value={value}
@@ -187,7 +187,7 @@ export function CommentInput({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="flex-none rounded-full bg-primary-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex-none rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] px-3 py-1 text-xs font-semibold text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                 >
                     Enviar
                 </button>

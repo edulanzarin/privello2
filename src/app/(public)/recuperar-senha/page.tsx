@@ -82,7 +82,7 @@ export default function RecuperarSenhaPage(): React.ReactElement {
                 footer={
                     <a
                         href="/login"
-                        className="font-medium text-primary-700 hover:text-primary-800"
+                        className="font-medium text-[color:var(--accent-deep)] hover:text-primary-800"
                     >
                         Voltar para o login
                     </a>
@@ -95,7 +95,7 @@ export default function RecuperarSenhaPage(): React.ReactElement {
                         </span>
                         <a
                             href={`/redefinir-senha?token=${devToken}`}
-                            className="mt-1 inline-block break-all text-xs text-primary-700 underline"
+                            className="mt-1 inline-block break-all text-xs text-[color:var(--accent-deep)] underline"
                         >
                             /redefinir-senha?token={devToken.slice(0, 16)}…
                         </a>
@@ -112,7 +112,7 @@ export default function RecuperarSenhaPage(): React.ReactElement {
             footer={
                 <a
                     href="/login"
-                    className="font-medium text-primary-700 hover:text-primary-800"
+                    className="font-medium text-[color:var(--accent-deep)] hover:text-primary-800"
                 >
                     Voltar para o login
                 </a>

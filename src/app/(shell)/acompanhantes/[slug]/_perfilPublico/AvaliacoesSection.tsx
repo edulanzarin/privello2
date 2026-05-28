@@ -287,7 +287,7 @@ function SuaAvaliacao({
             <Card>
                 <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-primary-700">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[color:var(--accent-deep)]">
                             Sua avaliação
                         </span>
                         <LinkButton onClick={() => setEditing(true)}>
@@ -671,9 +671,9 @@ function ReviewCard({
 
                 {/* Resposta da Acompanhante (se houver e não estiver editando) */}
                 {review.replyText !== null && !replying ? (
-                    <div className="ml-3 rounded-2xl border border-primary-100 bg-primary-50/50 px-3 py-2">
+                    <div className="ml-3 rounded-2xl border border-primary-100 bg-[color:var(--accent-soft)]/50 px-3 py-2">
                         <div className="mb-1 flex items-center justify-between gap-2">
-                            <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold uppercase tracking-wider text-primary-700">
+                            <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold uppercase tracking-wider text-[color:var(--accent-deep)]">
                                 <SparklesIcon size={11} />
                                 Resposta
                             </span>

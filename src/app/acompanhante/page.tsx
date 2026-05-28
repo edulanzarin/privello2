@@ -216,7 +216,7 @@ export default async function AcompanhantePainelPage() {
                         {perguntasPendentes > 0 ? (
                             <span
                                 aria-label={`${perguntasPendentes} pendentes`}
-                                className="ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary-600 px-1 text-[0.6rem] font-semibold text-white"
+                                className="ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white"
                             >
                                 {perguntasPendentes}
                             </span>

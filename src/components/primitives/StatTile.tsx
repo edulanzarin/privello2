@@ -71,7 +71,7 @@ export function StatTile({
                 {icon != null ? (
                     <span
                         aria-hidden="true"
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary-100 text-primary-700"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
                     >
                         {icon}
                     </span>

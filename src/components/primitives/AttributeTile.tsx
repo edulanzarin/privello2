@@ -48,7 +48,7 @@ export function AttributeTile({
     className,
 }: AttributeTileProps): React.ReactElement {
     const composed = [
-        "flex flex-col items-center gap-2.5 rounded-2xl bg-neutral-50 px-3 py-5 text-center transition-colors duration-200 hover:bg-primary-50",
+        "flex flex-col items-center gap-2.5 rounded-2xl bg-neutral-50 px-3 py-5 text-center transition-all duration-200 hover:bg-[color:var(--accent-soft)]/60 hover:-translate-y-0.5",
         className ?? "",
     ]
         .filter(Boolean)
@@ -58,7 +58,7 @@ export function AttributeTile({
         <div className={composed}>
             <div
                 aria-hidden="true"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-surface text-primary-600"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface text-[color:var(--accent-deep)] ring-2 ring-[color:var(--accent)]/15"
             >
                 {icon}
             </div>
