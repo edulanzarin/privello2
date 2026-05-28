@@ -10,6 +10,7 @@ import {
     Button,
     Card,
     CashIcon,
+    ChatIcon,
     CreditCardIcon,
     CrownIcon,
     EyeIcon,
@@ -150,7 +151,7 @@ export interface PerfilPublicoViewProps {
      * Avaliação (apenas texto) que o Cliente autenticado já deixou
      * (ou `null`). Usado pra pré-popular o textarea "Sua avaliação".
      */
-    minhaReview: { comment: string } | null;
+    minhaReview: { comment: string; rating: number | null } | null;
 }
 
 const FORMA_PAGAMENTO_ICONS: Record<FormaPagamento, React.ReactElement> = {
@@ -602,6 +603,24 @@ export function PerfilPublicoView({
                         {likesTotal === 1 ? "curtida" : "curtidas"}
                     </span>
                 </span>
+                {perfil.reviewsCount > 0 ? (
+                    <>
+                        <span aria-hidden="true" className="text-text-disabled">
+                            ·
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                            <ChatIcon size={12} />
+                            <span>
+                                <span className="font-medium text-text-primary">
+                                    {formatViews(perfil.reviewsCount)}
+                                </span>{" "}
+                                {perfil.reviewsCount === 1
+                                    ? "avaliação"
+                                    : "avaliações"}
+                            </span>
+                        </span>
+                    </>
+                ) : null}
             </div>
 
             {/* CTA principal: WhatsApp */}

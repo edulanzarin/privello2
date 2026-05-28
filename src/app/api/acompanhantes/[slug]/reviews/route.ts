@@ -33,13 +33,13 @@ export async function POST(
     const { slug } = await context.params;
     const slugNorm = slug.trim().toLowerCase();
 
-    let body: { comment?: unknown };
+    let body: { comment?: unknown; rating?: unknown };
     try {
         const parsed = await request.json();
         if (parsed === null || typeof parsed !== "object") {
             throw new Error("body inválido");
         }
-        body = parsed as { comment?: unknown };
+        body = parsed as { comment?: unknown; rating?: unknown };
     } catch {
         return NextResponse.json(
             { ok: false, reason: "VALIDACAO" },
@@ -59,6 +59,18 @@ export async function POST(
         );
     }
 
+    // Rating opcional — quando vem, precisa ser número 1..5.
+    let rating: number | null = null;
+    if (body.rating !== undefined && body.rating !== null) {
+        if (typeof body.rating !== "number") {
+            return NextResponse.json(
+                { ok: false, reason: "VALIDACAO" },
+                { status: 400 },
+            );
+        }
+        rating = body.rating;
+    }
+
     const target = await db.user.findFirst({
         where: { identificador: slugNorm, type: "ACOMPANHANTE" },
         select: { id: true },
@@ -74,6 +86,7 @@ export async function POST(
         targetUserId: target.id,
         authorUserId: auth.userId,
         comment: commentRaw,
+        rating,
     });
 
     if (!result.ok) {

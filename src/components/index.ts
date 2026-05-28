@@ -196,6 +196,18 @@ export type {
 export { LikeButton } from "./primitives/LikeButton";
 export type { LikeButtonProps, LikeButtonSize } from "./primitives/LikeButton";
 
+export { RatingStars } from "./primitives/RatingStars";
+export type {
+    RatingStarsProps,
+    RatingStarsSize,
+} from "./primitives/RatingStars";
+
+export { RatingDistribution } from "./primitives/RatingDistribution";
+export type {
+    RatingDistributionData,
+    RatingDistributionProps,
+} from "./primitives/RatingDistribution";
+
 export { Comment, CommentInput } from "./primitives/Comment";
 export type { CommentProps, CommentInputProps } from "./primitives/Comment";
 
