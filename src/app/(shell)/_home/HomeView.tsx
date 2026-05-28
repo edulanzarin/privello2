@@ -403,6 +403,7 @@ function FeedGridLayout({
                         ) : null
                     }
                     badge={renderRankBadge(item.planoExibicao)}
+                    verified={item.verificada}
                 />
             ))}
         </div>

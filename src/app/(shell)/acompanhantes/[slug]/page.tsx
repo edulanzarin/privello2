@@ -198,6 +198,7 @@ export default async function PerfilPublicoPage({
             <ViewTracker slug={slug} />
             <PerfilPublicoView
                 slug={slug}
+                profileUserId={result.userId}
                 perfil={perfilSafe}
                 galeriaItems={galeriaItems}
                 reviews={reviews}

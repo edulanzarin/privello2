@@ -29,6 +29,12 @@ export interface FeedItem {
     descricao: string;
     /** Selo discriminado. Mesmo formato usado pelo perfil público. */
     planoExibicao: PlanoExibicao;
+    /**
+     * `true` quando a identidade foi verificada pelo admin. Mirror
+     * de `AcompanhanteProfile.verificada` para o card mostrar o
+     * `VerifiedBadge` sem join extra.
+     */
+    verificada: boolean;
     /** Total de visualizações públicas. */
     viewsCount: number;
     /** Total de avaliações. */
@@ -229,6 +235,7 @@ function toItem(row: Row, now: Date, mediasCount: number): FeedItem {
         bairroNome: row.bairroNome,
         descricao: row.descricao,
         planoExibicao,
+        verificada: row.verificada,
         viewsCount: row.viewsCount,
         reviewsCount: row.reviewsCount,
         valorHoraCents: row.valorHoraCents,

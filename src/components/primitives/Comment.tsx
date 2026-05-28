@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { FlagIcon } from "../icons";
+
 import { Avatar } from "./Avatar";
 import type { MediaComment } from "./MediaTypes";
 
@@ -18,6 +20,12 @@ import type { MediaComment } from "./MediaTypes";
 export interface CommentProps {
     /** Dados do comentário no formato compartilhado pelos primitivos. */
     comment: MediaComment;
+    /**
+     * Callback opcional para denunciar o comentário. Quando ausente,
+     * o botão não é renderizado. Visitante anônimo costuma omitir
+     * (não há sessão pra autoria da denúncia).
+     */
+    onReport?: (commentId: string) => void;
     /** Classes extras aplicadas ao container. */
     className?: string;
 }
@@ -31,12 +39,13 @@ export interface CommentProps {
  */
 export function Comment({
     comment,
+    onReport,
     className,
 }: CommentProps): React.ReactElement {
     return (
         <div
             className={[
-                "flex items-start gap-2.5",
+                "group/comment flex items-start gap-2.5",
                 className ?? "",
             ]
                 .filter(Boolean)
@@ -60,6 +69,17 @@ export function Comment({
                     {comment.text}
                 </p>
             </div>
+            {onReport !== undefined ? (
+                <button
+                    type="button"
+                    onClick={() => onReport(comment.id)}
+                    aria-label="Denunciar comentário"
+                    title="Denunciar"
+                    className="flex-none rounded-full p-1 text-text-disabled opacity-0 transition-opacity hover:text-danger-600 focus:opacity-100 group-hover/comment:opacity-100 focus-visible:opacity-100"
+                >
+                    <FlagIcon size={12} />
+                </button>
+            ) : null}
         </div>
     );
 }

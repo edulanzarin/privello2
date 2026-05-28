@@ -609,3 +609,49 @@ export function GlobeIcon(props: IconProps): React.ReactElement {
         </Svg>
     );
 }
+
+/**
+ * Selo de verificação no estilo do Twitter/Instagram — escudo
+ * circular com check interno. Em vez de um simples check, é uma
+ * "roseta" pra dar o sinal claro de "verificado".
+ */
+export function VerifiedBadgeIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path
+                d="M12 2.5l1.7 1.4 2.2-.2 1.1 1.9 2 .9.2 2.2 1.4 1.7-1.4 1.7-.2 2.2-2 .9-1.1 1.9-2.2-.2L12 15.7l-1.7 1.4-2.2-.2-1.1-1.9-2-.9-.2-2.2L3.4 12l1.4-1.7.2-2.2 2-.9 1.1-1.9 2.2.2L12 4.1z"
+                fill="currentColor"
+                stroke="none"
+            />
+            <path
+                d="M9 9.8l2.2 2.2L15 8.2"
+                stroke="white"
+                strokeWidth="1.5"
+            />
+        </Svg>
+    );
+}
+
+/**
+ * Bandeira/flag para indicar denúncia.
+ */
+export function FlagIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M5 3v18" />
+            <path d="M5 4h11l-1.5 4 1.5 4H5" fill="currentColor" />
+        </Svg>
+    );
+}
+
+/**
+ * Ícone de "shield" — proteção/admin/segurança.
+ */
+export function ShieldIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M12 3l8 3v6c0 4.5-3.5 7.5-8 9-4.5-1.5-8-4.5-8-9V6l8-3z" />
+            <path d="M9 12l2 2 4-4" />
+        </Svg>
+    );
+}

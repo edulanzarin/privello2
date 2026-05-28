@@ -5,6 +5,7 @@ import * as React from "react";
 import {
     ChevronLeftIcon,
     ChevronRightIcon,
+    FlagIcon,
     TrashIcon,
     XIcon,
 } from "../icons";
@@ -88,6 +89,23 @@ export interface MediaCarouselProps {
      */
     onDelete?: (itemId: string) => void | Promise<void>;
     /**
+     * Callback opcional para denunciar um comentário individual.
+     * Recebe o `commentId`. Quando ausente, o botão de denunciar
+     * comentário não aparece. Anônimo costuma ficar sem botão
+     * porque não há sessão pra autoria da denúncia.
+     */
+    onReportComment?: (commentId: string) => void;
+    /**
+     * Callback opcional para denunciar o item ativo. Quando ausente,
+     * o botão de denunciar não é renderizado. Use no perfil público
+     * quando o viewer não é dono da mídia (anônimo já não tem botão
+     * porque não existe sessão).
+     *
+     * Caller é responsável por abrir o {@link ReportDialog} ou
+     * disparar a UX que preferir. Recebe o `itemId` no callback.
+     */
+    onReport?: (itemId: string) => void;
+    /**
      * Quando presente, substitui a área de comentários por um
      * gate visual ({@link LockedContent}) — usado pra anônimos
      * que não podem ver comentários, ou pra Cliente Grátis quando
@@ -162,6 +180,8 @@ export function MediaCarousel({
     currentUserPhotoUrl,
     currentUserName,
     onDelete,
+    onReport,
+    onReportComment,
     commentsLocked,
     hideComments = false,
     storyMode = false,
@@ -511,6 +531,15 @@ export function MediaCarousel({
                                     onClick={() => void onDelete(active.id)}
                                 />
                             ) : null}
+                            {onReport !== undefined ? (
+                                <IconButton
+                                    icon={<FlagIcon size={14} />}
+                                    aria-label="Denunciar mídia"
+                                    tone="neutral"
+                                    size="sm"
+                                    onClick={() => onReport(active.id)}
+                                />
+                            ) : null}
                             {active.createdAt !== undefined ? (
                                 <span className="text-xs font-medium text-text-disabled">
                                     {formatRelativeTime(active.createdAt)}
@@ -575,7 +604,10 @@ export function MediaCarousel({
                                 <ul className="flex flex-col gap-4">
                                     {itemComments.map((c) => (
                                         <li key={c.id}>
-                                            <Comment comment={c} />
+                                            <Comment
+                                                comment={c}
+                                                onReport={onReportComment}
+                                            />
                                         </li>
                                     ))}
                                 </ul>

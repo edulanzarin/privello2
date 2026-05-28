@@ -4,6 +4,8 @@ import * as React from "react";
 
 import { ImageIcon, MapPinIcon, MicIcon } from "../icons";
 
+import { VerifiedBadge } from "./VerifiedBadge";
+
 /**
  * Variante visual do {@link ProfileFeedCard}.
  *
@@ -93,6 +95,12 @@ export interface ProfileFeedCardProps {
     /** Variante visual. Padrão: `"split"`. */
     variant?: ProfileFeedCardVariant;
     /**
+     * Quando `true`, renderiza o {@link VerifiedBadge} ao lado do
+     * nome (e em variant `"overlay"`, ao lado do nome sobreposto).
+     * Não muda o layout — só pinta o selo discreto.
+     */
+    verified?: boolean;
+    /**
      * Forma do tile de foto. Padrão: `"portrait"` (3:4) — usado em
      * ambos os variants.
      */
@@ -145,6 +153,7 @@ export function ProfileFeedCard({
     audio,
     hasAudio = false,
     variant = "split",
+    verified = false,
     aspect = "portrait",
     className,
 }: ProfileFeedCardProps): React.ReactElement {
@@ -195,8 +204,11 @@ export function ProfileFeedCard({
                     ) : null}
 
                     <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-3 text-white">
-                        <span className="text-base font-semibold tracking-tight leading-tight">
-                            {name}
+                        <span className="inline-flex items-center gap-1.5 text-base font-semibold tracking-tight leading-tight">
+                            <span className="truncate">{name}</span>
+                            {verified ? (
+                                <VerifiedBadge size="sm" />
+                            ) : null}
                         </span>
                         <span className="text-[0.7rem] text-white/80">
                             @{identifier}
@@ -265,8 +277,9 @@ export function ProfileFeedCard({
             <div className="flex flex-1 flex-col gap-3 p-4">
                 {/* Header: nome/@id */}
                 <div className="flex flex-col gap-0.5">
-                    <span className="truncate text-base font-semibold leading-tight tracking-tight text-text-primary">
-                        {name}
+                    <span className="inline-flex items-center gap-1.5 text-base font-semibold leading-tight tracking-tight text-text-primary">
+                        <span className="truncate">{name}</span>
+                        {verified ? <VerifiedBadge size="sm" /> : null}
                     </span>
                     <span className="text-[0.7rem] text-text-secondary">
                         @{identifier}

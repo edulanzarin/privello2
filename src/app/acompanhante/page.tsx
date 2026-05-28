@@ -9,6 +9,7 @@ import {
     ProfileCoverEditor,
     ProfilePhotoEditor,
     SparklesIcon,
+    ShieldIcon,
     TabList,
     TabPanel,
     TabTrigger,
@@ -39,8 +40,10 @@ import { AudioTab } from "./_painel/AudioTab";
 import { PerguntasTab } from "./_painel/PerguntasTab";
 import { EstatisticasTab } from "./_painel/EstatisticasTab";
 import { ConfiguracoesTab } from "./_painel/ConfiguracoesTab";
+import { VerificacaoTab } from "./_painel/VerificacaoTab";
 import { PerfilOcultoBanner } from "./_painel/PerfilOcultoBanner";
 import type { MediaItem } from "@/components";
+import { obterStatusVerificacao } from "@/server/verification";
 
 /**
  * Painel privado da Acompanhante (`/acompanhante`).
@@ -132,6 +135,7 @@ export default async function AcompanhantePainelPage() {
         perguntas,
         boost,
         statsDiarias,
+        statusVerificacao,
     ] = await Promise.all([
         contarLikesTotais(session.userId),
         contarPerguntasPendentes(session.userId),
@@ -140,6 +144,7 @@ export default async function AcompanhantePainelPage() {
         }),
         obterStatusBoost(session.userId),
         listarStatsDiarias(session.userId, { dias: 30 }),
+        obterStatusVerificacao(session.userId),
     ]);
 
     const isPremium = planoVigente.tipo === "PREMIUM";
@@ -226,6 +231,10 @@ export default async function AcompanhantePainelPage() {
                             Áudio
                         </TabTrigger>
                     ) : null}
+                    <TabTrigger value="verificacao">
+                        <ShieldIcon size={14} />
+                        Verificação
+                    </TabTrigger>
                     <TabTrigger value="configuracoes">Configurações</TabTrigger>
                 </TabList>
 
@@ -264,6 +273,24 @@ export default async function AcompanhantePainelPage() {
                         />
                     </TabPanel>
                 ) : null}
+                <TabPanel value="verificacao">
+                    <VerificacaoTab
+                        status={
+                            statusVerificacao
+                                ? {
+                                      status: statusVerificacao.status,
+                                      submetidaEm:
+                                          statusVerificacao.submetidaEm.toISOString(),
+                                      revisadaEm:
+                                          statusVerificacao.revisadaEm?.toISOString() ??
+                                          null,
+                                      motivoRejeicao:
+                                          statusVerificacao.motivoRejeicao,
+                                  }
+                                : null
+                        }
+                    />
+                </TabPanel>
                 <TabPanel value="configuracoes">
                     <ConfiguracoesTab
                         email={perfil.email}

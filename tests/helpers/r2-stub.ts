@@ -48,6 +48,7 @@ export interface R2Client {
     commit(stagedKey: string, finalKey: string): Promise<{ key: string }>;
     deleteObject(key: string): Promise<void>;
     presignedUrl(key: string): Promise<string>;
+    fetch(key: string): Promise<Uint8Array | null>;
 }
 
 export interface R2StubOptions {
@@ -126,6 +127,11 @@ export function createR2Stub(options: R2StubOptions = {}): R2Client & {
                 );
             }
             return `${baseUrl}/${encodeURIComponent(key)}?sig=stub`;
+        },
+
+        async fetch(key) {
+            const obj = store.get(key);
+            return obj ? obj.bytes : null;
         },
 
         snapshot() {

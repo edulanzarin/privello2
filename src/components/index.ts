@@ -162,6 +162,25 @@ export type { InfoListProps } from "./primitives/InfoList";
 export { Badge } from "./primitives/Badge";
 export type { BadgeProps, BadgeTone } from "./primitives/Badge";
 
+export { VerifiedBadge } from "./primitives/VerifiedBadge";
+export type {
+    VerifiedBadgeProps,
+    VerifiedBadgeSize,
+} from "./primitives/VerifiedBadge";
+
+export { ReportButton } from "./primitives/ReportButton";
+export type {
+    ReportButtonProps,
+    ReportButtonSize,
+} from "./primitives/ReportButton";
+
+export { ReportDialog } from "./primitives/ReportDialog";
+export type {
+    ReportDialogProps,
+    ReportDialogTargetType,
+    ReportDialogMotivo,
+} from "./primitives/ReportDialog";
+
 export { RankBadge } from "./primitives/RankBadge";
 export type { RankBadgeProps, RankBadgeTone } from "./primitives/RankBadge";
 
@@ -375,6 +394,9 @@ export {
     TrashIcon,
     UserIcon,
     UsersIcon,
+    VerifiedBadgeIcon,
+    FlagIcon,
+    ShieldIcon,
     WeightIcon,
     WhatsappIcon,
     XIcon,

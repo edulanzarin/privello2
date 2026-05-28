@@ -352,6 +352,7 @@ function toFeedItem(
         bairroNome: row.bairroNome,
         descricao: row.descricao,
         planoExibicao,
+        verificada: row.verificada,
         viewsCount: row.viewsCount,
         reviewsCount: row.reviewsCount,
         valorHoraCents: row.valorHoraCents,

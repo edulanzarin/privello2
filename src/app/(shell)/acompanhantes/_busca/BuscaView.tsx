@@ -926,6 +926,7 @@ export function BuscaView({
                                         badge={renderRankBadge(
                                             item.planoExibicao,
                                         )}
+                                        verified={item.verificada}
                                     />
                                 ))}
                             </div>

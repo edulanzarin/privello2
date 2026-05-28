@@ -103,6 +103,14 @@ export interface R2Client {
      * default validity is 300 seconds; callers can override via `opts`.
      */
     presignedUrl(key: string, opts?: PresignedUrlOptions): Promise<string>;
+
+    /**
+     * Reads the raw bytes of an object. Returns `null` when the key
+     * does not exist. Used by private endpoints (e.g. admin viewing
+     * verification photos) that must serve content server-side
+     * instead of redirecting to a presigned URL.
+     */
+    fetch(key: string): Promise<Uint8Array | null>;
 }
 
 /** Subset of `process.env` consumed by `createR2Client`. */
@@ -332,6 +340,31 @@ export function createR2Client(
                 );
             }
         },
+
+        async fetch(key) {
+            try {
+                const out = await s3.send(
+                    new GetObjectCommand({
+                        Bucket: bucket,
+                        Key: key,
+                    }),
+                );
+                const body = out.Body as
+                    | { transformToByteArray?: () => Promise<Uint8Array> }
+                    | undefined;
+                if (!body || typeof body.transformToByteArray !== "function") {
+                    return null;
+                }
+                return await body.transformToByteArray();
+            } catch (err) {
+                if (isNoSuchKey(err)) return null;
+                throw new R2Error(
+                    "R2_NOT_FOUND",
+                    `Failed to fetch object '${key}'.`,
+                    err,
+                );
+            }
+        },
     };
 }
 
@@ -388,6 +421,13 @@ function createLocalR2Client(): R2Client {
         async presignedUrl(key, _opts) {
             // In dev, just return a local path that can be served statically.
             return `/.storage/${key}`;
+        },
+
+        async fetch(key) {
+            const filePath = localPath(key);
+            if (!fs.existsSync(filePath)) return null;
+            const buf = fs.readFileSync(filePath);
+            return Uint8Array.from(buf);
         },
     };
 }

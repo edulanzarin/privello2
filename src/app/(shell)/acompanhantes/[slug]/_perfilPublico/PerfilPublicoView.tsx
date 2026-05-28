@@ -28,12 +28,15 @@ import {
     PlayIcon,
     ProfileHeader,
     RankBadge,
+    ReportButton,
+    ReportDialog,
     RulerIcon,
     ScissorsIcon,
     SectionHeader,
     SparklesIcon,
     StatCard,
     TagChip,
+    VerifiedBadge,
     WeekCalendar,
     WeightIcon,
     WhatsappIcon,
@@ -108,6 +111,12 @@ export interface PerfilPublicoViewProps {
     /** `User.identificador` da Acompanhante (slug). Usado nos calls
      *  de avaliação. */
     slug: string;
+    /**
+     * `User.id` da Acompanhante. Necessário pra disparar denúncias
+     * via {@link import("@/components").ReportButton} (a API exige
+     * UUID, não slug).
+     */
+    profileUserId: string;
     perfil: PerfilAcompanhantePublico;
     galeriaItems: ReadonlyArray<MediaItem>;
     /** Avaliações públicas mais recentes (apenas texto). */
@@ -177,6 +186,7 @@ type FiltroGaleria = "tudo" | "fotos" | "videos";
 
 export function PerfilPublicoView({
     slug,
+    profileUserId,
     perfil,
     galeriaItems: galeriaItemsProp,
     reviews,
@@ -210,6 +220,21 @@ export function PerfilPublicoView({
     React.useEffect(() => {
         setStoryRingState(storyRing);
     }, [storyRing]);
+
+    /**
+     * State do {@link ReportDialog} pra denunciar mídias do
+     * MediaCarousel. `targetId` é o `mediaId` do item ativo.
+     * Anônimo não tem botão (não pode denunciar sem sessão).
+     */
+    const [reportMediaId, setReportMediaId] = React.useState<string | null>(
+        null,
+    );
+    /**
+     * Igual ao acima, mas pra denunciar comentário (`COMMENT`).
+     */
+    const [reportCommentId, setReportCommentId] = React.useState<
+        string | null
+    >(null);
 
     /**
      * Abre o carrossel de Stories no primeiro não visto, ou no
@@ -568,7 +593,24 @@ export function PerfilPublicoView({
                 photoUrl={perfil.fotoUrl}
                 name={perfil.nome}
                 identifier={`@${perfil.identificador}`}
-                badge={<PlanoBadge plano={perfil.planoExibicao} />}
+                badge={
+                    <span className="inline-flex items-center gap-1.5">
+                        {perfil.verificada ? (
+                            <VerifiedBadge size="md" />
+                        ) : null}
+                        <PlanoBadge plano={perfil.planoExibicao} />
+                    </span>
+                }
+                actions={
+                    !viewerIsOwner && viewerKind !== "anonimo" ? (
+                        <ReportButton
+                            targetType="USER"
+                            targetId={profileUserId}
+                            tone="neutral"
+                            title="Denunciar perfil"
+                        />
+                    ) : undefined
+                }
                 storyRing={storyRingState}
                 onStoryClick={
                     storyRingState !== "none" && storiesState.length > 0
@@ -938,6 +980,16 @@ export function PerfilPublicoView({
                             : undefined
                 }
                 onToggleLike={handleToggleLike}
+                onReport={
+                    viewerKind !== "anonimo" && !viewerIsOwner
+                        ? (id) => setReportMediaId(id)
+                        : undefined
+                }
+                onReportComment={
+                    viewerKind !== "anonimo"
+                        ? (id) => setReportCommentId(id)
+                        : undefined
+                }
                 onAddComment={
                     viewerKind === "cliente" && viewerIsFan
                         ? handleAddComment
@@ -994,6 +1046,22 @@ export function PerfilPublicoView({
                         ? handleStoryToggleLike
                         : undefined
                 }
+            />
+
+            {/* Diálogo de denúncia de mídia. `targetId` é o id da
+                mídia ativa no MediaCarousel — capturado via
+                `onReport` callback. */}
+            <ReportDialog
+                open={reportMediaId !== null}
+                onClose={() => setReportMediaId(null)}
+                targetType="MEDIA"
+                targetId={reportMediaId ?? ""}
+            />
+            <ReportDialog
+                open={reportCommentId !== null}
+                onClose={() => setReportCommentId(null)}
+                targetType="COMMENT"
+                targetId={reportCommentId ?? ""}
             />
         </div>
     );

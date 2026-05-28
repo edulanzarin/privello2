@@ -103,6 +103,15 @@ export interface PerfilAcompanhantePublicoBase {
     // Plano e destaque.
     /** Selo discriminado para o badge de plano (BOOST > PREMIUM > BASICO). */
     planoExibicao: PlanoExibicao;
+
+    /**
+     * `true` quando a identidade foi verificada por um admin. Mirror
+     * de `Verification.status === "APROVADA"` mantido em
+     * `AcompanhanteProfile.verificada` para evitar join extra. UI
+     * pinta o {@link import("@/components").VerifiedBadge} ao lado
+     * do nome.
+     */
+    verificada: boolean;
 }
 
 /**
@@ -240,6 +249,7 @@ export async function obterPerfilAcompanhante(
         viewsCount: profile.viewsCount,
         reviewsCount: profile.reviewsCount,
         planoExibicao,
+        verificada: profile.verificada,
     };
 }
 
@@ -386,6 +396,7 @@ export async function obterPerfilPublico(
         viewsCount: profile.viewsCount,
         reviewsCount: profile.reviewsCount,
         planoExibicao,
+        verificada: profile.verificada,
     };
 
     return { state: "OK", userId: profile.userId, perfil };

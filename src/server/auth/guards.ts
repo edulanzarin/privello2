@@ -243,6 +243,36 @@ export async function requireAcompanhanteWithPlano(
 }
 
 /**
+ * Garante sessão válida + `User.isAdmin === true`. Usado por
+ * endpoints `/api/admin/...` e pelo layout `/admin`.
+ *
+ * Retorna 403 com `reason: "NAO_ADMIN"` quando o usuário
+ * autenticado não é admin. Não distingue do 401 propositalmente —
+ * segredo da existência da rota fica preservado.
+ */
+export async function requireAdmin(
+    request?: Request,
+): Promise<GuardResult<{ userId: string; sessionId: string }>> {
+    const auth = await requireSession(request);
+    if (!auth.ok) return auth;
+
+    const user = await db.user.findUnique({
+        where: { id: auth.userId },
+        select: { isAdmin: true },
+    });
+    if (!user || !user.isAdmin) {
+        return {
+            ok: false,
+            response: NextResponse.json(
+                { ok: false, reason: "NAO_ADMIN" },
+                { status: 403 },
+            ),
+        };
+    }
+    return { ok: true, userId: auth.userId, sessionId: auth.sessionId };
+}
+
+/**
  * Lê o FormData da request e valida que o campo `fieldName` é um
  * `File` não-vazio. Retorna 400 (`VALIDACAO`) caso contrário.
  *
