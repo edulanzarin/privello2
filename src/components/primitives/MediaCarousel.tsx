@@ -422,10 +422,14 @@ export function MediaCarousel({
             showCloseButton={false}
             className="!p-0"
         >
-            {/* Container interno. Mobile: coluna; desktop: linha. */}
-            <div className="flex h-full w-full flex-col md:flex-row">
-                {/* Mídia */}
-                <div className="relative flex flex-1 items-center justify-center bg-black md:w-[60%]">
+            {/* Container interno com altura fixa — 85% do viewport.
+                Garante que o modal não cresce/encolhe com a mídia e
+                que a seção de comentários tem scroll interno com
+                input fixo no fundo (estilo Instagram). */}
+            <div className="flex h-[85dvh] w-full flex-col md:flex-row">
+                {/* Mídia — em mobile ocupa no máximo 50% da altura
+                    do modal; em desktop ocupa 60% da largura. */}
+                <div className="relative flex max-h-[50%] flex-1 items-center justify-center bg-black md:max-h-full md:w-[60%]">
                     <CarouselMedia item={active} />
 
                     {/* Botão de fechar próprio do carrossel — fica
@@ -480,8 +484,12 @@ export function MediaCarousel({
                     </span>
                 </div>
 
-                {/* Painel lateral: stats + comentários */}
-                <aside className="flex flex-col bg-surface md:w-[40%] md:max-w-md">
+                {/* Painel lateral: stats + comentários.
+                    `min-h-0` é essencial pra que `flex-1` + 
+                    `overflow-y-auto` na lista de comentários
+                    funcione — sem ele o flex item não encolhe
+                    abaixo do conteúdo intrínseco. */}
+                <aside className="flex min-h-0 flex-1 flex-col bg-surface md:w-[40%] md:max-w-md">
                     {/* Toolbar: like grande à esquerda + ações + data à direita */}
                     <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-4 py-3">
                         <LikeButton
@@ -526,7 +534,7 @@ export function MediaCarousel({
                         (anônimo / Cliente Grátis) não deve ver
                         comentários reais. Pulado quando hideComments. */}
                     {effectiveHideComments ? null : commentsLocked ? (
-                        <div className="flex-1 overflow-hidden p-4">
+                        <div className="min-h-0 flex-1 overflow-hidden p-4">
                             <LockedContent
                                 blurAmount={8}
                                 title={commentsLocked.title}
@@ -552,7 +560,7 @@ export function MediaCarousel({
                             </LockedContent>
                         </div>
                     ) : (
-                        <div className="flex-1 overflow-y-auto px-4 py-3">
+                        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
                             {itemComments.length === 0 ? (
                                 <EmptyState
                                     size="sm"
