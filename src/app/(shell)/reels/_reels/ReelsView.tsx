@@ -253,7 +253,7 @@ export function ReelsView({
             await fetch(`/api/medias/${encodeURIComponent(reelId)}/likes`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ desired }),
+                body: JSON.stringify({ liked: desired }),
             });
         } catch {
             // se falhar, próxima carga corrige; UX não bloqueia.
