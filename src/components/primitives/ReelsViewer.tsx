@@ -198,23 +198,24 @@ export function ReelsViewer({
     }
 
     return (
-        <div
-            ref={containerRef}
-            className={[
-                "relative w-full overflow-y-scroll bg-black",
-                "snap-y snap-mandatory",
-                "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-                className ?? "",
-            ]
-                .filter(Boolean)
-                .join(" ")}
-            style={{
-                // Desconta TopBar (h-14 = 3.5rem) + BottomNav (h-16 = 4rem)
-                // pra que cada reel caiba exatamente no espaço visível
-                // entre as duas barras fixas.
-                height: "calc(100dvh - 3.5rem - 4rem)",
-            }}
-        >
+        <div className="flex w-full justify-center bg-black">
+            <div
+                ref={containerRef}
+                className={[
+                    "relative w-full max-w-[28rem] overflow-y-scroll bg-black",
+                    "snap-y snap-mandatory",
+                    "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                    className ?? "",
+                ]
+                    .filter(Boolean)
+                    .join(" ")}
+                style={{
+                    // Desconta TopBar (h-14 = 3.5rem) + BottomNav (h-16 = 4rem)
+                    // pra que cada reel caiba exatamente no espaço visível
+                    // entre as duas barras fixas.
+                    height: "calc(100dvh - 3.5rem - 4rem)",
+                }}
+            >
             {items.map((item) => (
                 <section
                     key={item.id}
@@ -324,6 +325,7 @@ export function ReelsViewer({
                     </div>
                 </div>
             ) : null}
+            </div>
         </div>
     );
 }
