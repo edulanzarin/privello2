@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import {
     Button,
@@ -95,7 +95,6 @@ export function ReelsView({
     viewerPlano,
     initialQuota,
 }: ReelsViewProps): React.ReactElement {
-    const router = useRouter();
     const pathname = usePathname();
 
     const [items, setItems] = React.useState<ReelsViewerItem[]>(
@@ -150,21 +149,23 @@ export function ReelsView({
                 }
                 | null;
             if (payload === null || !payload.ok) return;
-            setItems((prev) => [
-                ...prev,
-                ...payload.items.map((reel) => ({
-                    id: reel.id,
-                    videoUrl: `/api/storage/${reel.storageKey}`,
-                    posterUrl: reel.posterStorageKey
-                        ? `/api/storage/${reel.posterStorageKey}`
-                        : null,
-                    caption: reel.caption,
-                    likes: reel.likesCount,
-                    liked: reel.liked,
-                    comments: reel.commentsCount,
-                    owner: reel.owner,
-                })),
-            ]);
+            setItems((prev) => {
+                const existingIds = new Set(prev.map((i) => i.id));
+                const novos = payload.items
+                    .filter((reel) => !existingIds.has(reel.id))
+                    .map((reel) => ({
+                        id: reel.id,
+                        videoUrl: `/api/storage/${reel.storageKey}`,
+                        posterUrl: reel.posterStorageKey
+                            ? `/api/storage/${reel.posterStorageKey}`
+                            : null,
+                        caption: reel.caption,
+                        likes: reel.likesCount,
+                        liked: reel.liked,
+                        owner: reel.owner,
+                    }));
+                return [...prev, ...novos];
+            });
             setCursor(payload.nextCursor);
         } catch {
             // best-effort; usuário pode tentar de novo rolando
@@ -259,12 +260,6 @@ export function ReelsView({
         }
     }
 
-    function handleOpenComments(reelId: string): void {
-        const item = items.find((i) => i.id === reelId);
-        if (!item) return;
-        router.push(`/acompanhantes/${item.owner.identificador}`);
-    }
-
     const paywall: ReelsViewerPaywall | null = paywallOn
         ? buildPaywall(viewerKind, pathname)
         : null;
@@ -275,7 +270,6 @@ export function ReelsView({
             onNeedMore={() => void loadMore()}
             onViewActive={(id) => void handleViewActive(id)}
             onToggleLike={(id, desired) => void handleToggleLike(id, desired)}
-            onOpenComments={handleOpenComments}
             paywall={paywall}
         />
     );

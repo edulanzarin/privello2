@@ -187,7 +187,6 @@ export default async function ReelDeepLinkPage({
         caption: reel.caption,
         likes: reel.likesCount,
         liked: reel.liked,
-        comments: reel.commentsCount,
         owner: {
             identificador: reel.owner.identificador,
             nome: reel.owner.nome,

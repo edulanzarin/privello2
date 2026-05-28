@@ -3,7 +3,6 @@
 import * as React from "react";
 
 import { Avatar } from "./Avatar";
-import { ChatIcon } from "../icons";
 import { HeartIcon } from "../icons";
 import { LikeButton } from "./LikeButton";
 import { LockIcon } from "../icons";
@@ -29,8 +28,6 @@ export interface ReelsViewerItem {
     likes: number;
     /** Já curtido pelo viewer atual? */
     liked: boolean;
-    /** Total de comentários. */
-    comments: number;
     /** Owner exibido como header overlay. */
     owner: {
         identificador: string;
@@ -82,12 +79,6 @@ export interface ReelsViewerProps {
     onToggleLike?: (id: string, desired: boolean) => void;
 
     /**
-     * Chamado quando o viewer toca no balão de comentários — leva
-     * pro perfil ou abre modal. Consumer decide.
-     */
-    onOpenComments?: (id: string) => void;
-
-    /**
      * Quando passado, cobre o viewer com um overlay de paywall ao
      * tentar avançar pra novos reels. Itens já visualizados ainda
      * podem ser revisitados pelo scroll.
@@ -134,7 +125,6 @@ export function ReelsViewer({
     onNeedMore,
     onViewActive,
     onToggleLike,
-    onOpenComments,
     paywall,
     className,
 }: ReelsViewerProps): React.ReactElement {
@@ -283,7 +273,7 @@ export function ReelsViewer({
                             ) : null}
                         </div>
 
-                        {/* Coluna de ações à direita. */}
+                        {/* Coluna de ações à direita — só like + mute. */}
                         <div className="pointer-events-auto flex flex-col items-center gap-3">
                             <LikeButton
                                 liked={item.liked}
@@ -299,20 +289,6 @@ export function ReelsViewer({
                                 }
                                 tone="onDark"
                             />
-
-                            <button
-                                type="button"
-                                onClick={() => onOpenComments?.(item.id)}
-                                aria-label="Comentários"
-                                className="flex flex-col items-center gap-0.5 text-white"
-                            >
-                                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors hover:bg-black/70">
-                                    <ChatIcon size={20} />
-                                </span>
-                                <span className="text-[0.65rem] font-semibold">
-                                    {item.comments}
-                                </span>
-                            </button>
 
                             <button
                                 type="button"
