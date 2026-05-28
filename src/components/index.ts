@@ -217,6 +217,13 @@ export type {
     StoriesRailProps,
 } from "./primitives/StoriesRail";
 
+export { ReelsViewer } from "./primitives/ReelsViewer";
+export type {
+    ReelsViewerItem,
+    ReelsViewerPaywall,
+    ReelsViewerProps,
+} from "./primitives/ReelsViewer";
+
 export { LockedContent } from "./primitives/LockedContent";
 export type { LockedContentProps } from "./primitives/LockedContent";
 

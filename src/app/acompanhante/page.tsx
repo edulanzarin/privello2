@@ -30,9 +30,11 @@ import {
     listarStories,
     toMediaItem as toStoryMediaItem,
 } from "@/server/storage/storyMedia";
+import { listarReelsDoDono, type ReelDoOwner } from "@/server/storage/reelMedia";
 
 import { PerfilTab } from "./_painel/PerfilTab";
 import { MidiasTab } from "./_painel/MidiasTab";
+import { ReelsTab } from "./_painel/ReelsTab";
 import { AudioTab } from "./_painel/AudioTab";
 import { PerguntasTab } from "./_painel/PerguntasTab";
 import { EstatisticasTab } from "./_painel/EstatisticasTab";
@@ -104,6 +106,22 @@ export default async function AcompanhantePainelPage() {
     );
     const storiesArquivadosItems: ReadonlyArray<MediaItem> =
         storiesArquivados.map(toStoryMediaItem);
+
+    // Reels do dono — sempre carrega; `permiteReels` é true em
+    // ambos os planos. UI mostra limite na própria aba.
+    const reelsDoDono: ReadonlyArray<ReelDoOwner> = await listarReelsDoDono(
+        session.userId,
+    );
+    const reelsItems = reelsDoDono.map((r) => ({
+        id: r.id,
+        storageKey: r.storageKey,
+        posterStorageKey: r.posterStorageKey,
+        durationSeconds: r.durationSeconds,
+        caption: r.caption,
+        createdAt: r.createdAt,
+        likesCount: r.likesCount,
+        commentsCount: r.commentsCount,
+    }));
 
     // Métricas reais: visualizações + curtidas totais (foto + galeria
     // + stories) + perguntas pendentes a responder + lista completa
@@ -186,6 +204,7 @@ export default async function AcompanhantePainelPage() {
                 <TabList aria-label="Áreas do painel">
                     <TabTrigger value="perfil">Perfil</TabTrigger>
                     <TabTrigger value="midias">Mídias</TabTrigger>
+                    <TabTrigger value="reels">Reels</TabTrigger>
                     <TabTrigger value="perguntas">
                         <ChatIcon size={14} />
                         Perguntas
@@ -219,6 +238,12 @@ export default async function AcompanhantePainelPage() {
                         items={galeriaItems}
                         storiesAtivos={storiesAtivosItems}
                         storiesExpirados={storiesArquivadosItems}
+                    />
+                </TabPanel>
+                <TabPanel value="reels">
+                    <ReelsTab
+                        items={reelsItems}
+                        limite={planoVigente.limiteReels}
                     />
                 </TabPanel>
                 <TabPanel value="perguntas">
