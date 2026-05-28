@@ -1,8 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+/**
+ * Geist — fonte moderna criada pela Vercel, otimizada para UI.
+ * Visualmente próxima da SF Pro do macOS, com formas mais
+ * angulares e melhor legibilidade em pequenos tamanhos.
+ *
+ * Mantemos o variable `--font-inter` no nome do CSS var pra não
+ * quebrar consumidores existentes (tailwind.config aponta pra
+ * essa var). Trocar o nome da var seria um refactor mais amplo
+ * sem ganho funcional.
+ */
+const geist = Geist({
     subsets: ["latin"],
     variable: "--font-inter",
     display: "swap",
@@ -126,7 +136,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="pt-BR" className={inter.variable}>
+        <html lang="pt-BR" className={geist.variable}>
             <body className="min-h-screen font-sans">
                 <OrganizationJsonLd />
                 {children}

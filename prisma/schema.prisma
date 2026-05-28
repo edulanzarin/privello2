@@ -570,6 +570,16 @@ model AcompanhanteReview {
   authorUserId String   @map("author_user_id") @db.Uuid
   author       User     @relation("ReviewAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
   comment      String   @db.VarChar(2000)
+  /// Nota numérica de 1 a 5 (opcional). Cliente pode avaliar sem
+  /// dar nota. Quando dá, alimenta a "nota geral" exposta atrás de
+  /// gate Fan no perfil. Constraint no banco garante range.
+  rating       Int?
+  /// Resposta da Acompanhante à avaliação. `null` quando ainda
+  /// não respondeu. Acompanhante pode editar livremente.
+  replyText    String?  @db.VarChar(2000) @map("reply_text")
+  /// Quando a Acompanhante respondeu pela primeira vez. Editar
+  /// não atualiza, apenas a primeira resposta.
+  repliedAt    DateTime? @map("replied_at")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

@@ -28,6 +28,10 @@ import { db } from "@/lib/db";
 export interface ReviewPublico {
     id: string;
     comment: string;
+    rating: number | null;
+    /** Resposta da Acompanhante (se houver). */
+    replyText: string | null;
+    repliedAt: Date | null;
     createdAt: Date;
     /**
      * Autor — exibido como "@identificador" + nome. Sem PII além do
@@ -45,12 +49,15 @@ export type UpsertReviewResult =
     | { ok: true; reviewId: string }
     | { ok: false; reason: "AUTO_AVALIACAO" }
     | { ok: false; reason: "TARGET_NAO_E_ACOMPANHANTE" }
-    | { ok: false; reason: "COMENTARIO_INVALIDO" };
+    | { ok: false; reason: "COMENTARIO_INVALIDO" }
+    | { ok: false; reason: "RATING_INVALIDO" };
 
 export interface UpsertReviewInput {
     targetUserId: string;
     authorUserId: string;
     comment: string;
+    /** Nota 1-5, opcional. */
+    rating?: number | null;
 }
 
 /**
@@ -72,6 +79,16 @@ export async function upsertReview(
         return { ok: false, reason: "COMENTARIO_INVALIDO" };
     }
 
+    // Rating opcional. Quando vem, exige int 1..5.
+    let ratingNorm: number | null = null;
+    if (input.rating !== null && input.rating !== undefined) {
+        const r = Math.floor(Number(input.rating));
+        if (!Number.isFinite(r) || r < 1 || r > 5) {
+            return { ok: false, reason: "RATING_INVALIDO" };
+        }
+        ratingNorm = r;
+    }
+
     // Confirma que o target é uma Acompanhante.
     const target = await db.user.findUnique({
         where: { id: input.targetUserId },
@@ -90,11 +107,13 @@ export async function upsertReview(
         },
         update: {
             comment: trimmed,
+            rating: ratingNorm,
         },
         create: {
             targetUserId: input.targetUserId,
             authorUserId: input.authorUserId,
             comment: trimmed,
+            rating: ratingNorm,
         },
         select: { id: true },
     });
@@ -118,6 +137,9 @@ export async function listarReviewsPublicos(
         select: {
             id: true,
             comment: true,
+            rating: true,
+            replyText: true,
+            repliedAt: true,
             createdAt: true,
             author: {
                 select: {
@@ -137,6 +159,9 @@ export async function listarReviewsPublicos(
     return rows.map((row) => ({
         id: row.id,
         comment: row.comment,
+        rating: row.rating,
+        replyText: row.replyText,
+        repliedAt: row.repliedAt,
         createdAt: row.createdAt,
         authorNome: row.author.nome,
         authorIdentificador: row.author.identificador,
@@ -156,7 +181,7 @@ export async function listarReviewsPublicos(
 export async function obterMinhaReview(
     targetUserId: string,
     authorUserId: string,
-): Promise<{ comment: string } | null> {
+): Promise<{ comment: string; rating: number | null } | null> {
     const row = await db.acompanhanteReview.findUnique({
         where: {
             targetUserId_authorUserId: {
@@ -164,7 +189,7 @@ export async function obterMinhaReview(
                 authorUserId,
             },
         },
-        select: { comment: true },
+        select: { comment: true, rating: true },
     });
     return row;
 }
@@ -258,4 +283,147 @@ export async function contarReviewsDoCliente(
             },
         },
     });
+}
+
+// ---------------------------------------------------------------------------
+// Resposta da Acompanhante
+// ---------------------------------------------------------------------------
+
+/**
+ * Resultado de {@link responderReview}.
+ */
+export type ResponderReviewResult =
+    | { ok: true }
+    | { ok: false; reason: "NAO_ENCONTRADA" | "NAO_E_DONA" | "TEXTO_INVALIDO" };
+
+/**
+ * Acompanhante responde a uma avaliação recebida. Quando já tem
+ * resposta, sobrescreve (mas mantém o `repliedAt` original — só
+ * a primeira resposta marca a data).
+ *
+ * Apenas a Acompanhante avaliada (`targetUserId`) pode responder.
+ * Outros recebem `NAO_E_DONA`.
+ */
+export async function responderReview(input: {
+    reviewId: string;
+    acompanhanteUserId: string;
+    text: string;
+}): Promise<ResponderReviewResult> {
+    const trimmed = input.text.trim();
+    if (trimmed.length === 0 || trimmed.length > 2000) {
+        return { ok: false, reason: "TEXTO_INVALIDO" };
+    }
+
+    const review = await db.acompanhanteReview.findUnique({
+        where: { id: input.reviewId },
+        select: { targetUserId: true, repliedAt: true },
+    });
+    if (!review) {
+        return { ok: false, reason: "NAO_ENCONTRADA" };
+    }
+    if (review.targetUserId !== input.acompanhanteUserId) {
+        return { ok: false, reason: "NAO_E_DONA" };
+    }
+
+    await db.acompanhanteReview.update({
+        where: { id: input.reviewId },
+        data: {
+            replyText: trimmed,
+            // Marca repliedAt só na primeira resposta.
+            repliedAt: review.repliedAt ?? new Date(),
+        },
+        select: { id: true },
+    });
+
+    return { ok: true };
+}
+
+/**
+ * Remove a resposta da Acompanhante (volta a `null`). Usado quando
+ * ela quer apagar o que respondeu.
+ */
+export async function removerRespostaReview(input: {
+    reviewId: string;
+    acompanhanteUserId: string;
+}): Promise<ResponderReviewResult> {
+    const review = await db.acompanhanteReview.findUnique({
+        where: { id: input.reviewId },
+        select: { targetUserId: true },
+    });
+    if (!review) {
+        return { ok: false, reason: "NAO_ENCONTRADA" };
+    }
+    if (review.targetUserId !== input.acompanhanteUserId) {
+        return { ok: false, reason: "NAO_E_DONA" };
+    }
+
+    await db.acompanhanteReview.update({
+        where: { id: input.reviewId },
+        data: { replyText: null, repliedAt: null },
+        select: { id: true },
+    });
+    return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Nota geral (distribuição + média)
+// ---------------------------------------------------------------------------
+
+/**
+ * Resumo da nota geral de uma Acompanhante. Mostrado no perfil
+ * público dentro de gate Fan ("Ver nota geral").
+ */
+export interface NotaGeralResumo {
+    /** Total de avaliações que deram nota (descarta nulls). */
+    totalComNota: number;
+    /** Média ponderada (0..5). `null` quando não há nota. */
+    media: number | null;
+    /**
+     * Distribuição de notas — mapa `{ 1: 2, 2: 0, 3: 1, ... }`.
+     * Sempre tem as 5 chaves, mesmo zeradas, pra UI desenhar
+     * barras consistentes.
+     */
+    distribuicao: { 1: number; 2: number; 3: number; 4: number; 5: number };
+}
+
+/**
+ * Calcula nota geral agregada das avaliações de uma Acompanhante.
+ *
+ * Faz uma única query `groupBy` por rating — barato no índice
+ * existente. Avaliações sem nota (rating null) são ignoradas.
+ */
+export async function obterNotaGeral(
+    targetUserId: string,
+): Promise<NotaGeralResumo> {
+    const rows = await db.acompanhanteReview.groupBy({
+        by: ["rating"],
+        where: { targetUserId, rating: { not: null } },
+        _count: { _all: true },
+    });
+
+    const dist: NotaGeralResumo["distribuicao"] = {
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0,
+        5: 0,
+    };
+    let total = 0;
+    let soma = 0;
+
+    for (const row of rows) {
+        if (row.rating === null) continue;
+        const r = row.rating as 1 | 2 | 3 | 4 | 5;
+        if (r >= 1 && r <= 5) {
+            dist[r] = row._count._all;
+            total += row._count._all;
+            soma += r * row._count._all;
+        }
+    }
+
+    return {
+        totalComNota: total,
+        media: total > 0 ? soma / total : null,
+        distribuicao: dist,
+    };
 }
