@@ -113,6 +113,10 @@ export interface PerfilPublicoViewProps {
     reviews: ReadonlyArray<ReviewPublico>;
     /** Perguntas e respostas públicas. */
     perguntas: ReadonlyArray<QuestionPublica>;
+    /** Total real de perguntas (count completo no banco) — usado
+     *  pelo gate "+ X perguntas". A lista `perguntas` pode vir
+     *  truncada pra anônimo/Grátis, mas o count permanece exato. */
+    perguntasCount: number;
     /** Total de curtidas (foto perfil + galeria + stories ativos). */
     likesTotal: number;
     /** Stories ativos para exibição no carrossel. */
@@ -176,6 +180,7 @@ export function PerfilPublicoView({
     galeriaItems: galeriaItemsProp,
     reviews,
     perguntas,
+    perguntasCount,
     likesTotal,
     storiesAtivos,
     storyRing,
@@ -875,7 +880,7 @@ export function PerfilPublicoView({
             <PerguntasSection
                 slug={slug}
                 perguntas={perguntas}
-                perguntasCount={perguntas.length}
+                perguntasCount={perguntasCount}
                 viewerKind={viewerKind}
                 viewerIsOwner={viewerIsOwner}
                 viewerIsFan={viewerIsFan}

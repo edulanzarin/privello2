@@ -142,27 +142,26 @@ export default async function PerfilPublicoPage({
             : null;
     const viewerIsFan = viewerClienteProfile?.planoVigente === "FAN";
 
-    // Anônimo OU Cliente Grátis não veem avaliações/comentários
-    // detalhados nem perguntas. Recebem lista vazia no payload RSC.
-    // O contador `reviewsCount` também é zerado pra evitar vazar
-    // métricas pra quem não tem plano.
+    // Anônimo OU Cliente Grátis veem **uma prévia** (1 item) de
+    // avaliações, perguntas e comentários — o resto fica gated com
+    // blur e CTA. Padrão tipo LinkedIn: dá um gostinho do conteúdo
+    // pra incentivar a compra do Fan.
     //
     // Acompanhante (Owner ou outra) vê normal.
     const canSeeFanContent =
         session?.userType === "ACOMPANHANTE" || viewerIsFan;
-    const reviews = canSeeFanContent ? reviewsAll : [];
-    const perguntas = canSeeFanContent
+    const reviews = canSeeFanContent ? reviewsAll : reviewsAll.slice(0, 1);
+    const perguntasFull = canSeeFanContent
         ? await listarPerguntasPublicas(result.userId, {
             viewerUserId: session?.userId ?? null,
         })
-        : [];
+        : perguntasAll;
+    const perguntas = canSeeFanContent
+        ? perguntasFull
+        : perguntasFull.slice(0, 1);
+    const perguntasCount = perguntasFull.length;
 
-    const perfilSafe = canSeeFanContent
-        ? result.perfil
-        : {
-            ...result.perfil,
-            reviewsCount: 0,
-        };
+    const perfilSafe = result.perfil;
 
     // Re-popular minhaReview agora vira uma busca por comentário (sem
     // nota numérica).
@@ -203,6 +202,7 @@ export default async function PerfilPublicoPage({
                 galeriaItems={galeriaItems}
                 reviews={reviews}
                 perguntas={perguntas}
+                perguntasCount={perguntasCount}
                 likesTotal={likesTotal}
                 storiesAtivos={storiesAtivos.map((s) => ({
                     id: s.id,

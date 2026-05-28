@@ -64,51 +64,75 @@ export function AvaliacoesSection({
         // Anônimos veem dois caminhos: "Entrar" pra quem já tem conta,
         // "Virar Fan" pra quem nunca usou. Cliente Grátis vê só
         // "Virar Fan" — já está logado, só precisa do plano.
+        //
+        // Quando há avaliações, mostramos UMA visível (a primeira)
+        // como "amostra grátis" + LockedContent embaixo com o
+        // restante (`reviewsCount - 1`). Quando não há, fica só o
+        // LockedContent vazio.
         const description =
             viewerKind === "anonimo"
-                ? "Crie sua conta ou entre pra desbloquear avaliações reais de outros Clientes."
-                : "Vire Fan pra ler o que outros Clientes estão dizendo.";
+                ? "Crie sua conta ou entre pra desbloquear todas as avaliações reais."
+                : "Vire Fan pra ler tudo o que outros Clientes estão dizendo.";
+
+        const cta =
+            viewerKind === "anonimo" ? (
+                <div className="flex flex-col gap-1.5 sm:flex-row">
+                    <Button
+                        href={buildAuthUrl("/cadastro", pathname)}
+                        size="sm"
+                        variant="primary"
+                    >
+                        Criar conta
+                    </Button>
+                    <Button
+                        href={buildAuthUrl("/login", pathname)}
+                        size="sm"
+                        variant="ghost"
+                    >
+                        Entrar
+                    </Button>
+                </div>
+            ) : (
+                <Button
+                    href={buildAuthUrl("/cliente/selecao-plano", pathname)}
+                    size="sm"
+                >
+                    Virar Fan
+                </Button>
+            );
+
+        const previewReview = reviews[0] ?? null;
+        const restante = Math.max(0, reviewsCount - (previewReview ? 1 : 0));
 
         return (
             <section className="flex flex-col gap-3">
-                <SectionHeader title="Avaliações" />
+                <SectionHeader
+                    title="Avaliações"
+                    trailing={
+                        reviewsCount > 0 ? (
+                            <span className="text-xs text-text-secondary">
+                                {reviewsCount}{" "}
+                                {reviewsCount === 1
+                                    ? "avaliação"
+                                    : "avaliações"}
+                            </span>
+                        ) : null
+                    }
+                />
+
+                {previewReview ? (
+                    <ReviewCard review={previewReview} />
+                ) : null}
+
                 <LockedContent
                     blurAmount={10}
-                    title="Avaliações exclusivas para Fans"
-                    description={description}
-                    action={
-                        viewerKind === "anonimo" ? (
-                            <div className="flex flex-col gap-1.5 sm:flex-row">
-                                <Button
-                                    href={buildAuthUrl(
-                                        "/cadastro",
-                                        pathname,
-                                    )}
-                                    size="sm"
-                                    variant="primary"
-                                >
-                                    Criar conta
-                                </Button>
-                                <Button
-                                    href={buildAuthUrl("/login", pathname)}
-                                    size="sm"
-                                    variant="ghost"
-                                >
-                                    Entrar
-                                </Button>
-                            </div>
-                        ) : (
-                            <Button
-                                href={buildAuthUrl(
-                                    "/cliente/selecao-plano",
-                                    pathname,
-                                )}
-                                size="sm"
-                            >
-                                Virar Fan
-                            </Button>
-                        )
+                    title={
+                        restante > 0
+                            ? `+ ${restante} ${restante === 1 ? "avaliação" : "avaliações"} pra ler`
+                            : "Avaliações exclusivas para Fans"
                     }
+                    description={description}
+                    action={cta}
                 >
                     <FakeAvaliacoesPreview />
                 </LockedContent>

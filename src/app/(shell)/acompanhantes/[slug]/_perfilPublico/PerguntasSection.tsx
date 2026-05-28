@@ -67,51 +67,79 @@ export function PerguntasSection({
     if (isLocked) {
         // Anônimos veem dois caminhos (Criar conta / Entrar).
         // Cliente Grátis vê só "Virar Fan".
+        //
+        // Quando há perguntas, mostramos UMA visível como amostra
+        // grátis + LockedContent abaixo com o restante.
         const description =
             viewerKind === "anonimo"
-                ? "Crie sua conta ou entre pra ver perguntas e respostas reais."
-                : "Vire Fan pra perguntar e ler respostas direto da Acompanhante.";
+                ? "Crie sua conta ou entre pra ver todas as perguntas e respostas."
+                : "Vire Fan pra perguntar e ler todas as respostas.";
+
+        const cta =
+            viewerKind === "anonimo" ? (
+                <div className="flex flex-col gap-1.5 sm:flex-row">
+                    <Button
+                        href={buildAuthUrl("/cadastro", pathname)}
+                        size="sm"
+                        variant="primary"
+                    >
+                        Criar conta
+                    </Button>
+                    <Button
+                        href={buildAuthUrl("/login", pathname)}
+                        size="sm"
+                        variant="ghost"
+                    >
+                        Entrar
+                    </Button>
+                </div>
+            ) : (
+                <Button
+                    href={buildAuthUrl("/cliente/selecao-plano", pathname)}
+                    size="sm"
+                >
+                    Virar Fan
+                </Button>
+            );
+
+        const previewPergunta = perguntas[0] ?? null;
+        const restante = Math.max(
+            0,
+            perguntasCount - (previewPergunta ? 1 : 0),
+        );
 
         return (
             <section className="flex flex-col gap-3">
-                <SectionHeader title="Perguntas e respostas" />
+                <SectionHeader
+                    title="Perguntas e respostas"
+                    trailing={
+                        perguntasCount > 0 ? (
+                            <span className="text-xs text-text-secondary">
+                                {perguntasCount}{" "}
+                                {perguntasCount === 1
+                                    ? "pergunta"
+                                    : "perguntas"}
+                            </span>
+                        ) : null
+                    }
+                />
+
+                {previewPergunta ? (
+                    <PerguntaCard
+                        pergunta={previewPergunta}
+                        onDeleted={() => router.refresh()}
+                    />
+                ) : null}
+
                 <LockedContent
                     blurAmount={10}
-                    title="Perguntas exclusivas para Fans"
-                    description={description}
-                    action={
-                        viewerKind === "anonimo" ? (
-                            <div className="flex flex-col gap-1.5 sm:flex-row">
-                                <Button
-                                    href={buildAuthUrl(
-                                        "/cadastro",
-                                        pathname,
-                                    )}
-                                    size="sm"
-                                    variant="primary"
-                                >
-                                    Criar conta
-                                </Button>
-                                <Button
-                                    href={buildAuthUrl("/login", pathname)}
-                                    size="sm"
-                                    variant="ghost"
-                                >
-                                    Entrar
-                                </Button>
-                            </div>
-                        ) : (
-                            <Button
-                                href={buildAuthUrl(
-                                    "/cliente/selecao-plano",
-                                    pathname,
-                                )}
-                                size="sm"
-                            >
-                                Virar Fan
-                            </Button>
-                        )
+                    title={
+                        restante > 0
+                            ? `+ ${restante} ${restante === 1 ? "pergunta" : "perguntas"} pra ler`
+                            : "Perguntas exclusivas para Fans"
                     }
+                    description={description}
+                    action={cta}
                 >
                     <FakePerguntasPreview />
                 </LockedContent>
