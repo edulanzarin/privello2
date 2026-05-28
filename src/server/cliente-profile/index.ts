@@ -26,6 +26,10 @@ export type PerfilClienteResumo = {
      * Plano vigente do Cliente. `null` quando o Cliente ainda não
      * passou pela tela de seleção pós-cadastro (cenário possível se
      * o usuário fechou a aba).
+     *
+     * **Downgrade lazy**: quando o `FAN` expira (`planoExpiraEm`
+     * passou), este campo já vem como `"GRATIS"` mesmo que o banco
+     * ainda diga `FAN` — caller pode confiar como fonte de verdade.
      */
     planoVigente: "GRATIS" | "FAN" | null;
     /**
@@ -33,6 +37,11 @@ export type PerfilClienteResumo = {
      * `planoVigente` também é `null`.
      */
     planoSelecionadoEm: Date | null;
+    /**
+     * Quando o `FAN` ativo expira. `null` quando `planoVigente` é
+     * `GRATIS` ou `null`. Útil pra UI mostrar "expira em 5 dias".
+     */
+    planoExpiraEm: Date | null;
 };
 
 /**
@@ -74,6 +83,18 @@ export async function obterPerfilCliente(
         return null;
     }
 
+    // Downgrade lazy: se o FAN expirou, retornamos como GRATIS pra
+    // que callers (UI e gates) tratem corretamente sem dependerem
+    // do GC noturno ter rodado.
+    const now = new Date();
+    const fanExpirado =
+        profile.planoVigente === "FAN" &&
+        profile.planoExpiraEm !== null &&
+        profile.planoExpiraEm.getTime() <= now.getTime();
+    const planoEfetivo: "GRATIS" | "FAN" | null = fanExpirado
+        ? "GRATIS"
+        : profile.planoVigente;
+
     return {
         userId: profile.userId,
         nome: profile.user.nome,
@@ -82,7 +103,8 @@ export async function obterPerfilCliente(
         fotoUrl: profile.fotoPerfil
             ? `/api/storage/${profile.fotoPerfil.storageKey}`
             : null,
-        planoVigente: profile.planoVigente,
+        planoVigente: planoEfetivo,
         planoSelecionadoEm: profile.planoSelecionadoEm,
+        planoExpiraEm: planoEfetivo === "FAN" ? profile.planoExpiraEm : null,
     };
 }

@@ -184,6 +184,12 @@ model ClientProfile {
   fotoPerfil         Media?            @relation("ClientFotoDePerfil", fields: [fotoPerfilId], references: [id])
   planoVigente       PlanoClienteTipo? @map("plano_vigente")
   planoSelecionadoEm DateTime?         @map("plano_selecionado_em")
+  /// Quando o plano vigente expira. `NULL` para `GRATIS` (perpétuo)
+  /// ou enquanto o Cliente ainda não escolheu plano. Para `FAN`,
+  /// é a data de fim do benefício comprado (24h, 7d ou 30d).
+  /// Quando `now() > planoExpiraEm`, o Cliente é tratado como
+  /// `GRATIS` (downgrade lazy no read).
+  planoExpiraEm      DateTime?         @map("plano_expira_em")
 
   @@map("client_profiles")
 }

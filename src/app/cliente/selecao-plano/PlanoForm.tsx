@@ -6,20 +6,14 @@ import { useActionState } from "react";
 import { ArrowRightIcon, Button, type ButtonVariant } from "@/components";
 
 import {
+    comprarFanClienteAction,
     selecionarPlanoClienteAction,
     type SelecionarPlanoClienteActionError,
 } from "./actions";
 
-/**
- * Estado renderizado pelo formulário da seleção de plano de Cliente.
- *
- * Estrutura idêntica ao formulário da Acompanhante; vive em arquivo
- * separado porque cada um chama uma Server Action diferente
- * (`selecionar` em `@/server/planos-cliente` vs `@/server/planos`).
- */
 type FormState = SelecionarPlanoClienteActionError | null;
 
-async function reducer(
+async function selecionarReducer(
     _prev: FormState,
     formData: FormData,
 ): Promise<FormState> {
@@ -27,44 +21,58 @@ async function reducer(
     return result ?? null;
 }
 
+async function comprarReducer(
+    _prev: FormState,
+    formData: FormData,
+): Promise<FormState> {
+    const result = await comprarFanClienteAction(formData);
+    return result ?? null;
+}
+
 export interface PlanoClienteFormProps {
-    /** Valor do `PlanoClienteTipo` submetido (`GRATIS` ou `FAN`). */
-    tipo: string;
-    /** Rótulo exibido no botão de confirmação. */
+    /** Valor submetido — `tipo` ou `duracao` dependendo do `mode`. */
+    value: string;
+    /**
+     * Modo de submit:
+     *   - `"selecionar"`: chama {@link selecionarPlanoClienteAction}.
+     *     Usado pra `GRATIS`.
+     *   - `"comprar"`: chama {@link comprarFanClienteAction}. Usado
+     *     pras 3 durações de Fan.
+     */
+    mode: "selecionar" | "comprar";
+    /** Rótulo exibido no botão. */
     label: string;
     /** Variante visual do botão. Padrão: `"primary"`. */
     variant?: ButtonVariant;
-    /**
-     * Quando `true`, o botão fica desabilitado e o formulário não
-     * dispara nada. Usado para o cartão do "plano atual" e para
-     * downgrades (que o servidor recusaria de qualquer forma).
-     */
+    /** Quando `true`, botão fica desabilitado (plano atual). */
     disabled?: boolean;
 }
 
 /**
- * Formulário client-side de seleção de um plano específico de Cliente.
+ * Formulário client-side de seleção/compra de plano de Cliente.
  *
- * Cada {@link import("@/components").OfferCard} da página de seleção
- * renderiza uma instância própria deste componente, permitindo que
- * mensagens de erro fiquem confinadas ao card clicado.
+ * Cada `OfferCard` da página de seleção renderiza uma instância
+ * própria desta forma, permitindo que mensagens de erro fiquem
+ * confinadas ao card clicado.
  */
 export function PlanoForm({
-    tipo,
+    value,
+    mode,
     label,
     variant = "primary",
     disabled = false,
 }: PlanoClienteFormProps): React.ReactElement {
     const [state, formAction, isPending] = useActionState<FormState, FormData>(
-        reducer,
+        mode === "comprar" ? comprarReducer : selecionarReducer,
         null,
     );
 
     const inactive = disabled || isPending;
+    const inputName = mode === "comprar" ? "duracao" : "tipo";
 
     return (
         <form action={formAction} className="space-y-2">
-            <input type="hidden" name="tipo" value={tipo} />
+            <input type="hidden" name={inputName} value={value} />
             <Button
                 type="submit"
                 size="lg"

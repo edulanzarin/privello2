@@ -33,6 +33,12 @@ export interface CleanupReport {
     loginAttemptsDeleted: number;
     passwordResetTokensDeleted: number;
     storiesArchived: number;
+    /**
+     * Quantos `ClientProfile.planoVigente='FAN'` com
+     * `planoExpiraEm <= now` foram normalizados pra `GRATIS`.
+     * Operação idempotente — rodar de novo não muda nada.
+     */
+    fansClienteExpirados: number;
 }
 
 /**
@@ -50,6 +56,7 @@ export async function runCleanup(
         loginAttemptsDeleted: 0,
         passwordResetTokensDeleted: 0,
         storiesArchived: 0,
+        fansClienteExpirados: 0,
     };
 
     // 1) Sessões revogadas há > 7 dias OU expiradas há > 7 dias.
@@ -111,6 +118,28 @@ export async function runCleanup(
     try {
         const result = await arquivarStoriesExpiradosGlobal({ now });
         report.storiesArchived = result.archived;
+    } catch {
+        // best-effort
+    }
+
+    // 6) Cliente Fan expirado → GRATIS.
+    //    A leitura via `obterPerfilCliente`/`obterVigente` já faz
+    //    downgrade lazy (retorna GRATIS quando expirado), mas o
+    //    registro físico pode ficar desatualizado por dias se ninguém
+    //    consultar — esta etapa normaliza o banco. Não toca em
+    //    `planoSelecionadoEm` (mantém histórico).
+    try {
+        const result = await db.clientProfile.updateMany({
+            where: {
+                planoVigente: "FAN",
+                planoExpiraEm: { not: null, lt: now },
+            },
+            data: {
+                planoVigente: "GRATIS",
+                planoExpiraEm: null,
+            },
+        });
+        report.fansClienteExpirados = result.count;
     } catch {
         // best-effort
     }

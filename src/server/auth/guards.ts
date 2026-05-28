@@ -133,9 +133,14 @@ export async function requireCliente(
 }
 
 /**
- * `requireCliente` + verificação de `planoVigente === "FAN"`.
+ * `requireCliente` + verificação de plano `FAN` ATIVO (não expirado).
  *
- * Usado em endpoints de interações premium (curtidas, comentários).
+ * Usado em endpoints de interações premium (curtidas, comentários,
+ * avaliações, perguntas). Lê `planoExpiraEm` e considera Cliente
+ * cujo Fan já expirou como Grátis (downgrade lazy) — mesmo que o
+ * banco ainda tenha `planoVigente: FAN`, o GC noturno é quem
+ * normaliza fisicamente.
+ *
  * Cliente Grátis recebe 402 com `reason: "PLANO_REQUERIDO"` —
  * a UI redireciona pra `/cliente/selecao-plano` quando ver isso.
  */
@@ -147,10 +152,16 @@ export async function requireClienteFan(
 
     const profile = await db.clientProfile.findUnique({
         where: { userId: auth.userId },
-        select: { planoVigente: true },
+        select: { planoVigente: true, planoExpiraEm: true },
     });
 
-    if (profile?.planoVigente !== "FAN") {
+    const now = new Date();
+    const fanAtivo =
+        profile?.planoVigente === "FAN" &&
+        (profile.planoExpiraEm === null ||
+            profile.planoExpiraEm.getTime() > now.getTime());
+
+    if (!fanAtivo) {
         return {
             ok: false,
             response: NextResponse.json(

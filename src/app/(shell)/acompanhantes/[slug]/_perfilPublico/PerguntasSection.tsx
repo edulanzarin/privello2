@@ -65,14 +65,11 @@ export function PerguntasSection({
         (viewerKind === "cliente" && !viewerIsFan);
 
     if (isLocked) {
-        const baseHref =
-            viewerKind === "anonimo" ? "/login" : "/cliente/selecao-plano";
-        const ctaHref = buildAuthUrl(baseHref, pathname);
-        const ctaLabel =
-            viewerKind === "anonimo" ? "Entrar" : "Virar Fan";
+        // Anônimos veem dois caminhos (Criar conta / Entrar).
+        // Cliente Grátis vê só "Virar Fan".
         const description =
             viewerKind === "anonimo"
-                ? "Faça login pra ver as perguntas e respostas deste perfil."
+                ? "Crie sua conta ou entre pra ver perguntas e respostas reais."
                 : "Vire Fan pra perguntar e ler respostas direto da Acompanhante.";
 
         return (
@@ -83,9 +80,37 @@ export function PerguntasSection({
                     title="Perguntas exclusivas para Fans"
                     description={description}
                     action={
-                        <Button href={ctaHref} size="sm">
-                            {ctaLabel}
-                        </Button>
+                        viewerKind === "anonimo" ? (
+                            <div className="flex flex-col gap-1.5 sm:flex-row">
+                                <Button
+                                    href={buildAuthUrl(
+                                        "/cadastro",
+                                        pathname,
+                                    )}
+                                    size="sm"
+                                    variant="primary"
+                                >
+                                    Criar conta
+                                </Button>
+                                <Button
+                                    href={buildAuthUrl("/login", pathname)}
+                                    size="sm"
+                                    variant="ghost"
+                                >
+                                    Entrar
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button
+                                href={buildAuthUrl(
+                                    "/cliente/selecao-plano",
+                                    pathname,
+                                )}
+                                size="sm"
+                            >
+                                Virar Fan
+                            </Button>
+                        )
                     }
                 >
                     <FakePerguntasPreview />

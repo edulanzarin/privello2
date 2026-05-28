@@ -9,169 +9,168 @@ import {
     type OfferBenefit,
 } from "@/components";
 import {
-    podeAlterarPlanoCliente,
-    type PlanoClienteDefinition,
+    PLANO_CLIENTE_DURACOES,
+    type PlanoClienteDuracao,
 } from "@/domain/plano-cliente/definitions";
 import { getCurrentSession } from "@/server/auth/currentSession";
-import { listar, obterVigente } from "@/server/planos-cliente";
+import { obterVigente } from "@/server/planos-cliente";
+import { obterPerfilCliente } from "@/server/cliente-profile";
 
 import { PlanoForm } from "./PlanoForm";
 
 /**
  * Página de seleção de plano de Cliente (`/cliente/selecao-plano`).
  *
- * Espelha o desenho da tela de planos da Acompanhante, mas com:
+ * Mostra 4 opções em cards:
  *
- * - Conjunto de planos próprio (`GRATIS`, `FAN`) vindo de
- *   `@/server/planos-cliente`.
- * - Cópia adaptada ao Cliente (foco em consumir/avaliar, não publicar).
- * - Mesma identidade visual via {@link OfferLayout} + {@link OfferCard}.
+ *   1. **Grátis** — sempre disponível, idempotente.
+ *   2. **Fan 24h** — R$ 3,99. Acesso premium por 1 dia.
+ *   3. **Fan 7 dias** — R$ X. Pacote semanal.
+ *   4. **Fan 30 dias** — R$ Y. Assinatura padrão.
+ *
+ * Comprar Fan estando já com Fan ativo **estende** a janela
+ * (cumulativo). O backend (`comprarFan`) cuida disso.
  *
  * Diferente da Acompanhante, **não bloqueia acesso à plataforma**
  * quando o Cliente ainda não escolheu um plano — esta página é o
  * destino natural após o cadastro, mas o Cliente pode pular e
  * voltar pela área de configurações depois.
- *
- * Quando o Cliente já é `FAN`, a página continua acessível mas
- * apresenta o card do Fan como "atual" (botão desabilitado) e o card
- * do Grátis como "downgrade não permitido". Downgrade ativo só
- * acontece passivamente quando a assinatura expira.
  */
 
-function rotularPlano(tipo: PlanoClienteDefinition["tipo"]): string {
-    return tipo === "GRATIS" ? "Grátis" : "Fan";
+const DURACOES: ReadonlyArray<PlanoClienteDuracao> = [
+    "FAN_24H",
+    "FAN_7D",
+    "FAN_30D",
+];
+
+function formatarPreco(cents: number): string {
+    return `R$ ${(cents / 100).toFixed(2).replace(".", ",")}`;
 }
 
-function rotularBotao(
-    tipo: PlanoClienteDefinition["tipo"],
-    isAtual: boolean,
-): string {
-    if (isAtual) return "Plano atual";
-    return tipo === "GRATIS" ? "Continuar com Grátis" : "Quero ser Fan";
-}
+const FAN_BENEFITS: ReadonlyArray<OfferBenefit> = [
+    {
+        label: "Leia avaliações de outros Clientes",
+        icon: ChatIcon,
+        highlight: true,
+    },
+    { label: "Veja perguntas e respostas", icon: ChatIcon, highlight: true },
+    { label: "Comente e curta as fotos", icon: HeartIcon, highlight: true },
+    { label: "Avalie seus encontros", icon: SparklesIcon, highlight: true },
+];
 
-function descricaoPlano(tipo: PlanoClienteDefinition["tipo"]): string {
-    return tipo === "GRATIS"
-        ? "Veja perfis, fotos e Stories. Bom pra explorar antes de virar Fan."
-        : "Tudo do Grátis e ainda interaja: leia e publique avaliações e comentários, curta fotos.";
-}
+const GRATIS_BENEFITS: ReadonlyArray<OfferBenefit> = [
+    { label: "Veja perfis públicos das Acompanhantes" },
+    { label: "Veja Stories" },
+    { label: "Filtre por cidade, gênero, preço e mais" },
+];
 
-function beneficios(plano: PlanoClienteDefinition): readonly OfferBenefit[] {
-    const isFan = plano.tipo === "FAN";
-    const items: OfferBenefit[] = [];
-
-    if (plano.podeVerStories) {
-        items.push({
-            label: "Veja Stories e fotos das Acompanhantes",
-            icon: SparklesIcon,
-        });
-    }
-    if (plano.podeAvaliar) {
-        items.push({
-            label: "Publique avaliações sobre quem você conheceu",
-            icon: ChatIcon,
-            highlight: isFan,
-        });
-    }
-    if (plano.podeVerAvaliacoes) {
-        items.push({
-            label: "Leia avaliações de outros Clientes",
-            icon: ChatIcon,
-            highlight: isFan,
-        });
-    }
-    if (plano.podeVerComentarios) {
-        items.push({
-            label: "Veja comentários nas fotos",
-            highlight: isFan,
-        });
-    }
-    if (plano.podeComentar) {
-        items.push({
-            label: "Comente nas fotos",
-            highlight: isFan,
-        });
-    }
-    if (plano.podeCurtir) {
-        items.push({
-            label: "Curta fotos e Stories",
-            icon: HeartIcon,
-            highlight: isFan,
-        });
-    }
-
-    return items;
+/**
+ * Formata "expira em X" a partir de uma data — usado quando o
+ * Cliente já tem Fan ativo e a página deve indicar isso.
+ */
+function expiraEmTexto(expiraEm: Date | null, now: Date): string | null {
+    if (!expiraEm) return null;
+    const ms = expiraEm.getTime() - now.getTime();
+    if (ms <= 0) return null;
+    const horas = Math.floor(ms / (60 * 60 * 1000));
+    if (horas < 24) return `Expira em ${horas} h`;
+    const dias = Math.floor(horas / 24);
+    return `Expira em ${dias} ${dias === 1 ? "dia" : "dias"}`;
 }
 
 export default async function SelecaoPlanoClientePage() {
     const session = await getCurrentSession();
     if (!session) {
-        // Layout protege esta rota; aqui é defensivo.
         throw new Error("Selecao_de_Plano sem sessão resolvida.");
     }
 
     const planoAtual = await obterVigente(session.userId);
-    const planos = listar();
+    const perfil = await obterPerfilCliente(session.userId);
+    const now = new Date();
+    const fanAtivo = planoAtual?.tipo === "FAN";
+    const expiraTexto = fanAtivo
+        ? expiraEmTexto(perfil?.planoExpiraEm ?? null, now)
+        : null;
 
     const isPrimeiraEscolha = planoAtual === null;
 
     return (
         <OfferLayout
-            eyebrow={isPrimeiraEscolha ? "Bem-vindo à Privello" : "Trocar plano"}
+            eyebrow={isPrimeiraEscolha ? "Bem-vindo à Privello" : "Plano Fan"}
             title={
                 isPrimeiraEscolha
-                    ? "Escolha como você quer participar"
-                    : "Faça upgrade"
+                    ? "Como você quer participar?"
+                    : fanAtivo
+                        ? "Renovar ou estender seu Fan"
+                        : "Vire Fan agora"
             }
             subtitle={
-                isPrimeiraEscolha
-                    ? "Comece grátis ou desbloqueie tudo com o Fan."
-                    : "Você está no Grátis. O Fan libera avaliações, comentários e curtidas."
+                fanAtivo
+                    ? `${expiraTexto ?? "Fan ativo"}. Comprar de novo soma à janela atual.`
+                    : "Comece grátis ou desbloqueie tudo pelo tempo que quiser."
             }
-            footer="Você pode dar upgrade depois. Trocar para um plano menor não é possível enquanto o atual estiver ativo."
+            footer="Trocar para o Grátis só após o Fan expirar. Comprar Fan novamente acumula o tempo."
         >
-            {planos.map((plano, index) => {
-                const isFan = plano.tipo === "FAN";
-                const isAtual =
-                    planoAtual !== null && planoAtual.tipo === plano.tipo;
-                const podeIr =
-                    isPrimeiraEscolha ||
-                    podeAlterarPlanoCliente(
-                        planoAtual?.tipo ?? null,
-                        plano.tipo,
-                    );
+            {/* ─── Card Grátis ─────────────────────────────────── */}
+            <OfferCard
+                name="Grátis"
+                description="Veja perfis e Stories. Boa pra explorar antes de virar Fan."
+                benefits={GRATIS_BENEFITS}
+                animationDelayMs={120}
+            >
+                <PlanoForm
+                    mode="selecionar"
+                    value="GRATIS"
+                    label={
+                        planoAtual?.tipo === "GRATIS"
+                            ? "Plano atual"
+                            : "Continuar com Grátis"
+                    }
+                    variant={planoAtual?.tipo === "GRATIS" ? "ghost" : "secondary"}
+                    disabled={planoAtual?.tipo === "GRATIS" || fanAtivo}
+                />
+            </OfferCard>
 
+            {/* ─── 3 cards Fan (24h / 7d / 30d) ───────────────── */}
+            {DURACOES.map((chave, idx) => {
+                const duracao = PLANO_CLIENTE_DURACOES[chave];
+                const recomendado = chave === "FAN_30D";
                 return (
                     <OfferCard
-                        key={plano.tipo}
-                        name={rotularPlano(plano.tipo)}
-                        description={descricaoPlano(plano.tipo)}
-                        benefits={beneficios(plano)}
-                        recommended={isFan && !isAtual}
+                        key={chave}
+                        name={duracao.label}
+                        description={duracao.descricaoCurta}
+                        benefits={[
+                            {
+                                label: formatarPreco(duracao.precoCents),
+                                icon: DiamondIcon,
+                                highlight: true,
+                            },
+                            ...FAN_BENEFITS,
+                        ]}
+                        recommended={recomendado}
                         badge={
-                            isFan && !isAtual ? (
+                            recomendado ? (
                                 <Badge
                                     tone="primaryGradient"
                                     icon={<DiamondIcon size={11} />}
                                     className="absolute right-5 top-5 px-3 py-1"
                                 >
-                                    Recomendado
+                                    Mais escolhido
                                 </Badge>
                             ) : undefined
                         }
-                        animationDelayMs={120 + index * 80}
+                        animationDelayMs={200 + idx * 80}
                     >
                         <PlanoForm
-                            tipo={plano.tipo}
-                            label={rotularBotao(plano.tipo, isAtual)}
-                            variant={
-                                isAtual
-                                    ? "ghost"
-                                    : isFan
-                                        ? "primary"
-                                        : "secondary"
+                            mode="comprar"
+                            value={chave}
+                            label={
+                                fanAtivo
+                                    ? `Estender +${duracao.label.replace("Fan ", "")}`
+                                    : `Comprar ${duracao.label}`
                             }
-                            disabled={isAtual || !podeIr}
+                            variant={recomendado ? "primary" : "secondary"}
                         />
                     </OfferCard>
                 );

@@ -61,14 +61,12 @@ export function AvaliacoesSection({
         (viewerKind === "cliente" && !viewerIsFan);
 
     if (isLocked) {
-        const baseHref =
-            viewerKind === "anonimo" ? "/login" : "/cliente/selecao-plano";
-        const ctaHref = buildAuthUrl(baseHref, pathname);
-        const ctaLabel =
-            viewerKind === "anonimo" ? "Entrar" : "Virar Fan";
+        // Anônimos veem dois caminhos: "Entrar" pra quem já tem conta,
+        // "Virar Fan" pra quem nunca usou. Cliente Grátis vê só
+        // "Virar Fan" — já está logado, só precisa do plano.
         const description =
             viewerKind === "anonimo"
-                ? "Faça login pra ler o que outros Clientes acharam deste perfil."
+                ? "Crie sua conta ou entre pra desbloquear avaliações reais de outros Clientes."
                 : "Vire Fan pra ler o que outros Clientes estão dizendo.";
 
         return (
@@ -79,9 +77,37 @@ export function AvaliacoesSection({
                     title="Avaliações exclusivas para Fans"
                     description={description}
                     action={
-                        <Button href={ctaHref} size="sm">
-                            {ctaLabel}
-                        </Button>
+                        viewerKind === "anonimo" ? (
+                            <div className="flex flex-col gap-1.5 sm:flex-row">
+                                <Button
+                                    href={buildAuthUrl(
+                                        "/cadastro",
+                                        pathname,
+                                    )}
+                                    size="sm"
+                                    variant="primary"
+                                >
+                                    Criar conta
+                                </Button>
+                                <Button
+                                    href={buildAuthUrl("/login", pathname)}
+                                    size="sm"
+                                    variant="ghost"
+                                >
+                                    Entrar
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button
+                                href={buildAuthUrl(
+                                    "/cliente/selecao-plano",
+                                    pathname,
+                                )}
+                                size="sm"
+                            >
+                                Virar Fan
+                            </Button>
+                        )
                     }
                 >
                     <FakeAvaliacoesPreview />

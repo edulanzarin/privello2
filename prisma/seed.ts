@@ -1170,18 +1170,28 @@ async function main(): Promise<void> {
             select: { id: true },
         });
 
+        // Cliente Fan no seed ganha 30 dias a partir de agora —
+        // simula assinatura recém-comprada. Cliente Grátis fica
+        // sem expiração.
+        const planoExpiraEm =
+            c.plano === "FAN"
+                ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+                : null;
+
         await prisma.clientProfile.upsert({
             where: { userId: user.id },
             update: {
                 fotoPerfilId: fotoMedia.id,
                 planoVigente: c.plano,
                 planoSelecionadoEm: now,
+                planoExpiraEm,
             },
             create: {
                 userId: user.id,
                 fotoPerfilId: fotoMedia.id,
                 planoVigente: c.plano,
                 planoSelecionadoEm: now,
+                planoExpiraEm,
             },
         });
     }
