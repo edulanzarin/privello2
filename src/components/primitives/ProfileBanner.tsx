@@ -73,6 +73,14 @@ export function ProfileBanner({
                 />
             ) : null}
 
+            {/* Vinheta inferior — gradiente preto fade pra dar
+                profundidade e legibilidade caso o caller plote
+                conteúdo sobreposto na base do banner. */}
+            <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/30 via-black/0 to-transparent"
+            />
+
             {overlay != null ? (
                 <div className="absolute right-3 top-3 z-10">{overlay}</div>
             ) : null}

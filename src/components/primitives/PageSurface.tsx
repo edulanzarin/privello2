@@ -128,19 +128,28 @@ export function PageSurface({
         >
             <div
                 className={[
-                    "mx-auto flex w-full min-w-0 flex-col bg-surface",
+                    "relative mx-auto flex w-full min-w-0 flex-col bg-surface",
                     banner != null ? "overflow-hidden" : "",
                     "rounded-none sm:rounded-3xl sm:border sm:border-border",
+                    texture ? "texture-paper-soft" : "",
                     WIDTH_CLASSES[width],
                     className ?? "",
                 ]
                     .filter(Boolean)
                     .join(" ")}
             >
-                {banner != null ? <div>{banner}</div> : null}
+                {/* Halo warm radial no topo — efeito "luz natural"
+                    nos cantos superiores. Não interativo. */}
+                <div
+                    aria-hidden="true"
+                    className="halo-warm pointer-events-none absolute inset-x-0 top-0 h-64 sm:rounded-t-3xl"
+                />
+                {banner != null ? (
+                    <div className="relative">{banner}</div>
+                ) : null}
                 <div
                     className={[
-                        "flex min-w-0 flex-col gap-5 overflow-x-clip p-4 sm:p-6",
+                        "relative flex min-w-0 flex-col gap-5 overflow-x-clip p-4 sm:p-6",
                     ].join(" ")}
                 >
                     {children}

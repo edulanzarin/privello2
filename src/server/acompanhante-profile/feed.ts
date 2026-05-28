@@ -283,3 +283,67 @@ export async function obterStatsHome(
         avaliacoes,
     };
 }
+
+/**
+ * Cidade com cobertura agregada — usada no carrossel de cidades
+ * em destaque na home.
+ */
+export interface CidadeEmDestaque {
+    cidadeNome: string;
+    estadoSigla: string;
+    /** Quantidade de perfis visíveis ativos. */
+    count: number;
+    /** URL da foto de perfil mais recente da cidade (capa do chip). */
+    photoUrl: string | null;
+}
+
+/**
+ * Lista as cidades com mais perfis ativos pra destacar na home.
+ *
+ * Faz um `groupBy(estadoSigla, cidadeNome)` ordenado por count
+ * desc, depois enriquece cada cidade com a foto do perfil mais
+ * recentemente atualizado pra usar como "capa" do chip.
+ */
+export async function listarCidadesEmDestaque(
+    options: { limit?: number } = {},
+): Promise<ReadonlyArray<CidadeEmDestaque>> {
+    const limit = Math.max(1, Math.min(20, options.limit ?? 10));
+
+    const grupos = await db.acompanhanteProfile.groupBy({
+        by: ["estadoSigla", "cidadeNome"],
+        where: baseWhereVisivel,
+        _count: { _all: true },
+        orderBy: { _count: { userId: "desc" } },
+        take: limit,
+    });
+
+    if (grupos.length === 0) return [];
+
+    // Pra cada cidade, busca a foto do perfil mais recentemente
+    // atualizado. Faz N queries pequenas — N ≤ 10, OK.
+    const enriched = await Promise.all(
+        grupos.map(async (g) => {
+            const top = await db.acompanhanteProfile.findFirst({
+                where: {
+                    ...baseWhereVisivel,
+                    estadoSigla: g.estadoSigla,
+                    cidadeNome: g.cidadeNome,
+                },
+                orderBy: { updatedAt: "desc" },
+                select: {
+                    fotoPerfil: { select: { storageKey: true } },
+                },
+            });
+            return {
+                cidadeNome: g.cidadeNome,
+                estadoSigla: g.estadoSigla,
+                count: g._count._all,
+                photoUrl: top?.fotoPerfil
+                    ? `/api/storage/${top.fotoPerfil.storageKey}`
+                    : null,
+            };
+        }),
+    );
+
+    return enriched;
+}

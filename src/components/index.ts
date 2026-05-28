@@ -108,6 +108,16 @@ export type { EmptyStateProps } from "./primitives/EmptyState";
 export { Skeleton } from "./primitives/Skeleton";
 export type { SkeletonProps, SkeletonVariant } from "./primitives/Skeleton";
 
+export {
+    LoadingSpinner,
+    PageLoader,
+} from "./primitives/LoadingSpinner";
+export type {
+    LoadingSpinnerProps,
+    LoadingSpinnerSize,
+    PageLoaderProps,
+} from "./primitives/LoadingSpinner";
+
 export { BarChart } from "./primitives/BarChart";
 export type { BarChartPoint, BarChartProps } from "./primitives/BarChart";
 
@@ -226,6 +236,12 @@ export type {
     RatingDistributionData,
     RatingDistributionProps,
 } from "./primitives/RatingDistribution";
+
+export { CityChips } from "./primitives/CityChips";
+export type {
+    CityChipsItem,
+    CityChipsProps,
+} from "./primitives/CityChips";
 
 export { Comment, CommentInput } from "./primitives/Comment";
 export type { CommentProps, CommentInputProps } from "./primitives/Comment";

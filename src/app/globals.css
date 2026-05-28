@@ -326,13 +326,82 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
- * Compat: classes do tema antigo viram no-op pra não quebrar nada.
+ * Pulse soft — animação dos dots do LoadingSpinner. Cada dot
+ * recebe `animation-delay` próprio pra criar o efeito de
+ * onda. Mais discreto que o pulse padrão do tailwind (que
+ * desaparece e volta a 100%).
+ * ------------------------------------------------------------------------- */
+@keyframes pulse-soft {
+    0%, 100% { opacity: 0.35; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.15); }
+}
+
+.animate-pulse-soft {
+    animation: pulse-soft 1.2s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Marquee horizontal — usado em rolagens contínuas (cidades,
+ * tags, etc). Direção pra esquerda em loop.
+ * ------------------------------------------------------------------------- */
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+    animation: marquee 40s linear infinite;
+}
+
+.animate-marquee:hover {
+    animation-play-state: paused;
+}
+
+/* ---------------------------------------------------------------------------
+ * Textura de papel — noise SVG sutil aplicado como background na
+ * canvas / surfaces. Substitui as classes legadas `.texture-paper`
+ * com algo real. A SVG é inline em data URI pra evitar request
+ * extra; opacity baixa + size pequeno = grão fino quase
+ * imperceptível, mas que tira a sensação de "tela plana".
  * ------------------------------------------------------------------------- */
 
-.texture-paper,
-.texture-paper-soft {
-    /* No-op — texturas antigas. */
+.texture-paper {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.4 0'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.5'/></svg>");
+    background-size: 200px 200px;
+    background-repeat: repeat;
+    background-blend-mode: multiply;
 }
+
+.texture-paper-soft {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='5'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.25 0'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.4'/></svg>");
+    background-size: 160px 160px;
+    background-repeat: repeat;
+}
+
+/* ---------------------------------------------------------------------------
+ * Halo warm radial — usado no canto superior do PageSurface pra
+ * dar profundidade. Combinado com a textura, dá um toque "Apple
+ * Music biographies".
+ * ------------------------------------------------------------------------- */
+
+.halo-warm {
+    background:
+        radial-gradient(
+            ellipse 60% 50% at 0% 0%,
+            rgba(236, 123, 91, 0.10) 0%,
+            rgba(236, 123, 91, 0) 60%
+        ),
+        radial-gradient(
+            ellipse 50% 40% at 100% 0%,
+            rgba(236, 123, 91, 0.06) 0%,
+            rgba(236, 123, 91, 0) 60%
+        );
+}
+
+/* ---------------------------------------------------------------------------
+ * Compat: mantém o nome antigo `.texture-paper` ativo (acima já
+ * implementado). Nada de no-op aqui agora.
+ * ------------------------------------------------------------------------- */
 
 
 /* ---------------------------------------------------------------------------

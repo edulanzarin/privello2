@@ -248,7 +248,7 @@ export function ReelsViewer({
                         <div className="pointer-events-auto flex min-w-0 flex-col gap-2 text-white">
                             <a
                                 href={`/acompanhantes/${item.owner.identificador}`}
-                                className="inline-flex items-center gap-2 self-start rounded-full bg-black/30 px-2 py-1 backdrop-blur-sm transition-colors hover:bg-black/50"
+                                className="inline-flex items-center gap-2 self-start rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-white/15 backdrop-blur-md transition-all hover:bg-white/20"
                             >
                                 <Avatar
                                     src={item.owner.fotoUrl ?? null}
@@ -295,7 +295,7 @@ export function ReelsViewer({
                                 type="button"
                                 onClick={() => setMuted((v) => !v)}
                                 aria-label={muted ? "Ativar som" : "Silenciar"}
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105"
                             >
                                 {muted ? (
                                     <MutedIcon size={16} />
@@ -310,11 +310,11 @@ export function ReelsViewer({
 
             {/* Paywall overlay — cobre tudo quando ativo. */}
             {paywall ? (
-                <div className="pointer-events-auto absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/80 px-6 text-center backdrop-blur-md">
-                    <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white">
-                        <LockIcon size={26} />
+                <div className="pointer-events-auto absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/55 px-6 text-center backdrop-blur-2xl">
+                    <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_12px_28px_-8px_rgba(197,82,58,0.7)] ring-4 ring-white/20">
+                        <LockIcon size={28} />
                     </span>
-                    <h2 className="max-w-xs text-2xl font-bold text-white">
+                    <h2 className="max-w-xs text-2xl font-bold tracking-tight text-white">
                         {paywall.title}
                     </h2>
                     <p className="max-w-sm text-sm leading-relaxed text-white/80">

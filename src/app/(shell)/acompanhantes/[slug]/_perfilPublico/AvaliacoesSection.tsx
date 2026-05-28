@@ -143,35 +143,67 @@ export function AvaliacoesSection({
 function AvaliacoesHeader({
     reviewsCount,
     onAbrirNotaGeral,
+    statsExtras,
 }: {
     reviewsCount: number;
     onAbrirNotaGeral: (() => void) | null;
+    statsExtras?: ReadonlyArray<{ icon: React.ReactNode; value: string; label: string }>;
 }): React.ReactElement {
+    const stats = statsExtras ?? [];
     return (
-        <SectionHeader
-            title="Avaliações"
-            trailing={
-                <div className="flex items-center gap-2">
-                    {reviewsCount > 0 ? (
-                        <span className="text-xs text-text-secondary">
-                            {reviewsCount}{" "}
-                            {reviewsCount === 1 ? "avaliação" : "avaliações"}
+        <header className="flex flex-col gap-4 border-b border-[color:var(--hairline)] pb-4">
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <span
+                        aria-hidden="true"
+                        className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[color:var(--accent)]/12"
+                    >
+                        <ChatIcon size={18} />
+                    </span>
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-base font-semibold tracking-tight text-text-primary">
+                            Avaliações
                         </span>
-                    ) : null}
-                    {onAbrirNotaGeral ? (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={onAbrirNotaGeral}
-                        >
-                            <StarIcon size={12} className="text-warning-500" />
-                            Ver nota geral
-                        </Button>
-                    ) : null}
+                        <span className="text-xs text-text-secondary">
+                            {reviewsCount > 0
+                                ? `${reviewsCount} ${reviewsCount === 1 ? "avaliação" : "avaliações"}`
+                                : "Nenhuma avaliação ainda"}
+                        </span>
+                    </div>
                 </div>
-            }
-        />
+                {onAbrirNotaGeral ? (
+                    <button
+                        type="button"
+                        onClick={onAbrirNotaGeral}
+                        className="inline-flex flex-none items-center gap-1.5 text-sm font-semibold text-[color:var(--accent-deep)] underline-offset-4 transition-colors hover:text-[color:var(--accent)] hover:underline focus:outline-none focus-visible:underline"
+                    >
+                        <StarIcon size={14} className="text-warning-500" />
+                        Ver nota geral
+                    </button>
+                ) : null}
+            </div>
+
+            {stats.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                    {stats.map((s, i) => (
+                        <div
+                            key={i}
+                            className="flex flex-col items-center gap-0.5 rounded-2xl bg-[color:var(--accent-soft)]/40 px-2 py-3 text-center"
+                        >
+                            <span aria-hidden="true" className="text-[color:var(--accent-deep)]">
+                                {s.icon}
+                            </span>
+                            <span className="text-sm font-semibold text-text-primary">
+                                {s.value}
+                            </span>
+                            <span className="text-[0.65rem] uppercase tracking-wider text-text-secondary">
+                                {s.label}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            ) : null}
+        </header>
     );
 }
 
@@ -513,35 +545,32 @@ function ListaReviews({
 
     if (!expanded) {
         return (
-            <Button
+            <button
                 type="button"
-                variant="ghost"
-                size="md"
                 onClick={() => setExpanded(true)}
-                className="self-start"
+                className="group inline-flex items-center gap-2 self-start rounded-2xl border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)]/40 px-4 py-2.5 text-sm font-medium text-[color:var(--accent-deep)] transition-all hover:bg-[color:var(--accent-soft)] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
             >
-                <ChevronRightIcon size={14} />
-                Mostrar {reviews.length}{" "}
+                <ChatIcon size={14} />
+                Ler {reviews.length}{" "}
                 {reviews.length === 1 ? "avaliação" : "avaliações"}
-            </Button>
+                <ChevronRightIcon
+                    size={14}
+                    className="transition-transform group-hover:translate-x-0.5"
+                />
+            </button>
         );
     }
 
     return (
         <div className="flex flex-col gap-3">
-            <Button
+            <button
                 type="button"
-                variant="ghost"
-                size="sm"
                 onClick={() => setExpanded(false)}
-                className="self-start"
+                className="inline-flex items-center gap-1.5 self-start text-xs font-medium text-text-secondary transition-colors hover:text-[color:var(--accent-deep)] focus:outline-none focus-visible:underline"
             >
-                <ChevronRightIcon
-                    size={14}
-                    className="rotate-90"
-                />
+                <ChevronRightIcon size={12} className="rotate-90" />
                 Ocultar
-            </Button>
+            </button>
             <Paginator
                 items={reviews}
                 pageSize={5}

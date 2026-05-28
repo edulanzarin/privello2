@@ -10,6 +10,7 @@ import {
     CameraIcon,
     CameraVerifiedIcon,
     CheckIcon,
+    CityChips,
     CityCombobox,
     CrownIcon,
     DocumentVerifiedIcon,
@@ -31,7 +32,7 @@ import {
 
 import { formatarValorHora } from "@/domain/atendimentoComercial";
 
-import type { FeedHome, FeedItem, HomeStats } from "@/server/acompanhante-profile/feed";
+import type { CidadeEmDestaque, FeedHome, FeedItem, HomeStats } from "@/server/acompanhante-profile/feed";
 import type { PlanoExibicao } from "@/server/acompanhante-profile";
 
 /**
@@ -44,6 +45,11 @@ export interface HomeViewProps {
     feed: FeedHome;
     /** Estatísticas globais pro aside do hero. */
     stats: HomeStats;
+    /**
+     * Cidades em destaque pra renderizar como carrossel horizontal
+     * abaixo do hero.
+     */
+    cidades: ReadonlyArray<CidadeEmDestaque>;
 }
 
 /**
@@ -71,6 +77,7 @@ export function HomeView({
     viewerType,
     feed,
     stats,
+    cidades,
 }: HomeViewProps): React.ReactElement {
     const router = useRouter();
     const [cityValue, setCityValue] = React.useState<CityComboboxValue>({
@@ -128,29 +135,35 @@ export function HomeView({
                         </p>
                     </div>
 
-                    {/* Direita: aside com stats */}
-                    <aside className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
-                        <StatList
-                            items={[
-                                {
-                                    label: "Perfis ativos",
-                                    value: formatNumber(stats.perfisAtivos),
-                                },
-                                {
-                                    label: "Cidades",
-                                    value: formatNumber(stats.cidades),
-                                },
-                                {
-                                    label: "Em destaque agora",
-                                    value: formatNumber(stats.boostsAtivos),
-                                },
-                                {
-                                    label: "Avaliações públicas",
-                                    value: formatNumber(stats.avaliacoes),
-                                },
-                            ]}
-                            footer="Conteúdo adulto. Você precisa ter 18 anos ou mais para usar a Privello."
+                    {/* Direita: collage de perfis em destaque + stats glass */}
+                    <aside className="relative">
+                        <HeroCollage
+                            items={[...feed.boost, ...feed.alta].slice(0, 5)}
                         />
+                        <div className="absolute inset-x-3 bottom-3 z-10 sm:inset-x-4 sm:bottom-4">
+                            <div className="glass-surface-strong rounded-2xl p-4 sm:p-5">
+                                <StatList
+                                    items={[
+                                        {
+                                            label: "Perfis ativos",
+                                            value: formatNumber(stats.perfisAtivos),
+                                        },
+                                        {
+                                            label: "Cidades",
+                                            value: formatNumber(stats.cidades),
+                                        },
+                                        {
+                                            label: "Em destaque",
+                                            value: formatNumber(stats.boostsAtivos),
+                                        },
+                                        {
+                                            label: "Avaliações",
+                                            value: formatNumber(stats.avaliacoes),
+                                        },
+                                    ]}
+                                />
+                            </div>
+                        </div>
                     </aside>
                 </div>
 
@@ -183,6 +196,34 @@ export function HomeView({
                     </div>
                 ) : null}
             </section>
+
+            {/* ── Cidades em destaque ────────────────────────────── */}
+            {cidades.length > 0 ? (
+                <section className="flex flex-col gap-4">
+                    <div className="flex items-end justify-between gap-3">
+                        <div className="flex flex-col gap-1">
+                            <span className="eyebrow">Onde estão</span>
+                            <h2 className="text-xl font-semibold tracking-tight text-text-primary sm:text-2xl">
+                                Cidades em destaque
+                            </h2>
+                        </div>
+                        <SectionLink href="/acompanhantes">
+                            Todas
+                        </SectionLink>
+                    </div>
+                    <CityChips
+                        items={cidades.map((c) => ({
+                            label: c.cidadeNome,
+                            sublabel: c.estadoSigla,
+                            href: `/acompanhantes?estado=${encodeURIComponent(
+                                c.estadoSigla,
+                            )}&cidade=${encodeURIComponent(c.cidadeNome)}`,
+                            photoUrl: c.photoUrl,
+                            count: c.count,
+                        }))}
+                    />
+                </section>
+            ) : null}
 
             {/* ── Em destaque (Boost) ────────────────────────────── */}
             {feed.boost.length > 0 ? (
@@ -515,4 +556,120 @@ function Step({
 function formatNumber(n: number): string {
     if (!Number.isFinite(n) || n < 0) return "—";
     return n.toLocaleString("pt-BR");
+}
+
+/**
+ * HeroCollage — mosaico assimétrico de 4-5 fotos pra ilustrar o
+ * hero. Layout estilo "wall" do Spotify: uma foto grande à esquerda
+ * (col-span 2) + 2 colunas com fotos menores empilhadas. Aspect
+ * geral 4:5 mais alto que largo, espaço pro card glass de stats
+ * sobreposto na base.
+ *
+ * Quando há menos itens, repete o último pra fechar o grid sem
+ * buracos. Quando não há item nenhum, cai num gradient warm com
+ * iniciais "P" centralizadas.
+ */
+function HeroCollage({
+    items,
+}: {
+    items: ReadonlyArray<FeedItem>;
+}): React.ReactElement {
+    // Pad pra 5 itens repetindo o último (ou usando placeholder).
+    const padded: ReadonlyArray<FeedItem | null> = (() => {
+        if (items.length === 0) return [null, null, null, null, null];
+        const out: Array<FeedItem | null> = [];
+        for (let i = 0; i < 5; i++) {
+            out.push(items[i % items.length] ?? null);
+        }
+        return out;
+    })();
+
+    const [big, t1, t2, b1, b2] = padded;
+
+    return (
+        <div className="relative grid aspect-[4/5] w-full grid-cols-3 grid-rows-3 gap-2 overflow-hidden rounded-3xl">
+            {/* Tile grande à esquerda — span 2 col × 3 row */}
+            <CollageTile
+                item={big}
+                className="col-span-2 row-span-3 rounded-3xl"
+            />
+            {/* 4 tiles menores em coluna direita */}
+            <CollageTile item={t1} className="col-start-3 row-start-1 rounded-2xl" />
+            <CollageTile item={t2} className="col-start-3 row-start-2 rounded-2xl" />
+            <CollageTile item={b1} className="col-start-3 row-start-3 rounded-2xl" />
+            {/* 5º item entra como overlay translúcido sobre o grande
+                pra dar densidade — pequeno, canto superior. */}
+            {b2 ? (
+                <a
+                    href={`/acompanhantes/${b2.identificador}`}
+                    aria-label={`Ver perfil de ${b2.nome}`}
+                    className="absolute left-3 top-3 z-10 inline-flex items-center gap-2 rounded-full bg-white/85 px-2.5 py-1.5 text-[0.7rem] font-medium text-text-primary shadow-md ring-1 ring-white backdrop-blur-md transition-transform hover:scale-105"
+                >
+                    {b2.fotoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={b2.fotoUrl}
+                            alt=""
+                            className="h-5 w-5 rounded-full object-cover ring-2 ring-white"
+                        />
+                    ) : null}
+                    <span className="truncate max-w-[8rem]">
+                        {b2.nome.split(" ")[0]} de {b2.cidadeNome}
+                    </span>
+                </a>
+            ) : null}
+        </div>
+    );
+}
+
+/**
+ * CollageTile — uma célula da collage. Renderiza foto do perfil
+ * (link clicável pra `/acompanhantes/<id>`) ou fallback warm.
+ */
+function CollageTile({
+    item,
+    className,
+}: {
+    item: FeedItem | null;
+    className?: string;
+}): React.ReactElement {
+    const composed = [
+        "group relative overflow-hidden bg-gradient-to-br from-[color:var(--accent-soft)] via-[#ffd1bf] to-[color:var(--accent)]",
+        className ?? "",
+    ]
+        .filter(Boolean)
+        .join(" ");
+
+    if (item === null || !item.fotoUrl) {
+        return (
+            <div className={composed}>
+                <span
+                    aria-hidden="true"
+                    className="flex h-full w-full items-center justify-center text-3xl font-bold text-white/85"
+                >
+                    P
+                </span>
+            </div>
+        );
+    }
+
+    return (
+        <a
+            href={`/acompanhantes/${item.identificador}`}
+            aria-label={`Ver perfil de ${item.nome}`}
+            className={composed}
+        >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+                src={item.fotoUrl}
+                alt={item.nome}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+            <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"
+            />
+        </a>
+    );
 }

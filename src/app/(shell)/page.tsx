@@ -3,8 +3,10 @@ import type { Metadata } from "next";
 import { PageSurface } from "@/components";
 import { getCurrentSession } from "@/server/auth/currentSession";
 import {
+    listarCidadesEmDestaque,
     listarFeedHome,
     obterStatsHome,
+    type CidadeEmDestaque,
     type FeedHome,
     type HomeStats,
 } from "@/server/acompanhante-profile/feed";
@@ -66,13 +68,16 @@ export default async function HomePage() {
 
     let feed: FeedHome = FALLBACK_FEED;
     let stats: HomeStats = FALLBACK_STATS;
+    let cidades: ReadonlyArray<CidadeEmDestaque> = [];
     try {
-        const [f, s] = await Promise.all([
+        const [f, s, c] = await Promise.all([
             listarFeedHome({ limite: { boost: 30, alta: 30 } }),
             obterStatsHome(),
+            listarCidadesEmDestaque({ limit: 10 }),
         ]);
         feed = f;
         stats = s;
+        cidades = c;
     } catch {
         // mantém fallbacks
     }
@@ -84,6 +89,7 @@ export default async function HomePage() {
                 viewerType={session?.userType ?? null}
                 feed={feed}
                 stats={stats}
+                cidades={cidades}
             />
         </PageSurface>
     );
