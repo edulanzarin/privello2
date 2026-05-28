@@ -519,79 +519,76 @@ export function BuscaView({
                 </p>
             </div>
 
-            {/* ── Barra fixa: chip da cidade + toolbar de filtros
-                e ordenação. Sticky abaixo do TopBar (`h-14`).
-                Em mobile sangra borda-a-borda do PageSurface
-                via padding interno do próprio sticky;
-                conteúdo do sticky usa o mesmo gap das demais
-                seções pra não destoar. */}
-            <div className="sticky top-14 z-20 flex flex-col gap-3 border-b border-border bg-surface/95 py-3 backdrop-blur-sm">
-                {/* Chip clicável da cidade quando há uma selecionada;
-                    senão, CityCombobox compacto pra escolher.
-                    Em listagem aberta sem cidade, o usuário pode
-                    refinar por localidade sem sair da página.
-                    Sempre centralizado horizontalmente — barra
-                    de pesquisa é o elemento visual principal do
-                    sticky. */}
+            {/* ── Barra fixa só com chip de cidade ──────────────
+                Em estado normal (topo), aparece logo após o título.
+                Quando rola, sobe pra `top-14` (abaixo da TopBar)
+                e fica fixa — usuário sempre tem 1 toque pra trocar
+                de cidade.
+                
+                Filtros e ordenação NÃO ficam sticky — voltam pro
+                topo após o chip. Ao trocar de cidade, a navegação
+                naturalmente leva o scroll pro topo (router.push). */}
+            <div className="sticky top-14 z-40 -mx-4 flex items-center justify-center border-b border-border bg-surface/95 px-4 py-2 backdrop-blur-sm sm:-mx-6 sm:px-6">
                 {filtros.cidadeNome && filtros.estadoSigla ? (
-                    <div className="flex justify-center">
-                        <button
-                            type="button"
-                            onClick={limparCidade}
-                            className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
-                        >
-                            <MapPinIcon size={14} />
-                            {filtros.cidadeNome}, {filtros.estadoSigla}
-                            <span className="text-xs text-primary-600">
-                                trocar
-                            </span>
-                        </button>
-                    </div>
-                ) : (
-                    <CityCombobox
-                        value={cityValue}
-                        onChange={setCityValue}
-                        onSubmit={buscarPorCidade}
-                        placeholder="Filtrar por cidade"
-                    />
-                )}
-
-                {/* Toolbar: botão de filtros (mobile) + ordenar.
-                    Em mobile o select de ordenação fica flexível
-                    pra não exceder o viewport quando há o botão
-                    de Filtros ao lado. */}
-                <div className="flex items-center justify-between gap-2">
-                    <Button
+                    <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPanelOpen(true)}
-                        className="lg:hidden"
+                        onClick={limparCidade}
+                        className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
                     >
-                        Filtros{" "}
-                        {ativosUrl > 0 ? (
-                            <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary-600 px-1 text-[0.6rem] font-semibold text-white">
-                                {ativosUrl}
-                            </span>
-                        ) : null}
-                    </Button>
-
-                    <div className="ml-auto flex min-w-0 items-center gap-2">
-                        <span className="hidden text-xs text-text-secondary sm:inline">
-                            Ordenar por:
+                        <MapPinIcon size={14} />
+                        <span className="truncate">
+                            {filtros.cidadeNome}, {filtros.estadoSigla}
                         </span>
-                        <div className="w-44 sm:w-48">
-                            <Select
-                                value={ordenar}
-                                onChange={(v) =>
-                                    trocarOrdenacao(v as BuscaOrdenacao)
-                                }
-                                options={ORDENACAO_OPCOES.map((o) => ({
-                                    value: o.value,
-                                    label: o.label,
-                                }))}
-                            />
-                        </div>
+                        <span className="text-xs text-primary-600">
+                            trocar
+                        </span>
+                    </button>
+                ) : (
+                    <div className="w-full max-w-md">
+                        <CityCombobox
+                            value={cityValue}
+                            onChange={setCityValue}
+                            onSubmit={buscarPorCidade}
+                            placeholder="Filtrar por cidade"
+                        />
+                    </div>
+                )}
+            </div>
+
+            {/* Toolbar de filtros + ordenação — fica no topo,
+                NÃO é sticky. Quando o usuário rola, somem da
+                viewport e só voltam ao subir. */}
+            <div className="flex items-center justify-between gap-2">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPanelOpen(true)}
+                    className="lg:hidden"
+                >
+                    Filtros{" "}
+                    {ativosUrl > 0 ? (
+                        <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary-600 px-1 text-[0.6rem] font-semibold text-white">
+                            {ativosUrl}
+                        </span>
+                    ) : null}
+                </Button>
+
+                <div className="ml-auto flex min-w-0 items-center gap-2">
+                    <span className="hidden text-xs text-text-secondary sm:inline">
+                        Ordenar por:
+                    </span>
+                    <div className="w-44 sm:w-48">
+                        <Select
+                            value={ordenar}
+                            onChange={(v) =>
+                                trocarOrdenacao(v as BuscaOrdenacao)
+                            }
+                            options={ORDENACAO_OPCOES.map((o) => ({
+                                value: o.value,
+                                label: o.label,
+                            }))}
+                        />
                     </div>
                 </div>
             </div>
