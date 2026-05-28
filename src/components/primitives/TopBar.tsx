@@ -36,7 +36,7 @@ export function TopBar({
     className,
 }: TopBarProps): React.ReactElement {
     const composed = [
-        "sticky top-0 z-30 flex h-14 items-center justify-between gap-2 bg-background border-b border-border px-4",
+        "sticky top-0 z-30 flex h-14 items-center justify-between gap-2 px-4 glass-bar",
         className ?? "",
     ]
         .filter(Boolean)

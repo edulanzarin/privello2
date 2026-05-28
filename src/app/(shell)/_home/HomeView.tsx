@@ -8,9 +8,13 @@ import {
     Badge,
     Button,
     CameraIcon,
+    CameraVerifiedIcon,
     CheckIcon,
     CityCombobox,
     CrownIcon,
+    DocumentVerifiedIcon,
+    FaceVerifiedIcon,
+    FeatureTile,
     FlameIcon,
     LockIcon,
     Paginator,
@@ -18,6 +22,7 @@ import {
     RankBadge,
     SectionLink,
     SectionTitle,
+    SecurityCheckIcon,
     SparklesIcon,
     StarIcon,
     StatList,
@@ -230,6 +235,45 @@ export function HomeView({
                         na sua cidade.
                     </p>
                 )}
+            </section>
+
+            {/* ── Por que confiar na Privello ────────────────────── */}
+            <section className="border-t border-border pt-12 sm:pt-16">
+                <div className="mb-8 flex flex-col items-center gap-3 text-center sm:mb-12">
+                    <span className="eyebrow">Plataforma confiável</span>
+                    <h2 className="max-w-2xl text-3xl font-bold leading-tight tracking-tight text-text-primary sm:text-4xl">
+                        Contrate com mais{" "}
+                        <span className="text-[color:var(--accent-deep)]">
+                            segurança e praticidade
+                        </span>
+                    </h2>
+                    <p className="max-w-xl text-base leading-relaxed text-text-secondary">
+                        Encontre acompanhantes verificadas, com perfil completo
+                        e sem complicações.
+                    </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                    <FeatureTile
+                        icon={<CameraVerifiedIcon size={22} />}
+                        title="Mídia 360°"
+                        subtitle="Fotos e vídeos atualizados, sem retoque enganoso."
+                    />
+                    <FeatureTile
+                        icon={<DocumentVerifiedIcon size={22} />}
+                        title="100% verificadas"
+                        subtitle="Documentos conferidos pela nossa equipe."
+                    />
+                    <FeatureTile
+                        icon={<FaceVerifiedIcon size={22} />}
+                        title="Verificação facial"
+                        subtitle="Selfie + documento batem com o perfil."
+                    />
+                    <FeatureTile
+                        icon={<SecurityCheckIcon size={22} />}
+                        title="Privacidade séria"
+                        subtitle="Seu telefone fica oculto até você decidir."
+                    />
+                </div>
             </section>
 
             {/* ── Verificação séria ──────────────────────────────── */}

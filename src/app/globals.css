@@ -214,18 +214,124 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+ * Glass surfaces — usadas em cards modernos, gates de paywall,
+ * cabeçalhos sticky. Combinam `backdrop-filter: blur` com fundo
+ * translúcido warm pra um look clean, levemente vidro.
+ *
+ * - `.glass-surface`: card com fundo branco translúcido + blur leve.
+ * - `.glass-surface-strong`: igual, mais opaco — pra modais.
+ * - `.glass-bar`: barra horizontal sticky (top bar, sticky filters).
+ * - `.glass-pill`: chip translúcido sutil (filtros, badges).
+ * - `.glass-pill-tinted`: chip com leve tinta accent.
+ * ------------------------------------------------------------------------- */
+
+.glass-surface {
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 12px 24px -16px rgba(26, 20, 16, 0.15);
+}
+
+.glass-surface-strong {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.95) inset,
+        0 24px 48px -24px rgba(26, 20, 16, 0.18);
+}
+
+.glass-bar {
+    background: rgba(251, 249, 246, 0.78);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border-bottom: 1px solid var(--hairline);
+}
+
+.glass-pill {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.glass-pill-tinted {
+    background: rgba(236, 123, 91, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(236, 123, 91, 0.22);
+    color: var(--accent-deep);
+}
+
+.glass-cta {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+    color: white;
+    border-radius: 9999px;
+    box-shadow:
+        0 8px 24px -8px rgba(197, 82, 58, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.4) inset;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.glass-cta:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+        0 14px 32px -10px rgba(197, 82, 58, 0.6),
+        0 1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+/* ---------------------------------------------------------------------------
+ * Paywall blur — overlay que mascara conteúdo bloqueado (LinkedIn-
+ * style). Aplica blur progressivo + gradiente warm pra gerar o
+ * "fade" que indica o paywall.
+ * ------------------------------------------------------------------------- */
+
+.paywall-blur {
+    filter: blur(8px) saturate(0.85);
+    pointer-events: none;
+    user-select: none;
+}
+
+.paywall-fade {
+    background: linear-gradient(
+        180deg,
+        rgba(251, 249, 246, 0) 0%,
+        rgba(251, 249, 246, 0.92) 70%,
+        rgba(251, 249, 246, 1) 100%
+    );
+}
+
+/* ---------------------------------------------------------------------------
+ * Shimmer — shimmer sutil em loading skeletons e barras de
+ * progresso. Substitui o pulse padrão.
+ * ------------------------------------------------------------------------- */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(26, 20, 16, 0.04) 0%,
+        rgba(26, 20, 16, 0.09) 50%,
+        rgba(26, 20, 16, 0.04) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
  * Compat: classes do tema antigo viram no-op pra não quebrar nada.
  * ------------------------------------------------------------------------- */
 
 .texture-paper,
-.texture-paper-soft,
-.glass-surface,
-.glass-surface-strong,
-.glass-bar,
-.glass-pill,
-.glass-pill-tinted,
-.glass-cta {
-    /* No-op — temas antigos. Componentes são migrados gradualmente. */
+.texture-paper-soft {
+    /* No-op — texturas antigas. */
 }
 
 

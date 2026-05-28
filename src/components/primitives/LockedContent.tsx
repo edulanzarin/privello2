@@ -5,10 +5,11 @@ import { LockIcon } from "../icons";
 /**
  * Props do {@link LockedContent}.
  *
- * Wrapper de gate visual: renderiza `children` borrado + overlay
- * com mensagem e CTA. Pensado para conteúdo que está visualmente
- * "lá" mas que o usuário não pode ler (ex.: avaliações para
- * anônimo, comentários para Cliente Grátis).
+ * Wrapper de gate visual estilo LinkedIn/Instagram: renderiza
+ * `children` borrado em camada de fundo + overlay translúcido com
+ * mensagem e CTA. Pensado para conteúdo que está visualmente "lá"
+ * mas que o usuário não pode ler (ex.: avaliações para anônimo,
+ * comentários para Cliente Grátis, perguntas para não-fan).
  *
  * IMPORTANTE: este componente é apenas visual. A proteção real do
  * conteúdo é responsabilidade do servidor — só renderize aqui
@@ -33,24 +34,32 @@ export interface LockedContentProps {
     /** Slot para CTA (botão/link "Entrar", "Virar Fan", etc). */
     action?: React.ReactNode;
     /**
-     * Intensidade do blur em pixels. Padrão: 8. Aumenta para
+     * Intensidade do blur em pixels. Padrão: 10. Aumenta para
      * conteúdo mais sensível.
      */
     blurAmount?: number;
+    /**
+     * Tom do hero (cadeado + glow). Padrão: `"accent"` (warm).
+     * `"neutral"` cai pro hero monocromático em telas mais
+     * frias.
+     */
+    tone?: "accent" | "neutral";
     /** Classes extras aplicadas ao container. */
     className?: string;
 }
 
 /**
- * LockedContent — gate visual com blur + overlay.
+ * LockedContent — gate visual com blur + overlay glass.
  *
  * Estrutura:
  *   - Container `relative` com `overflow-hidden` e cantos
  *     arredondados.
  *   - Camada de conteúdo blurrado, `aria-hidden`, `pointer-events:
  *     none` (não interativo, não navegável por leitor de tela).
- *   - Camada de overlay com gradient warm sutil + ícone de
- *     cadeado + título + descrição + ação. Recebe foco normalmente.
+ *   - Gradiente fade vertical (opaco no fundo) que mascara
+ *     suavemente o conteúdo borrado — efeito LinkedIn.
+ *   - Painel central glass com hero (ícone com glow), título,
+ *     descrição e CTA.
  *
  * Acessibilidade: o conteúdo borrado é marcado `aria-hidden` para
  * que screen readers leiam apenas a mensagem do overlay. Caller
@@ -61,7 +70,8 @@ export function LockedContent({
     title,
     description,
     action,
-    blurAmount = 8,
+    blurAmount = 10,
+    tone = "accent",
     className,
 }: LockedContentProps): React.ReactElement {
     const composed = [
@@ -71,43 +81,57 @@ export function LockedContent({
         .filter(Boolean)
         .join(" ");
 
+    const heroClasses =
+        tone === "accent"
+            ? "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[color:var(--accent)]/15"
+            : "bg-neutral-100 text-text-primary ring-4 ring-neutral-200";
+
     return (
         <div className={composed}>
             {/* Conteúdo blurrado — placeholder visual, sem interação. */}
             <div
                 aria-hidden="true"
-                className="pointer-events-none select-none"
+                className="pointer-events-none select-none paywall-blur"
                 style={{
-                    filter: `blur(${blurAmount}px) saturate(120%)`,
-                    WebkitFilter: `blur(${blurAmount}px) saturate(120%)`,
+                    filter: `blur(${blurAmount}px) saturate(0.85)`,
+                    WebkitFilter: `blur(${blurAmount}px) saturate(0.85)`,
                 }}
             >
                 {children}
             </div>
 
-            {/* Overlay com mensagem e CTA. */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-surface/60 via-surface/85 to-surface/95 px-4 py-6 text-center backdrop-blur-[2px]">
-                <span
-                    aria-hidden="true"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary-600"
-                >
-                    <LockIcon size={18} />
-                </span>
-                <div className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold tracking-tight text-text-primary">
-                        {title}
+            {/* Fade vertical sutil — escurece o blur de cima pra
+                baixo pra dar foco no painel central. */}
+            <div
+                aria-hidden="true"
+                className="paywall-fade pointer-events-none absolute inset-0"
+            />
+
+            {/* Painel glass centralizado. */}
+            <div className="absolute inset-0 flex items-center justify-center p-4">
+                <div className="glass-surface-strong flex max-w-sm flex-col items-center gap-3 rounded-3xl px-6 py-5 text-center">
+                    <span
+                        aria-hidden="true"
+                        className={`flex h-12 w-12 items-center justify-center rounded-full ${heroClasses}`}
+                    >
+                        <LockIcon size={20} />
                     </span>
-                    {description != null ? (
-                        <span className="text-xs text-text-secondary">
-                            {description}
+                    <div className="flex flex-col gap-1">
+                        <span className="text-base font-semibold tracking-tight text-text-primary">
+                            {title}
                         </span>
+                        {description != null ? (
+                            <span className="text-xs leading-relaxed text-text-secondary">
+                                {description}
+                            </span>
+                        ) : null}
+                    </div>
+                    {action != null ? (
+                        <div className="mt-1 flex flex-none items-center gap-2">
+                            {action}
+                        </div>
                     ) : null}
                 </div>
-                {action != null ? (
-                    <div className="mt-1 flex flex-none items-center">
-                        {action}
-                    </div>
-                ) : null}
             </div>
         </div>
     );

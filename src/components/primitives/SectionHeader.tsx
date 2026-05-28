@@ -39,7 +39,8 @@ const ICON_TONE_CLASSES: Record<
     NonNullable<SectionHeaderProps["tone"]>,
     string
 > = {
-    neutral: "bg-primary-100 text-primary-700",
+    neutral:
+        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]",
     muted: "bg-neutral-100 text-text-disabled",
 };
 
@@ -71,7 +72,7 @@ export function SectionHeader({
                 <span
                     aria-hidden="true"
                     className={[
-                        "inline-flex h-9 w-9 flex-none items-center justify-center rounded-full",
+                        "inline-flex h-10 w-10 flex-none items-center justify-center rounded-full ring-4 ring-[color:var(--accent)]/12",
                         ICON_TONE_CLASSES[tone],
                     ].join(" ")}
                 >
@@ -79,11 +80,11 @@ export function SectionHeader({
                 </span>
             ) : null}
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-sm font-semibold tracking-tight text-text-primary">
+                <span className="text-base font-semibold tracking-tight text-text-primary">
                     {title}
                 </span>
                 {subtitle != null ? (
-                    <span className="text-xs text-text-secondary">
+                    <span className="text-xs leading-relaxed text-text-secondary">
                         {subtitle}
                     </span>
                 ) : null}

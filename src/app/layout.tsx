@@ -1,19 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 
 /**
- * Geist — fonte moderna criada pela Vercel, otimizada para UI.
- * Visualmente próxima da SF Pro do macOS, com formas mais
- * angulares e melhor legibilidade em pequenos tamanhos.
+ * Poppins — fonte sans-serif geométrica humanista. Redondinha,
+ * com proporções modernas, ótima pra UI moderna estilo
+ * fashion/lifestyle. Carregada com pesos 300/400/500/600/700 pra
+ * cobrir hierarquia (display, body, métricas) sem sobrecarregar
+ * o bundle.
  *
- * Mantemos o variable `--font-inter` no nome do CSS var pra não
- * quebrar consumidores existentes (tailwind.config aponta pra
- * essa var). Trocar o nome da var seria um refactor mais amplo
- * sem ganho funcional.
+ * Mantemos o nome de variável `--font-inter` no CSS pra não
+ * quebrar consumidores antigos do tailwind config.
  */
-const geist = Geist({
+const geist = Poppins({
     subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700"],
     variable: "--font-inter",
     display: "swap",
 });

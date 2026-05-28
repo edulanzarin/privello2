@@ -655,3 +655,113 @@ export function ShieldIcon(props: IconProps): React.ReactElement {
         </Svg>
     );
 }
+
+/**
+ * Câmera com selo de check — usada em feature tiles tipo "Mídias
+ * verificadas" / "Mídia 360°".
+ */
+export function CameraVerifiedIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M5 8h2.5l1.5-2h6l1.5 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z" />
+            <circle cx="12" cy="13" r="3.5" />
+            <path d="M11 13l1 1 2-2" />
+        </Svg>
+    );
+}
+
+/**
+ * Documento com check — usada em "100% verificados".
+ */
+export function DocumentVerifiedIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+            <path d="M14 3v4h4" />
+            <path d="M9 13l2 2 4-4" />
+        </Svg>
+    );
+}
+
+/**
+ * Rosto com check — verificação facial.
+ */
+export function FaceVerifiedIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <circle cx="12" cy="12" r="9" />
+            <circle cx="9.5" cy="10.5" r="0.6" fill="currentColor" />
+            <circle cx="14.5" cy="10.5" r="0.6" fill="currentColor" />
+            <path d="M9 14c.7 1 1.8 1.5 3 1.5s2.3-.5 3-1.5" />
+            <path d="M17 6l1.5 1.5L21 5" />
+        </Svg>
+    );
+}
+
+/**
+ * Lock com check — segurança.
+ */
+export function SecurityCheckIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <rect x="5" y="10" width="14" height="10" rx="2" />
+            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+            <path d="M10 15l1.5 1.5L14 14" />
+        </Svg>
+    );
+}
+
+/**
+ * Coração com play — reels / "Stories diariamente".
+ */
+export function HeartPlayIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" />
+            <path d="M11 10v4l3-2-3-2z" fill="currentColor" stroke="none" />
+        </Svg>
+    );
+}
+
+/**
+ * Filtro / sliders — usado em barras de busca.
+ */
+export function SlidersIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M4 6h12" />
+            <path d="M18 6h2" />
+            <circle cx="17" cy="6" r="2" />
+            <path d="M4 12h6" />
+            <path d="M12 12h8" />
+            <circle cx="11" cy="12" r="2" />
+            <path d="M4 18h12" />
+            <path d="M18 18h2" />
+            <circle cx="17" cy="18" r="2" />
+        </Svg>
+    );
+}
+
+/**
+ * Search circular — usado em CTAs de busca destacados.
+ */
+export function SearchIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <circle cx="11" cy="11" r="6" />
+            <path d="M16 16l4 4" />
+        </Svg>
+    );
+}
+
+/**
+ * Crescimento / trending up — para "Em alta".
+ */
+export function TrendingUpIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M3 17l6-6 4 4 8-8" />
+            <path d="M14 7h7v7" />
+        </Svg>
+    );
+}

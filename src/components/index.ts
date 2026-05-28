@@ -237,7 +237,13 @@ export { MediaGrid } from "./primitives/MediaGrid";
 export type { MediaGridProps } from "./primitives/MediaGrid";
 
 export { Paginator } from "./primitives/Paginator";
-export type { PaginatorProps } from "./primitives/Paginator";
+export type { PaginatorProps, PaginatorVariant } from "./primitives/Paginator";
+
+export { FeatureTile } from "./primitives/FeatureTile";
+export type {
+    FeatureTileProps,
+    FeatureTileTone,
+} from "./primitives/FeatureTile";
 
 export { InfiniteScrollSentinel } from "./primitives/InfiniteScrollSentinel";
 export type { InfiniteScrollSentinelProps } from "./primitives/InfiniteScrollSentinel";
@@ -358,6 +364,7 @@ export {
     BanknoteIcon,
     CalendarIcon,
     CameraIcon,
+    CameraVerifiedIcon,
     CashIcon,
     ChatIcon,
     CheckIcon,
@@ -367,12 +374,15 @@ export {
     CreditCardIcon,
     CrownIcon,
     DiamondIcon,
+    DocumentVerifiedIcon,
     EyeIcon,
     EyeOffIcon,
+    FaceVerifiedIcon,
     FlameIcon,
     FootprintIcon,
     GlobeIcon,
     HeartIcon,
+    HeartPlayIcon,
     HomeIcon,
     ImageIcon,
     LockIcon,
@@ -389,9 +399,13 @@ export {
     PlusIcon,
     RulerIcon,
     ScissorsIcon,
+    SearchIcon,
+    SecurityCheckIcon,
+    SlidersIcon,
     SparklesIcon,
     StarIcon,
     TrashIcon,
+    TrendingUpIcon,
     UserIcon,
     UsersIcon,
     VerifiedBadgeIcon,

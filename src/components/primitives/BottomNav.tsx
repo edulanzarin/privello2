@@ -56,7 +56,8 @@ export function BottomNav({ items }: BottomNavProps): React.ReactElement {
     return (
         <nav
             aria-label="Navegação principal"
-            className="sticky bottom-0 z-30 border-t border-border bg-background"
+            className="sticky bottom-0 z-30 glass-bar"
+            style={{ borderTop: "1px solid var(--hairline)", borderBottom: "none" }}
         >
             <ul className="mx-auto flex max-w-3xl items-stretch">
                 {items.map((item) => {

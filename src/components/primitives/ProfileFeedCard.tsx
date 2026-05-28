@@ -232,18 +232,13 @@ export function ProfileFeedCard({
     }
 
     // variant === "split"
-    const showMediasChip =
-        typeof mediaCount === "number" && mediaCount > 0;
-    const showAudioChip = hasAudio && audio == null;
-    const showFooter = showMediasChip || showAudioChip || Boolean(priceLabel);
-
     return (
         <a
             href={href}
             aria-label={`Ver perfil de ${name}`}
             className={[
-                "group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-surface",
-                "transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300",
+                "group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-surface lift",
+                "transition-all duration-300 hover:border-[color:var(--accent)]/30 hover:shadow-[0_18px_36px_-22px_rgba(26,20,16,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40",
                 className ?? "",
             ]
                 .filter(Boolean)
@@ -262,38 +257,64 @@ export function ProfileFeedCard({
                         src={photoUrl}
                         alt={name}
                         loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
                     />
                 ) : (
                     <PhotoPlaceholder name={name} />
                 )}
 
+                {/* Gradiente sutil base → topo, dá profundidade */}
+                <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 via-black/0 to-transparent"
+                />
+
                 {badge != null ? (
                     <div className="absolute left-3 top-3">{badge}</div>
                 ) : null}
+
+                {/* Selo "verificada" no canto superior direito da foto */}
+                {verified ? (
+                    <div className="absolute right-3 top-3 glass-pill rounded-full px-2 py-1">
+                        <VerifiedBadge size="sm" />
+                    </div>
+                ) : null}
+
+                {/* Pílulas inferiores na foto: localização + nº mídias */}
+                <div className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-wrap items-center gap-1.5">
+                    <span className="glass-pill inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.7rem] font-medium text-white">
+                        <MapPinIcon size={11} />
+                        <span className="truncate">
+                            {neighborhood ? `${neighborhood}` : cityName}
+                        </span>
+                    </span>
+                    {typeof mediaCount === "number" && mediaCount > 0 ? (
+                        <span className="glass-pill inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.7rem] font-medium text-white">
+                            <ImageIcon size={11} />
+                            {mediaCount}
+                        </span>
+                    ) : null}
+                    {hasAudio ? (
+                        <span className="glass-pill inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.7rem] font-medium text-white">
+                            <MicIcon size={11} />
+                        </span>
+                    ) : null}
+                </div>
             </div>
 
             {/* Bloco de info */}
-            <div className="flex flex-1 flex-col gap-3 p-4">
+            <div className="flex flex-1 flex-col gap-2.5 p-4">
                 {/* Header: nome/@id */}
                 <div className="flex flex-col gap-0.5">
-                    <span className="inline-flex items-center gap-1.5 text-base font-semibold leading-tight tracking-tight text-text-primary">
+                    <span className="inline-flex items-center gap-1.5 text-[1.05rem] font-semibold leading-tight tracking-tight text-text-primary">
                         <span className="truncate">{name}</span>
-                        {verified ? <VerifiedBadge size="sm" /> : null}
                     </span>
-                    <span className="text-[0.7rem] text-text-secondary">
+                    <span className="inline-flex items-center gap-1 text-[0.7rem] uppercase tracking-wider text-text-secondary">
                         @{identifier}
+                        <span aria-hidden="true">·</span>
+                        <span>{cityName}/{stateSigla}</span>
                     </span>
                 </div>
-
-                {/* Localização */}
-                <span className="inline-flex items-center gap-1 text-xs text-text-secondary">
-                    <MapPinIcon size={12} />
-                    <span className="truncate">
-                        {neighborhood ? `${neighborhood} · ` : ""}
-                        {cityName} · {stateSigla}
-                    </span>
-                </span>
 
                 {/* Descrição */}
                 {description ? (
@@ -305,38 +326,23 @@ export function ProfileFeedCard({
                 {/* Áudio inline */}
                 {audio != null ? <div>{audio}</div> : null}
 
-                {/* Rodapé: chips + preço */}
-                {showFooter ? (
+                {/* Rodapé: preço destacado */}
+                {priceLabel ? (
                     <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            {showMediasChip ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[0.7rem] font-medium text-text-secondary">
-                                    <ImageIcon size={11} />
-                                    {mediaCount}
-                                    {mediaCount === 1
-                                        ? " mídia"
-                                        : " mídias"}
+                        <div className="flex flex-col">
+                            {priceCaption ? (
+                                <span className="text-[0.65rem] uppercase tracking-wider text-text-secondary">
+                                    {priceCaption}
                                 </span>
                             ) : null}
-                            {showAudioChip ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[0.7rem] font-medium text-text-secondary">
-                                    <MicIcon size={11} />
-                                    Áudio
-                                </span>
-                            ) : null}
+                            <span className="text-lg font-semibold tabular-nums text-[color:var(--accent-deep)]">
+                                {priceLabel}
+                            </span>
                         </div>
-                        {priceLabel ? (
-                            <div className="flex shrink-0 items-baseline gap-1.5">
-                                {priceCaption ? (
-                                    <span className="text-[0.7rem] text-text-secondary">
-                                        {priceCaption}
-                                    </span>
-                                ) : null}
-                                <span className="text-base font-semibold tabular-nums text-primary-700">
-                                    {priceLabel}
-                                </span>
-                            </div>
-                        ) : null}
+                        <span className="glass-pill-tinted inline-flex items-center gap-1 rounded-full px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-wider">
+                            Ver perfil
+                            <span aria-hidden="true">→</span>
+                        </span>
                     </div>
                 ) : null}
             </div>

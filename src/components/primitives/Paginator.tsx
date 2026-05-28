@@ -2,7 +2,16 @@
 
 import * as React from "react";
 
-import { Button } from "./Button";
+import { ChevronRightIcon, PlayCircleIcon } from "../icons";
+
+/**
+ * Variantes visuais do botão de "ver mais" do {@link Paginator}.
+ *
+ * - `"button"` (padrão): botão pill estilizado warm com ícone.
+ * - `"link"`: link sutil estilo "Ver mais →" — mais discreto, pra
+ *   listas inline de comentários/perguntas.
+ */
+export type PaginatorVariant = "button" | "link";
 
 /**
  * Props do {@link Paginator}.
@@ -42,8 +51,14 @@ export interface PaginatorProps<T> {
      * com sua própria primitiva de lista (`MediaGrid`, `<ul>`, etc.).
      */
     render: (visibleItems: ReadonlyArray<T>) => React.ReactNode;
-    /** Texto do botão de expansão. Padrão: `"Ver mais"`. */
+    /** Texto do botão de expansão. Padrão: `"Carregar mais"`. */
     loadMoreLabel?: React.ReactNode;
+    /**
+     * Variante visual do botão. Padrão: `"button"` (pill warm).
+     * Use `"link"` em listas de comentários/perguntas onde o
+     * peso visual de um botão sólido seria excessivo.
+     */
+    variant?: PaginatorVariant;
     /**
      * Quando `true` (default), exibe pequeno contador "Mostrando X
      * de Y" abaixo do botão. Passe `false` em listas onde o total
@@ -66,7 +81,8 @@ export function Paginator<T>({
     items,
     pageSize,
     render,
-    loadMoreLabel = "Ver mais",
+    loadMoreLabel = "Carregar mais",
+    variant = "button",
     showCounter = true,
     className,
 }: PaginatorProps<T>): React.ReactElement {
@@ -83,34 +99,44 @@ export function Paginator<T>({
     const visibleItems = items.slice(0, visibleCount);
     const hasMore = visibleCount < items.length;
 
-    const composed = ["flex flex-col gap-3", className ?? ""]
+    const composed = ["flex flex-col gap-4", className ?? ""]
         .filter(Boolean)
         .join(" ");
+
+    const handleClick = (): void =>
+        setVisibleCount((n) => Math.min(items.length, n + safePageSize));
 
     return (
         <div className={composed}>
             {render(visibleItems)}
 
             {hasMore ? (
-                <div className="flex flex-col items-center gap-1.5">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() =>
-                            setVisibleCount((n) =>
-                                Math.min(items.length, n + safePageSize),
-                            )
-                        }
-                    >
-                        {loadMoreLabel}
-                    </Button>
+                <div className="flex flex-col items-center gap-2">
+                    {variant === "button" ? (
+                        <button
+                            type="button"
+                            onClick={handleClick}
+                            className="glass-cta inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+                        >
+                            <PlayCircleIcon size={16} />
+                            {loadMoreLabel}
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleClick}
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-[color:var(--accent-deep)] transition-colors hover:text-[color:var(--accent)] focus:outline-none focus-visible:underline"
+                        >
+                            {loadMoreLabel}
+                            <ChevronRightIcon size={14} />
+                        </button>
+                    )}
                     {showCounter ? (
                         <span
                             aria-live="polite"
-                            className="text-[0.7rem] text-text-secondary"
+                            className="text-[0.7rem] uppercase tracking-wider text-text-secondary"
                         >
-                            Mostrando {visibleItems.length} de {items.length}
+                            {visibleItems.length} de {items.length}
                         </span>
                     ) : null}
                 </div>
