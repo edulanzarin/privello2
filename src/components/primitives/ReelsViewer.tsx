@@ -211,13 +211,19 @@ export function ReelsViewer({
         <div
             ref={containerRef}
             className={[
-                "relative h-[100dvh] w-full overflow-y-scroll bg-black",
+                "relative w-full overflow-y-scroll bg-black",
                 "snap-y snap-mandatory",
                 "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
                 className ?? "",
             ]
                 .filter(Boolean)
                 .join(" ")}
+            style={{
+                // Desconta TopBar (h-14 = 3.5rem) + BottomNav (h-16 = 4rem)
+                // pra que cada reel caiba exatamente no espaço visível
+                // entre as duas barras fixas.
+                height: "calc(100dvh - 3.5rem - 4rem)",
+            }}
         >
             {items.map((item) => (
                 <section
@@ -227,7 +233,8 @@ export function ReelsViewer({
                         if (node) itemRefs.current.set(item.id, node);
                         else itemRefs.current.delete(item.id);
                     }}
-                    className="relative flex h-[100dvh] w-full snap-start items-center justify-center bg-black"
+                    className="relative flex w-full snap-start items-center justify-center bg-black"
+                    style={{ height: "calc(100dvh - 3.5rem - 4rem)" }}
                 >
                     <video
                         ref={(node) => {
