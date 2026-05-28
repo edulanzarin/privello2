@@ -426,7 +426,7 @@ export function MediaCarousel({
                 Garante que o modal não cresce/encolhe com a mídia e
                 que a seção de comentários tem scroll interno com
                 input fixo no fundo (estilo Instagram). */}
-            <div className="flex h-[85dvh] w-full flex-col md:flex-row">
+            <div className="flex h-full w-full flex-col md:flex-row">
                 {/* Mídia — em mobile ocupa no máximo 50% da altura
                     do modal; em desktop ocupa 60% da largura. */}
                 <div className="relative flex max-h-[50%] flex-1 items-center justify-center bg-black md:max-h-full md:w-[60%]">

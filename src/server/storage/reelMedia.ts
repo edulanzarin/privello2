@@ -705,22 +705,36 @@ export async function listarFeedReels(
         };
     });
 
-    // Ordena por score desc; desempate por createdAt desc.
-    scored.sort((a, b) => {
-        if (a.score !== b.score) return b.score - a.score;
-        return b.item.createdAt.getTime() - a.item.createdAt.getTime();
+    // Ordena por score desc com randomização leve pra evitar que
+    // o mesmo reel fique sempre no topo (determinismo puro = feed
+    // estático). Adiciona jitter de ±5 pontos ao score antes de
+    // ordenar — suficiente pra variar a ordem entre reels com
+    // scores próximos sem destruir a relevância.
+    const jittered = scored.map((s) => ({
+        ...s,
+        jitteredScore: s.score + (Math.random() * 10 - 5),
+    }));
+    jittered.sort((a, b) => {
+        // Não-vistos SEMPRE antes dos vistos (hard partition).
+        const aUnseen = !a.item.viewed ? 1 : 0;
+        const bUnseen = !b.item.viewed ? 1 : 0;
+        if (aUnseen !== bUnseen) return bUnseen - aUnseen;
+        // Dentro de cada partição, ordena por score + jitter.
+        return b.jitteredScore - a.jitteredScore;
     });
+    // Reatribui ao array original pra manter o tipo.
+    const sorted = jittered as typeof scored;
 
     // Aplica cursor: pula até passar do `cursorReelId`.
     let startIdx = 0;
     if (input.cursorReelId) {
-        const idx = scored.findIndex((s) => s.id === input.cursorReelId);
+        const idx = sorted.findIndex((s) => s.id === input.cursorReelId);
         if (idx >= 0) startIdx = idx + 1;
     }
 
-    const slice = scored.slice(startIdx, startIdx + limit);
+    const slice = sorted.slice(startIdx, startIdx + limit);
     const nextCursor =
-        startIdx + limit < scored.length
+        startIdx + limit < sorted.length
             ? slice[slice.length - 1]?.id ?? null
             : null;
 
