@@ -37,6 +37,16 @@ export type PlanoDefinition = {
     permiteStories: boolean;
     prioridadeBusca: boolean;
     permiteAudio: boolean;
+    /**
+     * Indica se o plano habilita publicação de Reels — vídeos
+     * curtos que aparecem no feed `/reels`.
+     */
+    permiteReels: boolean;
+    /**
+     * Limite de Reels publicados simultaneamente. `Infinity` para
+     * Premium (sem teto prático).
+     */
+    limiteReels: number;
 };
 
 /**
@@ -57,6 +67,8 @@ export const PLANO_DEFINITIONS = Object.freeze({
         permiteStories: false,
         prioridadeBusca: false,
         permiteAudio: false,
+        permiteReels: true,
+        limiteReels: 20,
     }),
     PREMIUM: Object.freeze({
         tipo: "PREMIUM",
@@ -65,6 +77,8 @@ export const PLANO_DEFINITIONS = Object.freeze({
         permiteStories: true,
         prioridadeBusca: true,
         permiteAudio: true,
+        permiteReels: true,
+        limiteReels: Number.POSITIVE_INFINITY,
     }),
 } as const) satisfies Readonly<Record<PlanoTipo, PlanoDefinition>>;
 

@@ -52,6 +52,7 @@ enum MediaRole {
   AUDIO
   GALLERY
   STORY
+  REEL
 }
 
 enum BoostPaymentStatus {
@@ -172,6 +173,7 @@ model User {
   mediaLikes      MediaLike[]
   mediaComments   MediaComment[]
   storyViews      StoryView[]
+  reelViews       ReelView[]
   profileDailyStats ProfileDailyStat[]
 
   @@map("users")
@@ -309,6 +311,14 @@ model Media {
   // aplicado no read.
   expiresAt      DateTime?   @map("expires_at")
 
+  // Para Reels (vídeos), duração em segundos. Validada no upload
+  // entre 15 e 90s. Outros `role`s ignoram.
+  durationSeconds Int?       @map("duration_seconds")
+  // Para Reels (vídeos), chave do poster estático (primeiro frame
+  // extraído com ffmpeg) — evita tela preta enquanto o vídeo
+  // carrega. Outros `role`s ignoram.
+  posterStorageKey String?   @map("poster_storage_key")
+
   createdAt      DateTime    @default(now()) @map("created_at")
 
   acompanhanteAsProfile AcompanhanteProfile? @relation("FotoDePerfil")
@@ -319,6 +329,7 @@ model Media {
   likes    MediaLike[]
   comments MediaComment[]
   storyViews StoryView[]
+  reelViews ReelView[]
 
   @@index([ownerId])
   @@index([ownerId, role, status, createdAt(sort: Desc)])
@@ -358,6 +369,24 @@ model StoryView {
   @@id([mediaId, userId])
   @@index([userId, viewedAt(sort: Desc)])
   @@map("story_views")
+}
+
+/// Visualização de Reel por um viewer autenticado. Mesmo modelo de
+/// StoryView, mas separado pra que o algoritmo de feed possa
+/// priorizar não-vistos sem cruzar com Stories.
+///
+/// Também alimenta a quota diária de visualizações pra anônimos
+/// e não-Fans (limite na contagem dos últimos 24h).
+model ReelView {
+  mediaId   String   @map("media_id") @db.Uuid
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+
+  @@id([mediaId, userId])
+  @@index([userId, viewedAt(sort: Desc)])
+  @@map("reel_views")
 }
 
 /// Comentário em uma `Media`. N por par `(media, user)` (Cliente
