@@ -264,6 +264,9 @@ model AcompanhanteProfile {
 
   @@index([perfilVisivel, planoVigente])
   @@index([boostUntil])
+  @@index([estadoSigla, cidadeNome])
+  @@index([viewsCount(sort: Desc), updatedAt(sort: Desc)])
+  @@index([updatedAt(sort: Desc)])
   @@map("acompanhante_profiles")
 }
 

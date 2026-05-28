@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 
 import { runCleanup } from "@/server/cleanup";
+
+/**
+ * Compara o `expected` recebido no header com o token configurado
+ * em tempo constante. Sem isso, um atacante poderia inferir
+ * caracteres do token medindo o tempo de resposta.
+ */
+function safeTokenEquals(received: string, expected: string): boolean {
+    const a = Buffer.from(received, "utf8");
+    const b = Buffer.from(expected, "utf8");
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(a, b);
+}
 
 /**
  * `POST /api/cleanup` — endpoint de garbage collection.
@@ -33,11 +46,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     const auth = request.headers.get("authorization");
-    if (
-        auth === null ||
-        !auth.startsWith("Bearer ") ||
-        auth.slice("Bearer ".length) !== expectedToken
-    ) {
+    if (auth === null || !auth.startsWith("Bearer ")) {
+        return NextResponse.json(
+            { ok: false, reason: "NAO_AUTORIZADO" },
+            { status: 401 },
+        );
+    }
+    const provided = auth.slice("Bearer ".length);
+    if (!safeTokenEquals(provided, expectedToken)) {
         return NextResponse.json(
             { ok: false, reason: "NAO_AUTORIZADO" },
             { status: 401 },

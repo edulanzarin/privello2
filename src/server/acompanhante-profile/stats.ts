@@ -33,7 +33,12 @@ function dayUtc(date: Date): Date {
  * Idempotente em termos de SQL — o `upsert` cria a linha quando
  * é a primeira atividade do dia.
  *
- * `delta` aceita negativos (descurtir reduz `likes` em -1).
+ * `delta` aceita negativos (descurtir reduz `likes` em -1). Quando
+ * o resultado seria menor que zero (ex.: curtidas decrementadas
+ * antes do upsert original ter rodado), o `GREATEST(0, ...)` no
+ * fallback garante que o contador nunca vira negativo. Como o
+ * Prisma `increment` não suporta clamp diretamente, fazemos uma
+ * leitura+update extra quando `delta < 0`.
  */
 export async function incrementarStatDiaria(input: {
     userId: string;
@@ -44,19 +49,36 @@ export async function incrementarStatDiaria(input: {
     const day = dayUtc(input.now ?? new Date());
     const delta = input.delta ?? 1;
 
-    await db.profileDailyStat.upsert({
-        where: {
-            userId_day: { userId: input.userId, day },
-        },
-        update: {
-            [input.field]: { increment: delta },
-        },
-        create: {
-            userId: input.userId,
-            day,
-            views: input.field === "views" ? Math.max(0, delta) : 0,
-            likes: input.field === "likes" ? Math.max(0, delta) : 0,
-        },
+    if (delta >= 0) {
+        await db.profileDailyStat.upsert({
+            where: { userId_day: { userId: input.userId, day } },
+            update: { [input.field]: { increment: delta } },
+            create: {
+                userId: input.userId,
+                day,
+                views: input.field === "views" ? delta : 0,
+                likes: input.field === "likes" ? delta : 0,
+            },
+        });
+        return;
+    }
+
+    // Decremento: lê, clampa em zero e grava. Faz upsert vazio
+    // pra garantir que a linha exista — depois aplica o decremento
+    // sempre clampado.
+    const existing = await db.profileDailyStat.findUnique({
+        where: { userId_day: { userId: input.userId, day } },
+        select: { views: true, likes: true },
+    });
+    if (!existing) {
+        // Nada pra decrementar — não cria linha negativa.
+        return;
+    }
+    const current = input.field === "views" ? existing.views : existing.likes;
+    const next = Math.max(0, current + delta);
+    await db.profileDailyStat.update({
+        where: { userId_day: { userId: input.userId, day } },
+        data: { [input.field]: next },
     });
 }
 

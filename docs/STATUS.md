@@ -1,20 +1,60 @@
 # Status — Privello
 
-Última atualização: 26/05/2026.
+Última atualização: 28/05/2026.
 
 ## TL;DR
 
 - **49 rotas** compilando + `/robots.txt`, `/sitemap.xml`,
   `/manifest.webmanifest`.
-- **77 primitivos** em `src/components/primitives/` (zero domain leak).
+- **78 primitivos** em `src/components/primitives/` (zero domain leak).
 - **0 erros** TypeScript em `src/`.
-- **19 migrations** Prisma aplicadas.
+- **20 migrations** Prisma aplicadas (incluindo índices da busca).
 - SEO completo: metadata global, JSON-LD em home/perfil, sitemap
   e robots dinâmicos, generateMetadata dinâmico nas páginas
   principais.
 - Sistemas críticos todos prontos. Falta só infra real (credenciais
   MP, email transacional, monitoramento) e features pós-MVP (Reels,
   painel admin).
+
+## Última rodada de hardening (28/05)
+
+- Rate limit por IP em `/api/check-availability` (30/min) com
+  `clientKeyFromRequest` extraído de cabeçalhos do reverso.
+- `/api/conta/senha` revoga **todas** as sessões antigas em
+  transação atomicamente (preserva só a atual).
+- Índices SQL parciais pra busca:
+  `(estado_sigla, cidade_nome)`, `views_count DESC`,
+  `valor_hora_cents` (asc/desc), `updated_at DESC` — todos
+  `WHERE perfil_visivel = true AND plano_vigente IS NOT NULL`.
+- `_devToken` no reset de senha agora exige
+  `NEXT_PUBLIC_SITE_URL` apontando pra localhost (dupla checagem
+  contra staging com `NODE_ENV` errado).
+- Webhook MP só processa quando `type === "payment"` ou
+  `topic === "payment"` ou `action.startsWith("payment.")` —
+  recusa `merchant_order` e similares.
+- Cookie de cooldown de view consolidado em **1 cookie único**
+  (`pv`) com map base64-JSON e cap em 200 entries com LRU drop.
+  Antes era 1 cookie por perfil — power users explodiam a cota
+  do navegador.
+- `toggleLike` só ajusta stat diário quando a mutação realmente
+  alterou o banco (idempotência sem inflar contador).
+- `incrementarStatDiaria` clampa em zero pra decremento — nunca
+  vira negativo.
+- `obterStatsHome` usa `groupBy + count(_all)` em vez de
+  `findMany distinct` — é uma agregação SQL pura agora.
+- `obterStoryRingState` removido — `listarStoriesAtivosDoPerfil`
+  já entrega `viewed` por item, calculamos o ring em memória sem
+  query extra.
+- Cleanup token comparado em tempo constante (`timingSafeEqual`).
+- 3× `window.confirm` substituídos por `ConfirmDialog`
+  (PerguntasTab, PerguntasSection, AvaliacoesSection).
+- JSON-LD `Person` removeu `review` malformado (não tinha
+  `author`/`reviewBody` real — Google rejeitaria). `aggregateRating`
+  já estava ausente desde a remoção da nota numérica.
+- `BarChart.formatXLabel` opcional — `EstatisticasTab` extrai dia
+  do mês corretamente (cobre virada de mês).
+- Ícone `CrownIcon` no badge Premium do painel da Acompanhante
+  (consistente com perfil público).
 
 ## O que tem (completo)
 

@@ -31,14 +31,26 @@ import { processarWebhookBoost } from "@/server/boost";
 export async function POST(request: Request): Promise<NextResponse> {
     let paymentId: string | null = null;
 
-    // Tentativa 1: body JSON.
+    // Tentativa 1: body JSON. Aceita só quando `type === "payment"`
+    // ou quando o payload claramente carrega um payment ID. Sem
+    // `type`, recusamos pra evitar interpretar webhooks de
+    // `merchant_order`/`subscription`/etc. como payment.
     try {
         const body = (await request.clone().json()) as
-            | { type?: string; data?: { id?: string | number } }
+            | {
+                  type?: string;
+                  topic?: string;
+                  action?: string;
+                  data?: { id?: string | number };
+              }
             | null;
+        const looksLikePayment =
+            body !== null &&
+            (body.type === "payment" ||
+                body.topic === "payment" ||
+                body.action?.startsWith("payment."));
         if (
-            body &&
-            (body.type === "payment" || body.type === undefined) &&
+            looksLikePayment &&
             body.data?.id !== undefined &&
             body.data.id !== null
         ) {
@@ -49,11 +61,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // Tentativa 2: query string (`?topic=payment&id=...` ou `?id=...`).
+    // Aqui também exigimos topic=payment quando presente, pra não
+    // tratar `topic=merchant_order` como payment.
     if (paymentId === null) {
         const url = new URL(request.url);
-        const id = url.searchParams.get("id");
-        const dataId = url.searchParams.get("data.id");
-        paymentId = id ?? dataId ?? null;
+        const topic = url.searchParams.get("topic");
+        if (topic === null || topic === "payment") {
+            const id = url.searchParams.get("id");
+            const dataId = url.searchParams.get("data.id");
+            paymentId = id ?? dataId ?? null;
+        }
     }
 
     if (paymentId === null) {

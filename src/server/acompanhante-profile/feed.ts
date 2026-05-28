@@ -250,13 +250,18 @@ export async function obterStatsHome(
 ): Promise<HomeStats> {
     const now = options.now ?? new Date();
 
-    const [perfisAtivos, cidadesAgg, boostsAtivos, avaliacoes] =
+    const [perfisAtivos, cidadesGroups, boostsAtivos, avaliacoes] =
         await Promise.all([
             db.acompanhanteProfile.count({ where: baseWhereVisivel }),
-            db.acompanhanteProfile.findMany({
+            // `groupBy` + `count(_all)` traduz pra um único SELECT
+            // GROUP BY no Postgres em vez de carregar todas as
+            // linhas pra contar em memória. O resultado é um array
+            // de buckets — `length` é a quantidade de cidades
+            // distintas.
+            db.acompanhanteProfile.groupBy({
+                by: ["estadoSigla", "cidadeNome"],
                 where: baseWhereVisivel,
-                distinct: ["estadoSigla", "cidadeNome"],
-                select: { estadoSigla: true, cidadeNome: true },
+                _count: { _all: true },
             }),
             db.acompanhanteProfile.count({
                 where: { ...baseWhereVisivel, boostUntil: { gt: now } },
@@ -266,7 +271,7 @@ export async function obterStatsHome(
 
     return {
         perfisAtivos,
-        cidades: cidadesAgg.length,
+        cidades: cidadesGroups.length,
         boostsAtivos,
         avaliacoes,
     };

@@ -8,12 +8,14 @@ import {
     Button,
     Card,
     ChatIcon,
+    ConfirmDialog,
     EmptyState,
     FilterChips,
     InlineAlert,
     LinkButton,
     Paginator,
     SectionHeader,
+    useModal,
     type FilterChipsOption,
 } from "@/components";
 
@@ -152,6 +154,7 @@ function PerguntaPainelCard({
     const [answer, setAnswer] = React.useState(pergunta.answer ?? "");
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const deleteDialog = useModal();
 
     const trimmed = answer.trim();
     const canSubmit = trimmed.length > 0 && trimmed.length <= 2000;
@@ -180,9 +183,6 @@ function PerguntaPainelCard({
     }
 
     async function deleteAnswer(): Promise<void> {
-        if (!window.confirm("Remover sua resposta? A pergunta continua visível.")) {
-            return;
-        }
         setSubmitting(true);
         setError(null);
         try {
@@ -195,6 +195,7 @@ function PerguntaPainelCard({
             }
             setAnswer("");
             setEditing(false);
+            deleteDialog.close();
             router.refresh();
         } catch {
             setError("Falha de rede. Tente novamente.");
@@ -247,7 +248,7 @@ function PerguntaPainelCard({
                                     Editar
                                 </LinkButton>
                                 <LinkButton
-                                    onClick={deleteAnswer}
+                                    onClick={deleteDialog.open}
                                     tone="danger"
                                     disabled={submitting}
                                 >
@@ -261,8 +262,7 @@ function PerguntaPainelCard({
                     </div>
                 ) : null}
 
-                {/* Form de resposta — quando pendente OU editando */}
-                {!isAnswered || editing ? (
+                {/* Form de resposta — quando pendente OU editando */}                {!isAnswered || editing ? (
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
@@ -318,6 +318,17 @@ function PerguntaPainelCard({
                     </form>
                 ) : null}
             </div>
+
+            <ConfirmDialog
+                open={deleteDialog.isOpen}
+                onClose={deleteDialog.close}
+                onConfirm={deleteAnswer}
+                title="Remover resposta"
+                description="A pergunta continua visível, mas sua resposta será apagada. Você pode responder de novo a qualquer momento."
+                tone="danger"
+                confirmLabel="Remover"
+                loading={submitting}
+            />
         </Card>
     );
 }

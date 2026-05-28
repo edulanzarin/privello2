@@ -52,6 +52,17 @@ export interface BarChartProps {
      * abaixo das barras. Padrão: `true`.
      */
     showXLabels?: boolean;
+
+    /**
+     * Formatador opcional do rótulo do eixo X. Recebe `point.label`
+     * (e o índice) e devolve a string a ser exibida. Default:
+     * mostra os 2 últimos caracteres — funciona pra rótulos curtos
+     * tipo `"2026-05-28"` ("28") sem assumir nada do conteúdo.
+     *
+     * Quando o consumidor passa rótulos com semântica diferente
+     * (mês, hora, etc.), passe um formatador customizado.
+     */
+    formatXLabel?: (label: string, index: number) => string;
     /**
      * Quando `true`, exibe o valor numérico em cima de cada barra.
      * Padrão: `false` (visual mais limpo, info via hover).
@@ -73,6 +84,7 @@ export function BarChart({
     "aria-label": ariaLabel,
     className,
     showXLabels = true,
+    formatXLabel = (label) => label.slice(-2),
     showValues = false,
 }: BarChartProps): React.ReactElement {
     const max = data.reduce(
@@ -137,7 +149,7 @@ export function BarChart({
                             key={`label-${p.label}-${i}`}
                             className="flex-1 text-center text-[0.6rem] text-text-disabled"
                         >
-                            {p.label.slice(-2)}
+                            {formatXLabel(p.label, i)}
                         </li>
                     ))}
                 </ul>

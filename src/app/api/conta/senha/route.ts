@@ -104,9 +104,22 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     try {
         const newHash = await hashPassword(newPassword);
-        await db.user.update({
-            where: { id: auth.userId },
-            data: { passwordHash: newHash },
+        // Atualiza senha + revoga todas as sessões antigas atomicamente.
+        // Preserva apenas a sessão atual pra que o usuário não seja
+        // deslogado da própria janela enquanto troca a senha.
+        await db.$transaction(async (tx) => {
+            await tx.user.update({
+                where: { id: auth.userId },
+                data: { passwordHash: newHash },
+            });
+            await tx.session.updateMany({
+                where: {
+                    userId: auth.userId,
+                    revokedAt: null,
+                    id: { not: auth.sessionId },
+                },
+                data: { revokedAt: new Date() },
+            });
         });
         return NextResponse.json({ ok: true }, { status: 200 });
     } catch {

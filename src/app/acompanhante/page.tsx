@@ -1,5 +1,6 @@
 import {
     HeartIcon,
+    CrownIcon,
     ChatIcon,
     LogoutButton,
     MetricPill,
@@ -134,7 +135,7 @@ export default async function AcompanhantePainelPage() {
                 name={perfil.nome}
                 identifier={`@${perfil.identificador}`}
                 avatarCornerBadge={
-                    isPremium ? <HeartIcon size={11} /> : null
+                    isPremium ? <CrownIcon size={11} /> : null
                 }
                 actions={<LogoutButton variant="button" />}
             />

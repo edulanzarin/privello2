@@ -32,6 +32,9 @@ import type { PlanoDefinition } from "@/domain/plano/definitions";
 export type SessionResolved = {
     userId: string;
     userType: "CLIENTE" | "ACOMPANHANTE";
+    /** Id da sessão atual — útil pra preservar quando revogamos
+     *  sessões antigas (ex.: troca de senha). */
+    sessionId: string;
 };
 
 type GuardOk<T> = { ok: true } & T;
@@ -81,6 +84,7 @@ export async function requireSession(
         ok: true,
         userId: session.userId,
         userType: session.userType,
+        sessionId,
     };
 }
 
@@ -90,7 +94,7 @@ export async function requireSession(
  */
 export async function requireAcompanhante(
     request?: Request,
-): Promise<GuardResult<{ userId: string }>> {
+): Promise<GuardResult<{ userId: string; sessionId: string }>> {
     const auth = await requireSession(request);
     if (!auth.ok) return auth;
     if (auth.userType !== "ACOMPANHANTE") {
@@ -102,7 +106,7 @@ export async function requireAcompanhante(
             ),
         };
     }
-    return { ok: true, userId: auth.userId };
+    return { ok: true, userId: auth.userId, sessionId: auth.sessionId };
 }
 
 /**
@@ -113,7 +117,7 @@ export async function requireAcompanhante(
  */
 export async function requireCliente(
     request?: Request,
-): Promise<GuardResult<{ userId: string }>> {
+): Promise<GuardResult<{ userId: string; sessionId: string }>> {
     const auth = await requireSession(request);
     if (!auth.ok) return auth;
     if (auth.userType !== "CLIENTE") {
@@ -125,7 +129,7 @@ export async function requireCliente(
             ),
         };
     }
-    return { ok: true, userId: auth.userId };
+    return { ok: true, userId: auth.userId, sessionId: auth.sessionId };
 }
 
 /**
@@ -137,7 +141,7 @@ export async function requireCliente(
  */
 export async function requireClienteFan(
     request?: Request,
-): Promise<GuardResult<{ userId: string }>> {
+): Promise<GuardResult<{ userId: string; sessionId: string }>> {
     const auth = await requireCliente(request);
     if (!auth.ok) return auth;
 
@@ -156,7 +160,7 @@ export async function requireClienteFan(
         };
     }
 
-    return { ok: true, userId: auth.userId };
+    return { ok: true, userId: auth.userId, sessionId: auth.sessionId };
 }
 
 /**
@@ -183,7 +187,9 @@ export type RequireAcompanhantePlanoOptions = {
 export async function requireAcompanhanteWithPlano(
     options: RequireAcompanhantePlanoOptions = {},
     request?: Request,
-): Promise<GuardResult<{ userId: string; plano: PlanoDefinition }>> {
+): Promise<
+    GuardResult<{ userId: string; sessionId: string; plano: PlanoDefinition }>
+> {
     const auth = await requireAcompanhante(request);
     if (!auth.ok) return auth;
 
@@ -217,7 +223,12 @@ export async function requireAcompanhanteWithPlano(
         };
     }
 
-    return { ok: true, userId: auth.userId, plano };
+    return {
+        ok: true,
+        userId: auth.userId,
+        sessionId: auth.sessionId,
+        plano,
+    };
 }
 
 /**

@@ -8,11 +8,13 @@ import {
     Button,
     Card,
     ChatIcon,
+    ConfirmDialog,
     InlineAlert,
     LinkButton,
     LockedContent,
     Paginator,
     SectionHeader,
+    useModal,
 } from "@/components";
 import { buildAuthUrl } from "@/domain/redirect";
 
@@ -259,16 +261,17 @@ function PerguntaCard({
     onDeleted: () => void;
 }): React.ReactElement {
     const [deleting, setDeleting] = React.useState(false);
+    const dialog = useModal();
 
     async function handleDelete(): Promise<void> {
         if (deleting) return;
-        if (!window.confirm("Excluir esta pergunta?")) return;
         setDeleting(true);
         try {
             const res = await fetch(`/api/questions/${pergunta.id}`, {
                 method: "DELETE",
             });
             if (res.ok) {
+                dialog.close();
                 onDeleted();
             }
         } finally {
@@ -299,7 +302,7 @@ function PerguntaCard({
                             </div>
                             {pergunta.isMine ? (
                                 <LinkButton
-                                    onClick={handleDelete}
+                                    onClick={dialog.open}
                                     tone="danger"
                                     disabled={deleting}
                                 >
@@ -334,6 +337,17 @@ function PerguntaCard({
                     </div>
                 )}
             </div>
+
+            <ConfirmDialog
+                open={dialog.isOpen}
+                onClose={dialog.close}
+                onConfirm={handleDelete}
+                title="Excluir pergunta"
+                description="A pergunta e a resposta (se houver) serão removidas. Esta ação não pode ser desfeita."
+                tone="danger"
+                confirmLabel="Excluir"
+                loading={deleting}
+            />
         </Card>
     );
 }

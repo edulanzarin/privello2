@@ -8,10 +8,12 @@ import {
     Button,
     Card,
     ChatIcon,
+    ConfirmDialog,
     InlineAlert,
     LockedContent,
     Paginator,
     SectionHeader,
+    useModal,
 } from "@/components";
 import { buildAuthUrl } from "@/domain/redirect";
 
@@ -161,6 +163,7 @@ function ReviewForm({
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
     const [success, setSuccess] = React.useState(false);
+    const removeDialog = useModal();
     const isEditing = initial !== null;
     const trimmed = comment.trim();
     const canSubmit = trimmed.length > 0 && trimmed.length <= 2000;
@@ -196,13 +199,6 @@ function ReviewForm({
 
     async function remove(): Promise<void> {
         if (submitting || !isEditing) return;
-        if (
-            !window.confirm(
-                "Tem certeza que deseja remover sua avaliação?",
-            )
-        ) {
-            return;
-        }
         setSubmitting(true);
         setError(null);
         try {
@@ -217,6 +213,7 @@ function ReviewForm({
                 return;
             }
             setComment("");
+            removeDialog.close();
             router.refresh();
         } catch {
             setError("Falha de rede. Tente novamente.");
@@ -270,7 +267,7 @@ function ReviewForm({
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => void remove()}
+                            onClick={removeDialog.open}
                             disabled={submitting}
                         >
                             Remover
@@ -287,6 +284,17 @@ function ReviewForm({
                     </Button>
                 </div>
             </form>
+
+            <ConfirmDialog
+                open={removeDialog.isOpen}
+                onClose={removeDialog.close}
+                onConfirm={remove}
+                title="Remover avaliação"
+                description="Sua avaliação será removida do perfil. Você pode publicar uma nova depois."
+                tone="danger"
+                confirmLabel="Remover"
+                loading={submitting}
+            />
         </Card>
     );
 }

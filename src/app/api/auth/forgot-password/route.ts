@@ -61,7 +61,14 @@ export async function POST(request: Request): Promise<NextResponse> {
         {
             ok: true,
         };
-    if (process.env.NODE_ENV !== "production") {
+    // Só vaza o token em DEV (não em staging, qa, etc.). A
+    // checagem é dupla: NODE_ENV !== production E
+    // NEXT_PUBLIC_SITE_URL apontando pra localhost. Staging tem
+    // NEXT_PUBLIC_SITE_URL com domínio real → nunca expõe.
+    const isDevLocal =
+        process.env.NODE_ENV !== "production" &&
+        (process.env.NEXT_PUBLIC_SITE_URL ?? "").includes("localhost");
+    if (isDevLocal) {
         payload._devToken = result.token;
         payload._devEmailValido = result.emailValido;
     }

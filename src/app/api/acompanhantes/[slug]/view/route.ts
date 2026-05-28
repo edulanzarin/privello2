@@ -1,13 +1,11 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { getCurrentSession } from "@/server/auth/currentSession";
 import { enforceCsrf } from "@/server/auth/csrf";
 import {
-    VIEW_COOLDOWN_SECONDS,
-    buildViewCooldownCookieName,
     incrementarVisualizacao,
+    marcarViewCooldown,
     viewCooldownAtivo,
 } from "@/server/acompanhante-profile/views";
 
@@ -79,18 +77,11 @@ export async function POST(
         return NextResponse.json({ ok: true, applied: false });
     }
 
-    // Grava o cookie de cooldown — só agora porque estamos em Route
-    // Handler.
-    const cookieStore = await cookies();
-    cookieStore.set({
-        name: buildViewCooldownCookieName(target.id),
-        value: "1",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        maxAge: VIEW_COOLDOWN_SECONDS,
-    });
+    // Grava o cookie de cooldown único — só agora porque estamos em
+    // Route Handler. O cookie único agrega todos os perfis vistos
+    // num map compactado (cap em 200 entries com LRU drop) pra não
+    // estourar a cota de cookies do navegador.
+    await marcarViewCooldown(target.id);
 
     return NextResponse.json({ ok: true, applied: true });
 }

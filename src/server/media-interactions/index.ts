@@ -54,27 +54,35 @@ export async function toggleLike(
     userId: string,
     desired: boolean,
 ): Promise<ToggleLikeResult> {
+    // Rastreamos se a mutação realmente alterou o banco. Sem isso,
+    // chamadas idempotentes (ex.: descurtir o que já não estava
+    // curtido) decrementariam o stat diário pra negativo.
+    let mutated = false;
     if (desired) {
         // Idempotente: ignora P2002 (UNIQUE violation) — significa que
         // já estava curtido.
-        await db.mediaLike
-            .create({
+        try {
+            await db.mediaLike.create({
                 data: { mediaId, userId },
                 select: { mediaId: true },
-            })
-            .catch((err: { code?: string }) => {
-                if (err?.code !== "P2002") throw err;
             });
+            mutated = true;
+        } catch (err) {
+            const code = (err as { code?: string }).code;
+            if (code !== "P2002") throw err;
+            // Idempotente — ainda assim retornamos `liked: true`
+            // logo abaixo, mas sem mexer no stat diário.
+        }
     } else {
-        await db.mediaLike
-            .delete({
-                where: {
-                    mediaId_userId: { mediaId, userId },
-                },
-            })
-            .catch((err: { code?: string }) => {
-                if (err?.code !== "P2025") throw err;
+        try {
+            await db.mediaLike.delete({
+                where: { mediaId_userId: { mediaId, userId } },
             });
+            mutated = true;
+        } catch (err) {
+            const code = (err as { code?: string }).code;
+            if (code !== "P2025") throw err;
+        }
     }
 
     const media = await db.media.findUnique({
@@ -83,8 +91,13 @@ export async function toggleLike(
     });
 
     // Incrementa série diária do dono da mídia (Acompanhante).
-    // Best-effort — falha aqui não bloqueia a interação.
-    if (media?.ownerId !== undefined && media.ownerId !== userId) {
+    // Só dispara quando a mutação realmente alterou o estado —
+    // chamadas idempotentes não acumulam delta.
+    if (
+        mutated &&
+        media?.ownerId !== undefined &&
+        media.ownerId !== userId
+    ) {
         await incrementarStatDiaria({
             userId: media.ownerId,
             field: "likes",

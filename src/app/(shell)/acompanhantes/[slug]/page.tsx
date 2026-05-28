@@ -20,7 +20,6 @@ import {
 } from "@/server/storage/galleryMedia";
 import {
     listarStoriesAtivosDoPerfil,
-    obterStoryRingState,
 } from "@/server/storage/storyMedia";
 import { listarPerguntasPublicas } from "@/server/questions";
 import {
@@ -124,16 +123,16 @@ export default async function PerfilPublicoPage({
             contarLikesTotais(result.userId),
         ]);
 
-    // Stories ativos pra alimentar o ring + o viewer. O ring state
-    // (total / não vistos) discrimina se o anel é colorido ou cinza.
-    const [storiesAtivos, storyRing] = await Promise.all([
-        listarStoriesAtivosDoPerfil(result.userId, {
-            viewerUserId: session?.userId ?? null,
-        }),
-        obterStoryRingState(result.userId, {
-            viewerUserId: session?.userId ?? null,
-        }),
-    ]);
+    // Stories ativos do dono — uma única query traz a lista
+    // completa com flags `viewed`/`liked` por story. O estado do
+    // ring (unseen/seen/none) é derivado em memória — sem precisar
+    // de uma query separada como `obterStoryRingState` (que
+    // duplicava a leitura).
+    const storiesAtivos = await listarStoriesAtivosDoPerfil(result.userId, {
+        viewerUserId: session?.userId ?? null,
+    });
+    const storyRingTotal = storiesAtivos.length;
+    const storyRingNaoVistos = storiesAtivos.filter((s) => !s.viewed).length;
 
     // Plano do viewer Cliente — define se ele pode curtir/comentar.
     // Acompanhante e anônimo não interagem.
@@ -196,7 +195,6 @@ export default async function PerfilPublicoPage({
                 estadoSigla={result.perfil.estadoSigla}
                 descricao={result.perfil.descricao}
                 fotoUrl={result.perfil.fotoUrl}
-                reviewsCount={result.perfil.reviewsCount}
             />
             <ViewTracker slug={slug} />
             <PerfilPublicoView
@@ -217,9 +215,9 @@ export default async function PerfilPublicoPage({
                     viewed: s.viewed,
                 }))}
                 storyRing={
-                    storyRing.total === 0
+                    storyRingTotal === 0
                         ? "none"
-                        : storyRing.naoVistos > 0
+                        : storyRingNaoVistos > 0
                             ? "unseen"
                             : "seen"
                 }
@@ -327,7 +325,6 @@ function ProfileJsonLd({
     estadoSigla,
     descricao,
     fotoUrl,
-    reviewsCount,
 }: {
     slug: string;
     nome: string;
@@ -335,7 +332,6 @@ function ProfileJsonLd({
     estadoSigla: string;
     descricao: string;
     fotoUrl: string | null;
-    reviewsCount: number;
 }): React.ReactElement {
     const siteUrl =
         process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -359,16 +355,11 @@ function ProfileJsonLd({
             addressRegion: estadoSigla,
             addressCountry: "BR",
         },
-        // Quando reviews textuais existem, o Google mostra o
-        // contador. Não inclui `aggregateRating` (sem nota numérica).
-        ...(reviewsCount > 0
-            ? {
-                review: {
-                    "@type": "Review",
-                    reviewBody: `${reviewsCount} avaliações verificadas.`,
-                },
-            }
-            : {}),
+        // Sem `aggregateRating` (removemos nota numérica do produto)
+        // e sem `review` artificial — Schema.org `review` exige um
+        // texto real de uma única avaliação, não um sumário. Quando
+        // o produto tiver reviews textuais reais com autor, podemos
+        // emitir até 3 mais relevantes aqui. Por ora, omitimos.
     };
 
     const breadcrumb = {

@@ -130,6 +130,12 @@ export function EstatisticasTab({
                         <BarChart
                             data={points}
                             height={180}
+                            // Extrai só o dia do mês do ISO
+                            // `YYYY-MM-DD`. Cobre virada de mês —
+                            // `slice(-2)` antes pegava parte da
+                            // string sem semântica clara quando o
+                            // formato mudasse.
+                            formatXLabel={(iso) => iso.slice(8, 10)}
                             aria-label={
                                 metrica === "views"
                                     ? "Visualizações por dia"
