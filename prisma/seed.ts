@@ -847,11 +847,12 @@ async function main(): Promise<void> {
     await prisma.acompanhanteReview.deleteMany();
     await prisma.acompanhanteQuestion.deleteMany();
     await prisma.storyView.deleteMany();
+    await prisma.reelView.deleteMany();
     await prisma.boostPayment.deleteMany();
     // Apaga Media não-perfil (galeria, story, áudio, capa)
     // pra evitar acúmulo; foto de perfil é mantida via upsert.
     await prisma.media.deleteMany({
-        where: { role: { in: ["GALLERY", "STORY", "AUDIO", "COVER"] } },
+        where: { role: { in: ["GALLERY", "STORY", "AUDIO", "COVER", "REEL"] } },
     });
 
     // 2) Cria/atualiza Acompanhantes
@@ -1114,6 +1115,42 @@ async function main(): Promise<void> {
                 });
             }
         }
+
+        // Reels — vídeos curtos. Todas as Acompanhantes podem
+        // publicar (Básico até 20, Premium ilimitado). No seed
+        // usamos imagens como placeholder (o player aceita
+        // qualquer MIME; em produção serão vídeos reais). Cada
+        // Acompanhante publica 1-3 Reels com duração simulada.
+        const numReels = randInt(1, 3);
+        for (let i = 0; i < numReels; i++) {
+            const reelSeed = `${a.identificador}-reel-${i}`;
+            const reelKey = `committed/${user.id}/reels/${randomUUID()}.mp4`;
+            const reelMeta = await downloadImage(
+                reelSeed,
+                720,
+                1280,
+                reelKey,
+            );
+            await prisma.media.create({
+                data: {
+                    ownerId: user.id,
+                    storageKey: reelMeta.storageKey,
+                    mimeType: "video/mp4",
+                    sizeBytes: reelMeta.sizeBytes,
+                    status: "COMMITTED",
+                    kind: "VIDEO",
+                    role: "REEL",
+                    durationSeconds: randInt(10, 60),
+                    description: rand([
+                        "Vem comigo 🔥",
+                        "Disponível hoje",
+                        "Novidade da semana",
+                        null,
+                        null,
+                    ]),
+                },
+            });
+        }
     }
 
     // 3) Cria/atualiza Clientes
@@ -1322,6 +1359,7 @@ async function main(): Promise<void> {
         midiasPerfil: await prisma.media.count({ where: { role: "PROFILE" } }),
         midiasGaleria: await prisma.media.count({ where: { role: "GALLERY" } }),
         midiasStories: await prisma.media.count({ where: { role: "STORY" } }),
+        midiasReels: await prisma.media.count({ where: { role: "REEL" } }),
         likes: await prisma.mediaLike.count(),
         comentarios: await prisma.mediaComment.count(),
         reviews: await prisma.acompanhanteReview.count(),
@@ -1347,6 +1385,7 @@ async function main(): Promise<void> {
     console.log(`  Mídias (perfil):         ${stats.midiasPerfil}`);
     console.log(`  Mídias (galeria):        ${stats.midiasGaleria}`);
     console.log(`  Mídias (stories):        ${stats.midiasStories}`);
+    console.log(`  Mídias (reels):          ${stats.midiasReels}`);
     console.log(`  Likes:                   ${stats.likes}`);
     console.log(`  Comentários:             ${stats.comentarios}`);
     console.log(`  Avaliações:              ${stats.reviews}`);
