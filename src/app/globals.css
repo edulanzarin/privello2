@@ -48,6 +48,30 @@ body {
     height: 100%;
 }
 
+html {
+    /* `overflow-x: clip` em vez de `hidden`: comportamento
+       moderno que NÃO cria contexto de scroll separado, então
+       `position: sticky` em descendentes continua funcionando
+       (sticky precisa do scroll do html/body). Resolve o caso
+       do StoriesRail/sticky bar empurrando layout pra direita
+       em mobile. */
+    overflow-x: clip;
+}
+
+body {
+    overflow-x: clip;
+    overscroll-behavior-x: contain;
+}
+
+/* Defesa contra qualquer elemento que tente sangrar pra fora
+   do viewport horizontalmente. `img`, `video`, e `iframe` são
+   os suspeitos clássicos — limita a 100% do container pai. */
+img,
+video,
+iframe {
+    max-width: 100%;
+}
+
 body {
     background: var(--canvas);
     color: var(--ink-1);

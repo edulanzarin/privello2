@@ -521,18 +521,11 @@ export function BuscaView({
 
             {/* ── Barra fixa: chip da cidade + toolbar de filtros
                 e ordenação. Sticky abaixo do TopBar (`h-14`).
-                Sangra borda-a-borda usando `-mx` que cancela o
-                padding interno do `PageSurface` (`p-4 sm:p-6`),
-                então em mobile bate na borda da viewport e em
-                desktop bate na borda do surface (sem comprometer
-                os cantos arredondados que o PageSurface mantém via
-                `overflow-hidden` quando há banner; aqui não tem
-                banner, mas o sticky fica clipado pelo container
-                pai naturalmente).
-                
-                `bg-surface/95 backdrop-blur-sm` dá um efeito glass
-                quando o conteúdo rola atrás. */}
-            <div className="sticky top-14 z-20 -mx-4 flex flex-col gap-3 border-b border-border bg-surface/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
+                Em mobile sangra borda-a-borda do PageSurface
+                via padding interno do próprio sticky;
+                conteúdo do sticky usa o mesmo gap das demais
+                seções pra não destoar. */}
+            <div className="sticky top-14 z-20 flex flex-col gap-3 border-b border-border bg-surface/95 py-3 backdrop-blur-sm">
                 {/* Chip clicável da cidade quando há uma selecionada;
                     senão, CityCombobox compacto pra escolher.
                     Em listagem aberta sem cidade, o usuário pode
@@ -563,7 +556,10 @@ export function BuscaView({
                     />
                 )}
 
-                {/* Toolbar: botão de filtros (mobile) + ordenar */}
+                {/* Toolbar: botão de filtros (mobile) + ordenar.
+                    Em mobile o select de ordenação fica flexível
+                    pra não exceder o viewport quando há o botão
+                    de Filtros ao lado. */}
                 <div className="flex items-center justify-between gap-2">
                     <Button
                         type="button"
@@ -580,11 +576,11 @@ export function BuscaView({
                         ) : null}
                     </Button>
 
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ml-auto flex min-w-0 items-center gap-2">
                         <span className="hidden text-xs text-text-secondary sm:inline">
                             Ordenar por:
                         </span>
-                        <div className="min-w-[12rem]">
+                        <div className="w-44 sm:w-48">
                             <Select
                                 value={ordenar}
                                 onChange={(v) =>
@@ -600,8 +596,14 @@ export function BuscaView({
                 </div>
             </div>
 
-            {/* ── Grid: sidebar (lg+) + resultados ─────────── */}
-            <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+            {/* ── Grid: sidebar (lg+) + resultados ───────────
+                `min-w-0` no grid pai e `minmax(0, 1fr)` na coluna
+                de resultados garantem que o conteúdo não force
+                a largura do grid track. Sem isso, qualquer item
+                "rígido" dentro do `<section>` (imagem com
+                width intrínseco, texto sem `truncate`) puxa o
+                grid pra fora do viewport em mobile. */}
+            <div className="grid min-w-0 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
                 <FilterPanel
                     open={panelOpen}
                     onClose={() => setPanelOpen(false)}
@@ -870,7 +872,7 @@ export function BuscaView({
                 </FilterPanel>
 
                 {/* Resultados */}
-                <section className="flex flex-col gap-5">
+                <section className="flex min-w-0 flex-col gap-5">
                     {/* ── Tira de Stories da cidade ───────────────
                         Aparece entre o painel de filtros e o grid
                         de cards. Depois dos filtros e antes dos

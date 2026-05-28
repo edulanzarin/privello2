@@ -41,9 +41,11 @@ export function AppShell({
     children,
 }: AppShellProps): React.ReactElement {
     return (
-        <div className="flex min-h-screen flex-col bg-background">
+        <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-clip bg-background">
             <TopBar leading={topLeading} trailing={topTrailing} />
-            <main className="flex-1">{children}</main>
+            <main className="w-full max-w-full flex-1 overflow-x-clip">
+                {children}
+            </main>
             <BottomNav items={navItems} />
         </div>
     );

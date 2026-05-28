@@ -118,7 +118,7 @@ export function PageSurface({
     return (
         <div
             className={[
-                "mx-auto w-full px-3 py-3 sm:px-6 sm:py-6",
+                "mx-auto w-full max-w-full px-3 py-3 sm:px-6 sm:py-6",
                 isCenter
                     ? "flex min-h-[calc(100dvh-9rem)] flex-col justify-center"
                     : "",
@@ -128,7 +128,7 @@ export function PageSurface({
         >
             <div
                 className={[
-                    "mx-auto flex w-full flex-col bg-surface",
+                    "mx-auto flex w-full min-w-0 flex-col bg-surface",
                     banner != null ? "overflow-hidden" : "",
                     "rounded-none sm:rounded-3xl sm:border sm:border-border",
                     WIDTH_CLASSES[width],
@@ -140,7 +140,7 @@ export function PageSurface({
                 {banner != null ? <div>{banner}</div> : null}
                 <div
                     className={[
-                        "flex flex-col gap-5 p-4 sm:p-6",
+                        "flex min-w-0 flex-col gap-5 overflow-x-clip p-4 sm:p-6",
                     ].join(" ")}
                 >
                     {children}

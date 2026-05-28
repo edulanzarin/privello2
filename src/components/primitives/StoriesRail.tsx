@@ -73,7 +73,7 @@ export function StoriesRail({
     return (
         <div
             className={[
-                "-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0",
+                "overflow-x-auto pb-1",
                 "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
                 className ?? "",
             ]

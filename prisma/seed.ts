@@ -8,15 +8,18 @@
  *
  * Dados criados:
  *
- *   - **12 Acompanhantes** em 8 cidades brasileiras, com:
- *     - 4 Premium (1 com Boost ativo, 1 com áudio publicado)
- *     - 8 Básico (1 com Boost ativo, 1 com perfilVisivel=false)
- *     - Variedade de gênero, etnia, faixa de preço, idiomas,
- *       formas de pagamento, dias.
- *     - Foto de perfil real (Unsplash placeholder portrait)
- *     - 1 a 3 fotos na galeria (algumas)
- *     - Stories ativos pras Premium
- *     - viewsCount distribuído
+ *   - **22 Acompanhantes** distribuídas em 8 cidades brasileiras,
+ *     com **11 perfis em Blumenau-SC** (cidade-piloto pra teste
+ *     da busca):
+ *     - Variedade total de gênero (MULHER/HOMEM/TRANS), etnia,
+ *       cor de olhos, estilo de cabelo, idiomas.
+ *     - Faixas de preço de R$ 150 a R$ 1.000 por hora.
+ *     - Mistura de Boost ativo, Premium puro e Básico.
+ *     - 1 perfil oculto (`perfilVisivel=false`) pra testar HIDDEN.
+ *     - 1 a 4 fotos na galeria (algumas).
+ *     - Stories ativos pras Premium e algumas Básico.
+ *     - Áudio de apresentação em ~5 perfis Premium.
+ *     - viewsCount distribuído (boost > premium > básico).
  *   - **8 Clientes** (4 Fan + 4 Grátis), com nome e foto.
  *   - **Avaliações** (apenas texto) e **Perguntas** (algumas
  *     respondidas) cruzadas entre Clientes e Acompanhantes.
@@ -106,14 +109,20 @@ const ETNIAS = ["BRANCA", "NEGRA", "PARDA", "AMARELA", "INDIGENA"] as const;
 const COR_OLHOS = ["CASTANHO", "PRETO", "AZUL", "VERDE", "MEL", "CINZA"] as const;
 const ESTILO_CABELO = ["LISO", "ONDULADO", "CACHEADO", "CRESPO"] as const;
 const TAMANHO_CABELO = ["CURTO", "MEDIO", "LONGO"] as const;
-const IDIOMAS = ["PORTUGUES", "INGLES", "ESPANHOL"] as const;
+const IDIOMAS = [
+    "PORTUGUES",
+    "INGLES",
+    "ESPANHOL",
+    "ITALIANO",
+    "ALEMAO",
+] as const;
 const PRATICAS_BASE = ["ORAL", "VAGINAL", "BEIJO_NA_BOCA", "MASSAGEM"] as const;
 const PRATICAS_EXTRA = ["ANAL", "FETICHE"] as const;
 const DIAS = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"] as const;
 const PAGAMENTOS = ["DINHEIRO", "PIX", "CARTAO_CREDITO", "CARTAO_DEBITO"] as const;
 
 // -------------------------------------------------------------------
-// Acompanhantes — 12 perfis variados
+// Acompanhantes — 22 perfis (11 em Blumenau-SC + 11 espalhados)
 // -------------------------------------------------------------------
 
 interface AcompanhanteSeed {
@@ -197,6 +206,282 @@ const ACOMPANHANTES: ReadonlyArray<AcompanhanteSeed> = [
         audioApresentacao: true,
         publicaStories: true,
         publicaGaleria: 2,
+    },
+    // ─── Bloco BLUMENAU-SC ────────────────────────────────────
+    // Cidade-piloto pra testar a busca: 10 perfis adicionais em
+    // Blumenau cobrindo todas as variações de filtro (gênero,
+    // etnia, cor de olhos, cabelo, idiomas, faixas de preço,
+    // dias de atendimento, formas de pagamento e práticas).
+    // ──────────────────────────────────────────────────────────
+    {
+        nome: "Helena Schmidt",
+        identificador: "helenaschmidt",
+        email: "helenaschmidt@gmail.com",
+        telefone: "47988111001",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Vila Nova",
+        descricao:
+            "Loiríssima de olhos azuis, descendência alemã. Atendimento exclusivo, ambiente discreto e climatizado. Disponível durante a semana.",
+        genero: "MULHER",
+        atendePublicos: ["HOMEM", "CASAL"],
+        pesoKg: 58,
+        alturaCm: 168,
+        tamanhoPe: 37,
+        etnia: "BRANCA",
+        corOlhos: "AZUL",
+        estiloCabelo: "LISO",
+        tamanhoCabelo: "LONGO",
+        valorHoraCents: 60_000,
+        plano: "PREMIUM",
+        boost: true,
+        perfilVisivel: true,
+        audioApresentacao: true,
+        publicaStories: true,
+        publicaGaleria: 4,
+    },
+    {
+        nome: "Bruna Krause",
+        identificador: "brunakrause",
+        email: "brunakrause@gmail.com",
+        telefone: "47988111002",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Garcia",
+        descricao:
+            "Universitária, cabelo cacheado, sorriso fácil. Encontros descontraídos, papo longo. Atendo só em local meu.",
+        genero: "MULHER",
+        atendePublicos: ["HOMEM"],
+        pesoKg: 54,
+        alturaCm: 163,
+        tamanhoPe: 36,
+        etnia: "PARDA",
+        corOlhos: "MEL",
+        estiloCabelo: "CACHEADO",
+        tamanhoCabelo: "MEDIO",
+        valorHoraCents: 22_000,
+        plano: "BASICO",
+        boost: false,
+        perfilVisivel: true,
+        audioApresentacao: false,
+        publicaStories: false,
+        publicaGaleria: 2,
+    },
+    {
+        nome: "Yasmin Ribeiro",
+        identificador: "yasminribeiro",
+        email: "yasminribeiro@gmail.com",
+        telefone: "47988111003",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Velha",
+        descricao:
+            "Negra, alta, escultural. Atendimento profissional com agenda apertada — combine com antecedência. Aceito hotéis na região central.",
+        genero: "MULHER",
+        atendePublicos: ["HOMEM", "CASAL"],
+        pesoKg: 64,
+        alturaCm: 175,
+        tamanhoPe: 39,
+        etnia: "NEGRA",
+        corOlhos: "PRETO",
+        estiloCabelo: "CRESPO",
+        tamanhoCabelo: "MEDIO",
+        valorHoraCents: 70_000,
+        plano: "PREMIUM",
+        boost: true,
+        perfilVisivel: true,
+        audioApresentacao: false,
+        publicaStories: true,
+        publicaGaleria: 3,
+    },
+    {
+        nome: "Camila Hoffmann",
+        identificador: "camilahoffmann",
+        email: "camilahoffmann@gmail.com",
+        telefone: "47988111004",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Itoupava",
+        descricao:
+            "Madura, experiente, sem pressa. Café antes do encontro? Conversa boa e ambiente aconchegante.",
+        genero: "MULHER",
+        atendePublicos: ["HOMEM", "CASAL", "MULHER"],
+        pesoKg: 67,
+        alturaCm: 165,
+        tamanhoPe: 36,
+        etnia: "BRANCA",
+        corOlhos: "VERDE",
+        estiloCabelo: "ONDULADO",
+        tamanhoCabelo: "MEDIO",
+        valorHoraCents: 45_000,
+        plano: "PREMIUM",
+        boost: false,
+        perfilVisivel: true,
+        audioApresentacao: true,
+        publicaStories: false,
+        publicaGaleria: 3,
+    },
+    {
+        nome: "Larissa Wagner",
+        identificador: "larissawagner",
+        email: "larissawagner@gmail.com",
+        telefone: "47988111005",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Ponta Aguda",
+        descricao:
+            "Ruiva natural, baixinha e cheia de energia. Atendo finais de semana e segundas. Valor justo, ambiente limpo.",
+        genero: "MULHER",
+        atendePublicos: ["HOMEM"],
+        pesoKg: 50,
+        alturaCm: 156,
+        tamanhoPe: 34,
+        etnia: "BRANCA",
+        corOlhos: "VERDE",
+        estiloCabelo: "ONDULADO",
+        tamanhoCabelo: "CURTO",
+        valorHoraCents: 18_000,
+        plano: "BASICO",
+        boost: false,
+        perfilVisivel: true,
+        audioApresentacao: false,
+        publicaStories: true,
+        publicaGaleria: 2,
+    },
+    {
+        nome: "Júlia Becker",
+        identificador: "juliabecker",
+        email: "juliabecker@gmail.com",
+        telefone: "47988111006",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Centro",
+        descricao:
+            "Acompanhante de luxo, atendimentos longos e jantares. Falo inglês fluente e espanhol básico. Disponível para viagens.",
+        genero: "MULHER",
+        atendePublicos: ["HOMEM"],
+        pesoKg: 60,
+        alturaCm: 172,
+        tamanhoPe: 38,
+        etnia: "BRANCA",
+        corOlhos: "CASTANHO",
+        estiloCabelo: "LISO",
+        tamanhoCabelo: "LONGO",
+        valorHoraCents: 100_000,
+        plano: "PREMIUM",
+        boost: false,
+        perfilVisivel: true,
+        audioApresentacao: true,
+        publicaStories: false,
+        publicaGaleria: 4,
+    },
+    {
+        nome: "Tainá Müller",
+        identificador: "tainamuller",
+        email: "tainamuller@gmail.com",
+        telefone: "47988111007",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Velha Central",
+        descricao:
+            "Trans novinha, peituda, cheia de atitude. Encontros sem julgamento, vibe leve. Atendo durante o dia e à noite.",
+        genero: "TRANS",
+        atendePublicos: ["HOMEM", "CASAL"],
+        pesoKg: 62,
+        alturaCm: 170,
+        tamanhoPe: 38,
+        etnia: "PARDA",
+        corOlhos: "CASTANHO",
+        estiloCabelo: "LISO",
+        tamanhoCabelo: "LONGO",
+        valorHoraCents: 35_000,
+        plano: "BASICO",
+        boost: true,
+        perfilVisivel: true,
+        audioApresentacao: false,
+        publicaStories: true,
+        publicaGaleria: 2,
+    },
+    {
+        nome: "Diego Lima",
+        identificador: "diegoolima",
+        email: "diegoolima@gmail.com",
+        telefone: "47988111008",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Vila Itoupava",
+        descricao:
+            "Garoto de programa, malhado, discreto. Atendo homens, mulheres e casais. Ambiente seguro com hora marcada.",
+        genero: "HOMEM",
+        atendePublicos: ["HOMEM", "MULHER", "CASAL"],
+        pesoKg: 82,
+        alturaCm: 182,
+        tamanhoPe: 42,
+        etnia: "PARDA",
+        corOlhos: "CASTANHO",
+        estiloCabelo: "ONDULADO",
+        tamanhoCabelo: "CURTO",
+        valorHoraCents: 30_000,
+        plano: "BASICO",
+        boost: false,
+        perfilVisivel: true,
+        audioApresentacao: false,
+        publicaStories: false,
+        publicaGaleria: 2,
+    },
+    {
+        nome: "Sabrina Costa",
+        identificador: "sabrinacosta",
+        email: "sabrinacosta@gmail.com",
+        telefone: "47988111009",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Salto Weissbach",
+        descricao:
+            "Massagista profissional, atendimento sensual e relaxante. Especialidade em casais. Sem pressa, sem julgamento.",
+        genero: "MULHER",
+        atendePublicos: ["HOMEM", "CASAL", "MULHER"],
+        pesoKg: 59,
+        alturaCm: 166,
+        tamanhoPe: 36,
+        etnia: "AMARELA",
+        corOlhos: "PRETO",
+        estiloCabelo: "LISO",
+        tamanhoCabelo: "LONGO",
+        valorHoraCents: 40_000,
+        plano: "BASICO",
+        boost: false,
+        perfilVisivel: true,
+        audioApresentacao: false,
+        publicaStories: true,
+        publicaGaleria: 3,
+    },
+    {
+        nome: "Rafaela Klein",
+        identificador: "rafaklein",
+        email: "rafaklein@gmail.com",
+        telefone: "47988111010",
+        estadoSigla: "SC",
+        cidadeNome: "Blumenau",
+        bairroNome: "Itoupavazinha",
+        descricao:
+            "Casual e direta. Encontros rápidos sem complicação, valor acessível. Aceito pix e dinheiro.",
+        genero: "MULHER",
+        atendePublicos: ["HOMEM"],
+        pesoKg: 63,
+        alturaCm: 161,
+        tamanhoPe: 35,
+        etnia: "BRANCA",
+        corOlhos: "AZUL",
+        estiloCabelo: "LISO",
+        tamanhoCabelo: "MEDIO",
+        valorHoraCents: 15_000,
+        plano: "BASICO",
+        boost: false,
+        perfilVisivel: true,
+        audioApresentacao: false,
+        publicaStories: false,
+        publicaGaleria: 1,
     },
     {
         nome: "Bianca Andrade",
@@ -629,12 +914,19 @@ async function main(): Promise<void> {
             ...PRATICAS_BASE,
             ...(Math.random() > 0.5 ? [rand(PRATICAS_EXTRA)] : []),
         ];
-        // Idiomas: PT obrigatório + 0..2 extras
-        const idiomas: Array<"PORTUGUES" | "INGLES" | "ESPANHOL"> = [
-            "PORTUGUES",
-        ];
+        // Idiomas: PT obrigatório + extras variados.
+        // Em Blumenau, adicionamos chance de ALEMAO (cidade
+        // colônia) pra ter perfis testáveis com filtro
+        // `idiomas=ALEMAO`. Em outras cidades, mistura padrão.
+        const idiomas: Array<
+            "PORTUGUES" | "INGLES" | "ESPANHOL" | "ITALIANO" | "ALEMAO"
+        > = ["PORTUGUES"];
         if (Math.random() > 0.5) idiomas.push("INGLES");
         if (Math.random() > 0.7) idiomas.push("ESPANHOL");
+        if (a.cidadeNome === "Blumenau" && Math.random() > 0.5) {
+            idiomas.push("ALEMAO");
+        }
+        if (Math.random() > 0.85) idiomas.push("ITALIANO");
 
         // Boost ativo: até +24h
         const boostUntil = a.boost
@@ -1030,6 +1322,14 @@ async function main(): Promise<void> {
         storyViews: await prisma.storyView.count(),
     };
 
+    // Distribuição por cidade — facilita validar que a busca por
+    // cidade tem volume suficiente pra testar filtros.
+    const porCidade = await prisma.acompanhanteProfile.groupBy({
+        by: ["estadoSigla", "cidadeNome"],
+        _count: { _all: true },
+        orderBy: { _count: { userId: "desc" } },
+    });
+
     console.log("\n✓ Seed concluído.\n");
     console.log("Stats:");
     console.log(`  Acompanhantes:           ${stats.acompanhantes}`);
@@ -1042,10 +1342,19 @@ async function main(): Promise<void> {
     console.log(`  Avaliações:              ${stats.reviews}`);
     console.log(`  Perguntas:               ${stats.perguntas} (${stats.perguntasRespondidas} respondidas)`);
     console.log(`  Visualizações de Story:  ${stats.storyViews}`);
+    console.log(`\nDistribuição por cidade:`);
+    for (const c of porCidade) {
+        console.log(
+            `  ${c.cidadeNome}, ${c.estadoSigla}: ${c._count._all} ${c._count._all === 1 ? "perfil" : "perfis"}`,
+        );
+    }
     console.log(`\nSenha de todos os usuários: ${SEED_PASSWORD}`);
     console.log(`\nLogins de teste:`);
     console.log(`  Acompanhante: ${ACOMPANHANTES[0]!.email} (Premium + Boost + Stories)`);
-    console.log(`  Acompanhante: ${ACOMPANHANTES[1]!.email} (Premium + Áudio)`);
+    console.log(`  Acompanhante: ${ACOMPANHANTES[1]!.email} (Premium + Áudio · Blumenau)`);
+    console.log(`  Acompanhante: helenaschmidt@gmail.com (Premium + Boost · Blumenau)`);
+    console.log(`  Acompanhante: tainamuller@gmail.com (Trans · Blumenau)`);
+    console.log(`  Acompanhante: diegoolima@gmail.com (Homem · Blumenau)`);
     console.log(`  Cliente Fan:  ${CLIENTES[0]!.email}`);
     console.log(`  Cliente Grátis: ${CLIENTES[4]!.email}`);
 }
