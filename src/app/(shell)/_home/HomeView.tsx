@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 import {
     AudioWavePlayer,
-    Badge,
     Button,
     CameraIcon,
     CameraVerifiedIcon,
@@ -116,12 +115,6 @@ export function HomeView({
                 <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-16">
                     {/* Esquerda: headline + sub */}
                     <div className="flex flex-col gap-6">
-                        <Badge
-                            tone="primary"
-                            icon={<FlameIcon size={11} />}
-                        >
-                            Privello 2026
-                        </Badge>
                         <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl lg:text-6xl lg:leading-[1.05]">
                             Encontros com{" "}
                             <span className="text-[color:var(--accent-deep)]">respeito,</span>
@@ -138,7 +131,7 @@ export function HomeView({
                     {/* Direita: collage de perfis em destaque + stats glass */}
                     <aside className="relative">
                         <HeroCollage
-                            items={[...feed.boost, ...feed.alta].slice(0, 5)}
+                            items={[...feed.boost, ...feed.alta].slice(0, 4)}
                         />
                         <div className="absolute inset-x-3 bottom-3 z-10 sm:inset-x-4 sm:bottom-4">
                             <div className="glass-surface-strong rounded-2xl p-4 sm:p-5">
@@ -574,17 +567,17 @@ function HeroCollage({
 }: {
     items: ReadonlyArray<FeedItem>;
 }): React.ReactElement {
-    // Pad pra 5 itens repetindo o último (ou usando placeholder).
+    // Pad pra 4 itens repetindo o último (ou usando placeholder).
     const padded: ReadonlyArray<FeedItem | null> = (() => {
-        if (items.length === 0) return [null, null, null, null, null];
+        if (items.length === 0) return [null, null, null, null];
         const out: Array<FeedItem | null> = [];
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 4; i++) {
             out.push(items[i % items.length] ?? null);
         }
         return out;
     })();
 
-    const [big, t1, t2, b1, b2] = padded;
+    const [big, t1, t2, b1] = padded;
 
     return (
         <div className="relative grid aspect-[4/5] w-full grid-cols-3 grid-rows-3 gap-2 overflow-hidden rounded-3xl">
@@ -593,31 +586,10 @@ function HeroCollage({
                 item={big}
                 className="col-span-2 row-span-3 rounded-3xl"
             />
-            {/* 4 tiles menores em coluna direita */}
+            {/* 3 tiles menores em coluna direita */}
             <CollageTile item={t1} className="col-start-3 row-start-1 rounded-2xl" />
             <CollageTile item={t2} className="col-start-3 row-start-2 rounded-2xl" />
             <CollageTile item={b1} className="col-start-3 row-start-3 rounded-2xl" />
-            {/* 5º item entra como overlay translúcido sobre o grande
-                pra dar densidade — pequeno, canto superior. */}
-            {b2 ? (
-                <a
-                    href={`/acompanhantes/${b2.identificador}`}
-                    aria-label={`Ver perfil de ${b2.nome}`}
-                    className="absolute left-3 top-3 z-10 inline-flex items-center gap-2 rounded-full bg-white/85 px-2.5 py-1.5 text-[0.7rem] font-medium text-text-primary shadow-md ring-1 ring-white backdrop-blur-md transition-transform hover:scale-105"
-                >
-                    {b2.fotoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                            src={b2.fotoUrl}
-                            alt=""
-                            className="h-5 w-5 rounded-full object-cover ring-2 ring-white"
-                        />
-                    ) : null}
-                    <span className="truncate max-w-[8rem]">
-                        {b2.nome.split(" ")[0]} de {b2.cidadeNome}
-                    </span>
-                </a>
-            ) : null}
         </div>
     );
 }
