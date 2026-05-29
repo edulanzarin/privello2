@@ -157,6 +157,15 @@ export interface MediaCarouselProps {
      * 5000.
      */
     storyAutoAdvanceMs?: number;
+    /**
+     * Callback opcional disparado quando o último item do
+     * `storyMode` termina de exibir (foto: timer venceu; vídeo:
+     * `onEnded`). Se ausente, o `MediaCarousel` chama `onClose`
+     * automaticamente. Caller pode usar isso pra encadear vários
+     * grupos de stories — ex.: quando termina os do owner A,
+     * abre os do owner B sem fechar o modal.
+     */
+    onComplete?: () => void;
 }
 
 /**
@@ -186,6 +195,7 @@ export function MediaCarousel({
     hideComments = false,
     storyMode = false,
     storyAutoAdvanceMs = 5000,
+    onComplete,
 }: MediaCarouselProps): React.ReactElement | null {
     const [draft, setDraft] = React.useState("");
     const storyVideoRef = React.useRef<HTMLVideoElement>(null);
@@ -252,6 +262,8 @@ export function MediaCarousel({
                 const nextItem = items[idx + 1];
                 if (nextItem !== undefined) {
                     onActiveChange(nextItem.id);
+                } else if (onComplete !== undefined) {
+                    onComplete();
                 } else {
                     onClose();
                 }
@@ -267,6 +279,7 @@ export function MediaCarousel({
         storyAutoAdvanceMs,
         onActiveChange,
         onClose,
+        onComplete,
     ]);
 
     if (!open || activeId === null) {
@@ -324,6 +337,8 @@ export function MediaCarousel({
                                     const next = items[activeIndex + 1];
                                     if (next !== undefined) {
                                         onActiveChange(next.id);
+                                    } else if (onComplete !== undefined) {
+                                        onComplete();
                                     } else {
                                         onClose();
                                     }

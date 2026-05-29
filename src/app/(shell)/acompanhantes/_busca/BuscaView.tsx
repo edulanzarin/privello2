@@ -477,12 +477,68 @@ export function BuscaView({
      * Como o array `storiesItems` já vem flat e ordenado por dono,
      * basta achar o primeiro item daquele identificador.
      */
+    /**
+     * Owner cujo grupo de stories está sendo visualizado no
+     * `MediaCarousel` em `storyMode`. Quando `null`, o carrossel
+     * está fechado. A lista de items mostrada e a barra de
+     * progresso são derivadas só dos stories desse owner — o
+     * comportamento é estilo Instagram: vê todos da Helena, depois
+     * passa pra próxima, e só fecha no fim do último owner.
+     */
+    const [activeOwnerId, setActiveOwnerId] = React.useState<string | null>(
+        null,
+    );
+
+    /**
+     * Stories do owner atualmente em foco. Memoizado pra que o
+     * `MediaCarousel` não re-renderize quando outros estados
+     * mudam.
+     */
+    const ownerStoryItems = React.useMemo(() => {
+        if (activeOwnerId === null) return [];
+        return storiesItems.filter(
+            (s) => s.ownerIdentificador === activeOwnerId,
+        );
+    }, [activeOwnerId, storiesItems]);
+
     function abrirStoriesDoOwner(identificador: string): void {
         const target = storiesItems.find(
             (s) => s.ownerIdentificador === identificador,
         );
         if (!target) return;
+        setActiveOwnerId(identificador);
         storyCarousel.openAt(target.id);
+    }
+
+    /**
+     * Avança pro próximo owner na ordem definida pelo backend
+     * (boost → premium → básico). Quando o owner atual é o último,
+     * fecha o carrossel.
+     */
+    function avancarParaProximoOwner(): void {
+        const owners = storiesOwners.map((o) => o.identificador);
+        const idx = owners.indexOf(activeOwnerId ?? "");
+        const next = owners[idx + 1];
+        if (next === undefined) {
+            setActiveOwnerId(null);
+            storyCarousel.close();
+            return;
+        }
+        const firstStoryNext = storiesItems.find(
+            (s) => s.ownerIdentificador === next,
+        );
+        if (!firstStoryNext) {
+            setActiveOwnerId(null);
+            storyCarousel.close();
+            return;
+        }
+        setActiveOwnerId(next);
+        storyCarousel.openAt(firstStoryNext.id);
+    }
+
+    function fecharStories(): void {
+        setActiveOwnerId(null);
+        storyCarousel.close();
     }
 
     /**
@@ -981,7 +1037,7 @@ export function BuscaView({
             {storiesItems.length > 0 ? (
                 <>
                     <MediaCarousel
-                        items={storiesItems.map((s) => ({
+                        items={ownerStoryItems.map((s) => ({
                             id: s.id,
                             type: s.type,
                             url: s.url,
@@ -996,11 +1052,12 @@ export function BuscaView({
                             handleStoryViewed(id);
                         }}
                         open={storyCarousel.open}
-                        onClose={storyCarousel.close}
+                        onClose={fecharStories}
+                        onComplete={avancarParaProximoOwner}
                         storyMode
                     />
                     <StoryOwnerOverlay
-                        active={storiesItems.find(
+                        active={ownerStoryItems.find(
                             (s) => s.id === storyCarousel.activeId,
                         ) ?? null}
                         open={storyCarousel.open}
