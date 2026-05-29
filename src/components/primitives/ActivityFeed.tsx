@@ -130,7 +130,7 @@ export function ActivityFeed({
     "aria-label": ariaLabel,
 }: ActivityFeedProps): React.ReactElement {
     const composed = [
-        "overflow-hidden rounded-lg bg-neutral-50 divide-y divide-neutral-200/70",
+        "overflow-hidden rounded-2xl bg-surface border border-border divide-y divide-[color:var(--hairline)]",
         className ?? "",
     ]
         .filter(Boolean)

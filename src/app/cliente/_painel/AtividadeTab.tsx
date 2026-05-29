@@ -11,6 +11,7 @@ import {
     EmptyState,
     FilterChips,
     HeartIcon,
+    Paginator,
     PlayCircleIcon,
     SparklesIcon,
     UpgradeBanner,
@@ -142,41 +143,51 @@ export function AtividadeTab({
                 layout="fixed"
             />
 
-            <ActivityFeed aria-label="Histórico de atividade">
-                {feedRows.length > 0 ? (
-                    feedRows.map((row) => {
-                        if (row.kind === "review") {
-                            return (
-                                <ReviewRow
-                                    key={`r-${row.review.id}`}
-                                    review={row.review}
-                                />
-                            );
-                        }
-                        if (row.kind === "like") {
-                            return (
-                                <LikeRow
-                                    key={`l-${row.like.mediaId}`}
-                                    like={row.like}
-                                />
-                            );
-                        }
-                        return (
-                            <CommentRow
-                                key={`c-${row.comment.id}`}
-                                comment={row.comment}
-                            />
-                        );
-                    })
-                ) : (
+            {feedRows.length > 0 ? (
+                <Paginator
+                    items={feedRows}
+                    pageSize={10}
+                    loadMoreLabel="Carregar mais"
+                    showCounter
+                    render={(visible) => (
+                        <ActivityFeed aria-label="Histórico de atividade">
+                            {visible.map((row) => {
+                                if (row.kind === "review") {
+                                    return (
+                                        <ReviewRow
+                                            key={`r-${row.review.id}`}
+                                            review={row.review}
+                                        />
+                                    );
+                                }
+                                if (row.kind === "like") {
+                                    return (
+                                        <LikeRow
+                                            key={`l-${row.like.mediaId}`}
+                                            like={row.like}
+                                        />
+                                    );
+                                }
+                                return (
+                                    <CommentRow
+                                        key={`c-${row.comment.id}`}
+                                        comment={row.comment}
+                                    />
+                                );
+                            })}
+                        </ActivityFeed>
+                    )}
+                />
+            ) : (
+                <ActivityFeed aria-label="Histórico de atividade">
                     <EmptyState
                         size="sm"
                         icon={empties[filtro].icon}
                         title={empties[filtro].title}
                         description={empties[filtro].description}
                     />
-                )}
-            </ActivityFeed>
+                </ActivityFeed>
+            )}
         </div>
     );
 }
