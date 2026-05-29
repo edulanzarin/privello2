@@ -347,3 +347,61 @@ export async function listarCidadesEmDestaque(
 
     return enriched;
 }
+
+
+/**
+ * Item de mídia aleatória usado pra preencher a collage do hero
+ * da home. NÃO carrega info de owner ou link clicável — é puramente
+ * visual, escolhido aleatoriamente entre fotos públicas da galeria
+ * de Acompanhantes ativas.
+ */
+export interface MidiaCollageItem {
+    id: string;
+    url: string;
+}
+
+/**
+ * Lista mídias aleatórias da galeria pra usar como pano de fundo
+ * da collage do hero. Critérios:
+ *
+ *   - Apenas FOTO (sem vídeo no hero — performance).
+ *   - Apenas `status = COMMITTED`, role `GALLERY`.
+ *   - Owner com perfil visível e plano vigente (mesmo filtro do
+ *     feed público).
+ *   - Ordenação aleatória — aplicada via `ORDER BY random()` no
+ *     Postgres.
+ *
+ * O caller não recebe ownerId ou link — a collage é decorativa.
+ * Em produção a UI aplica blur CSS pra evitar nudity em destaque,
+ * já que a sample é aleatória.
+ */
+export async function listarMidiasAleatoriasParaCollage(
+    options: { limit?: number } = {},
+): Promise<ReadonlyArray<MidiaCollageItem>> {
+    const limit = Math.max(1, Math.min(20, options.limit ?? 6));
+
+    // Prisma não suporta `ORDER BY random()` direto — usamos
+    // `$queryRaw` pra trazer um sample aleatório barato (até
+    // 200 candidatos) e cortar pelo limit. `random()` no Postgres
+    // é OK pra volumes baixos; caso a tabela cresça muito, uma
+    // alternativa seria amostrar por `id` em ranges.
+    const rows = await db.$queryRaw<{ id: string; storage_key: string }[]>`
+        SELECT m.id, m.storage_key
+        FROM medias m
+        INNER JOIN users u ON u.id = m.owner_id
+        INNER JOIN acompanhante_profiles ap ON ap.user_id = u.id
+        WHERE m.role = 'GALLERY'
+          AND m.status = 'COMMITTED'
+          AND m.kind = 'PHOTO'
+          AND ap.perfil_visivel = TRUE
+          AND ap.plano_vigente IS NOT NULL
+          AND u.type = 'ACOMPANHANTE'
+        ORDER BY random()
+        LIMIT ${limit};
+    `;
+
+    return rows.map((r) => ({
+        id: r.id,
+        url: `/api/storage/${r.storage_key}`,
+    }));
+}

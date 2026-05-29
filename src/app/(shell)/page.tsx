@@ -5,10 +5,12 @@ import { getCurrentSession } from "@/server/auth/currentSession";
 import {
     listarCidadesEmDestaque,
     listarFeedHome,
+    listarMidiasAleatoriasParaCollage,
     obterStatsHome,
     type CidadeEmDestaque,
     type FeedHome,
     type HomeStats,
+    type MidiaCollageItem,
 } from "@/server/acompanhante-profile/feed";
 
 import { HomeView } from "./_home/HomeView";
@@ -69,15 +71,18 @@ export default async function HomePage() {
     let feed: FeedHome = FALLBACK_FEED;
     let stats: HomeStats = FALLBACK_STATS;
     let cidades: ReadonlyArray<CidadeEmDestaque> = [];
+    let midiasCollage: ReadonlyArray<MidiaCollageItem> = [];
     try {
-        const [f, s, c] = await Promise.all([
+        const [f, s, c, m] = await Promise.all([
             listarFeedHome({ limite: { boost: 30, alta: 30 } }),
             obterStatsHome(),
             listarCidadesEmDestaque({ limit: 10 }),
+            listarMidiasAleatoriasParaCollage({ limit: 4 }),
         ]);
         feed = f;
         stats = s;
         cidades = c;
+        midiasCollage = m;
     } catch {
         // mantém fallbacks
     }
@@ -90,6 +95,7 @@ export default async function HomePage() {
                 feed={feed}
                 stats={stats}
                 cidades={cidades}
+                midiasCollage={midiasCollage}
             />
         </PageSurface>
     );

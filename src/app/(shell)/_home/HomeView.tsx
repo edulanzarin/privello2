@@ -31,7 +31,7 @@ import {
 
 import { formatarValorHora } from "@/domain/atendimentoComercial";
 
-import type { CidadeEmDestaque, FeedHome, FeedItem, HomeStats } from "@/server/acompanhante-profile/feed";
+import type { CidadeEmDestaque, FeedHome, FeedItem, HomeStats, MidiaCollageItem } from "@/server/acompanhante-profile/feed";
 import type { PlanoExibicao } from "@/server/acompanhante-profile";
 
 /**
@@ -49,6 +49,12 @@ export interface HomeViewProps {
      * abaixo do hero.
      */
     cidades: ReadonlyArray<CidadeEmDestaque>;
+    /**
+     * Mídias aleatórias da galeria pra preencher a collage do hero.
+     * Decorativo — sem links pra perfis e renderizado com blur
+     * pra evitar destaque de conteúdo sensível.
+     */
+    midiasCollage: ReadonlyArray<MidiaCollageItem>;
 }
 
 /**
@@ -77,6 +83,7 @@ export function HomeView({
     feed,
     stats,
     cidades,
+    midiasCollage,
 }: HomeViewProps): React.ReactElement {
     const router = useRouter();
     const [cityValue, setCityValue] = React.useState<CityComboboxValue>({
@@ -130,9 +137,7 @@ export function HomeView({
 
                     {/* Direita: collage de perfis em destaque + stats glass */}
                     <aside className="relative">
-                        <HeroCollage
-                            items={[...feed.boost, ...feed.alta].slice(0, 4)}
-                        />
+                        <HeroCollage items={midiasCollage} />
                         <div className="absolute inset-x-3 bottom-3 z-10 sm:inset-x-4 sm:bottom-4">
                             <div className="glass-surface-strong rounded-2xl p-4 sm:p-5">
                                 <StatList
@@ -552,25 +557,26 @@ function formatNumber(n: number): string {
 }
 
 /**
- * HeroCollage — mosaico assimétrico de 4-5 fotos pra ilustrar o
+ * HeroCollage — mosaico assimétrico de 4 fotos pra ilustrar o
  * hero. Layout estilo "wall" do Spotify: uma foto grande à esquerda
- * (col-span 2) + 2 colunas com fotos menores empilhadas. Aspect
- * geral 4:5 mais alto que largo, espaço pro card glass de stats
- * sobreposto na base.
+ * (col-span 2) + 3 fotos menores empilhadas à direita.
+ *
+ * As fotos são amostras aleatórias da galeria pública, sem links
+ * pra perfil — puramente decorativas. Aplica blur leve pra evitar
+ * destaque de conteúdo sensível, já que o sample é random.
  *
  * Quando há menos itens, repete o último pra fechar o grid sem
- * buracos. Quando não há item nenhum, cai num gradient warm com
- * iniciais "P" centralizadas.
+ * buracos. Quando não há item nenhum, cai num gradient warm.
  */
 function HeroCollage({
     items,
 }: {
-    items: ReadonlyArray<FeedItem>;
+    items: ReadonlyArray<MidiaCollageItem>;
 }): React.ReactElement {
     // Pad pra 4 itens repetindo o último (ou usando placeholder).
-    const padded: ReadonlyArray<FeedItem | null> = (() => {
+    const padded: ReadonlyArray<MidiaCollageItem | null> = (() => {
         if (items.length === 0) return [null, null, null, null];
-        const out: Array<FeedItem | null> = [];
+        const out: Array<MidiaCollageItem | null> = [];
         for (let i = 0; i < 4; i++) {
             out.push(items[i % items.length] ?? null);
         }
@@ -580,7 +586,10 @@ function HeroCollage({
     const [big, t1, t2, b1] = padded;
 
     return (
-        <div className="relative grid aspect-[4/5] w-full grid-cols-3 grid-rows-3 gap-2 overflow-hidden rounded-3xl">
+        <div
+            aria-hidden="true"
+            className="relative grid aspect-[4/5] w-full grid-cols-3 grid-rows-3 gap-2 overflow-hidden rounded-3xl"
+        >
             {/* Tile grande à esquerda — span 2 col × 3 row */}
             <CollageTile
                 item={big}
@@ -595,24 +604,25 @@ function HeroCollage({
 }
 
 /**
- * CollageTile — uma célula da collage. Renderiza foto do perfil
- * (link clicável pra `/acompanhantes/<id>`) ou fallback warm.
+ * CollageTile — uma célula da collage. Decorativa, sem link.
+ * Aplica blur leve + saturação reduzida + overlay warm pra
+ * evitar destaque de conteúdo sensível.
  */
 function CollageTile({
     item,
     className,
 }: {
-    item: FeedItem | null;
+    item: MidiaCollageItem | null;
     className?: string;
 }): React.ReactElement {
     const composed = [
-        "group relative overflow-hidden bg-gradient-to-br from-[color:var(--accent-soft)] via-[#ffd1bf] to-[color:var(--accent)]",
+        "relative overflow-hidden bg-gradient-to-br from-[color:var(--accent-soft)] via-[#ffd1bf] to-[color:var(--accent)]",
         className ?? "",
     ]
         .filter(Boolean)
         .join(" ");
 
-    if (item === null || !item.fotoUrl) {
+    if (item === null) {
         return (
             <div className={composed}>
                 <span
@@ -626,22 +636,24 @@ function CollageTile({
     }
 
     return (
-        <a
-            href={`/acompanhantes/${item.identificador}`}
-            aria-label={`Ver perfil de ${item.nome}`}
-            className={composed}
-        >
+        <div className={composed}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-                src={item.fotoUrl}
-                alt={item.nome}
+                src={item.url}
+                alt=""
+                aria-hidden="true"
                 loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                className="h-full w-full object-cover"
+                style={{
+                    filter: "blur(14px) saturate(1.1)",
+                    transform: "scale(1.15)",
+                }}
             />
+            {/* Overlay warm sutil pra unificar com o resto do hero */}
             <span
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-[color:var(--accent)]/15 via-transparent to-transparent"
             />
-        </a>
+        </div>
     );
 }
