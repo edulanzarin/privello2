@@ -215,26 +215,50 @@ export function MediaCarousel({
         return () => window.removeEventListener("keydown", handleKey);
     }, [open, activeId, items, onActiveChange]);
 
-    // Auto-advance no story mode. Foto: setTimeout simples de
-    // `storyAutoAdvanceMs`; vídeo: avança no `onEnded` via callback
-    // direto. Quando passa do último item, fecha o modal.
+    // Progresso 0..1 do item ativo no story mode. Pra fotos, é
+    // controlado por `setInterval` ticando a cada 50ms; pra vídeos
+    // espelha `currentTime / duration` via `timeupdate`. Mantemos
+    // como state pra a barra animar via React em vez de CSS — assim
+    // o vídeo controla o ritmo real.
+    const [storyProgress, setStoryProgress] = React.useState(0);
+
+    // Auto-advance no story mode. Foto: tick com setInterval pra
+    // controlar a barra; vídeo: avança no `onEnded` (callback
+    // direto). Em ambos os casos, no último item fecha o modal.
     React.useEffect(() => {
         if (!storyMode || !open || activeId === null) return;
         const idx = items.findIndex((m) => m.id === activeId);
         if (idx < 0) return;
         const current = items[idx];
-        if (!current || current.type === "video") return;
+        if (!current) return;
 
-        const timer = window.setTimeout(() => {
-            const nextItem = items[idx + 1];
-            if (nextItem !== undefined) {
-                onActiveChange(nextItem.id);
-            } else {
-                onClose();
+        // Reset progresso ao trocar de item.
+        setStoryProgress(0);
+
+        // Vídeo: progresso vem de `timeupdate` no <video>; aqui só
+        // garantimos o reset acima. O avanço acontece no `onEnded`.
+        if (current.type === "video") return;
+
+        // Foto: tick a cada 50ms (20fps suaves). Total =
+        // `storyAutoAdvanceMs`. Quando completa, avança.
+        const startedAt = Date.now();
+        const TICK_MS = 50;
+        const timer = window.setInterval(() => {
+            const elapsed = Date.now() - startedAt;
+            const pct = Math.min(1, elapsed / storyAutoAdvanceMs);
+            setStoryProgress(pct);
+            if (pct >= 1) {
+                window.clearInterval(timer);
+                const nextItem = items[idx + 1];
+                if (nextItem !== undefined) {
+                    onActiveChange(nextItem.id);
+                } else {
+                    onClose();
+                }
             }
-        }, storyAutoAdvanceMs);
+        }, TICK_MS);
 
-        return () => window.clearTimeout(timer);
+        return () => window.clearInterval(timer);
     }, [
         storyMode,
         open,
@@ -292,6 +316,9 @@ export function MediaCarousel({
                                     ? storyVideoRef
                                     : undefined
                             }
+                            onVideoTimeUpdate={(pct) => {
+                                setStoryProgress(pct);
+                            }}
                             onVideoEnded={() => {
                                 queueMicrotask(() => {
                                     const next = items[activeIndex + 1];
@@ -318,29 +345,22 @@ export function MediaCarousel({
                                         : i === activeIndex
                                             ? "active"
                                             : "pending";
+                                const fill =
+                                    state === "done"
+                                        ? 1
+                                        : state === "active"
+                                            ? storyProgress
+                                            : 0;
                                 return (
                                     <div
                                         key={it.id}
                                         className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/30"
                                     >
                                         <div
-                                            // Reset de animação ao
-                                            // trocar de item via key
-                                            // (forçando re-mount do
-                                            // elemento animado).
-                                            key={`${activeId}-${i}`}
-                                            className="h-full w-full origin-left bg-white"
+                                            className="h-full origin-left bg-white transition-transform duration-100 ease-linear"
                                             style={{
-                                                transform:
-                                                    state === "done"
-                                                        ? "scaleX(1)"
-                                                        : state === "pending"
-                                                            ? "scaleX(0)"
-                                                            : undefined,
-                                                animation:
-                                                    state === "active"
-                                                        ? `story-progress-bar ${storyAutoAdvanceMs}ms linear forwards`
-                                                        : undefined,
+                                                width: "100%",
+                                                transform: `scaleX(${fill})`,
                                             }}
                                         />
                                     </div>
@@ -671,7 +691,7 @@ function CarouselMedia({
                             const v = e.currentTarget;
                             if (v.duration > 0) {
                                 onVideoTimeUpdate(
-                                    (v.currentTime / v.duration) * 100,
+                                    v.currentTime / v.duration,
                                 );
                             }
                         }

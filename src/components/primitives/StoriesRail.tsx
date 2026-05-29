@@ -128,10 +128,8 @@ function RailButton({
                 {item.unseen > 0 ? (
                     <span
                         aria-hidden="true"
-                        className="absolute -top-1 -right-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] px-1 text-[0.65rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(197,82,58,0.5)] ring-2 ring-surface"
-                    >
-                        {item.unseen > 9 ? "9+" : item.unseen}
-                    </span>
+                        className="absolute -top-0.5 -right-0.5 inline-block h-3 w-3 rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] shadow-[0_2px_8px_-2px_rgba(197,82,58,0.55)] ring-2 ring-surface"
+                    />
                 ) : null}
             </span>
             <span className="block max-w-[6rem] truncate text-center text-xs font-medium text-text-primary">
