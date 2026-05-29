@@ -67,7 +67,7 @@ export function CityChips({
                         <a
                             href={item.href}
                             aria-label={item.label}
-                            className="group relative flex aspect-[16/10] w-full flex-col justify-end overflow-hidden rounded-2xl bg-gradient-to-br from-[color:var(--accent-soft)] via-[#ffd1bf] to-[color:var(--accent)] shadow-[0_12px_24px_-16px_rgba(26,20,16,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_32px_-18px_rgba(26,20,16,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+                            className="group relative flex aspect-[16/10] w-full flex-col justify-end overflow-hidden rounded-2xl bg-gradient-to-br from-[color:var(--accent-soft)] via-[#ffd1bf] to-[color:var(--accent)] shadow-[0_12px_24px_-16px_rgba(26,20,16,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_32px_-18px_rgba(26,20,16,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
                         >
                             {item.photoUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element

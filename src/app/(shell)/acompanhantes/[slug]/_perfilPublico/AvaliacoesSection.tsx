@@ -156,7 +156,7 @@ function AvaliacoesHeader({
                 <div className="flex items-center gap-3">
                     <span
                         aria-hidden="true"
-                        className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[color:var(--accent)]/12"
+                        className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[#ec7b5b]/15"
                     >
                         <ChatIcon size={18} />
                     </span>
@@ -188,7 +188,7 @@ function AvaliacoesHeader({
                     {stats.map((s, i) => (
                         <div
                             key={i}
-                            className="flex flex-col items-center gap-0.5 rounded-2xl bg-[color:var(--accent-soft)]/40 px-2 py-3 text-center"
+                            className="flex flex-col items-center gap-0.5 rounded-2xl bg-[#fff0eb]/40 px-2 py-3 text-center"
                         >
                             <span aria-hidden="true" className="text-[color:var(--accent-deep)]">
                                 {s.icon}
@@ -548,7 +548,7 @@ function ListaReviews({
             <button
                 type="button"
                 onClick={() => setExpanded(true)}
-                className="group inline-flex items-center gap-2 self-start rounded-2xl border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)]/40 px-4 py-2.5 text-sm font-medium text-[color:var(--accent-deep)] transition-all hover:bg-[color:var(--accent-soft)] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+                className="group inline-flex items-center gap-2 self-start rounded-2xl border border-[#ec7b5b]/25 bg-[#fff0eb]/40 px-4 py-2.5 text-sm font-medium text-[color:var(--accent-deep)] transition-all hover:bg-[color:var(--accent-soft)] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
             >
                 <ChatIcon size={14} />
                 Ler {reviews.length}{" "}
@@ -700,7 +700,7 @@ function ReviewCard({
 
                 {/* Resposta da Acompanhante (se houver e não estiver editando) */}
                 {review.replyText !== null && !replying ? (
-                    <div className="ml-3 rounded-2xl border border-primary-100 bg-[color:var(--accent-soft)]/50 px-3 py-2">
+                    <div className="ml-3 rounded-2xl border border-[#ec7b5b]/15 bg-[#fff0eb]/50 px-3 py-2">
                         <div className="mb-1 flex items-center justify-between gap-2">
                             <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold uppercase tracking-wider text-[color:var(--accent-deep)]">
                                 <SparklesIcon size={11} />

@@ -55,7 +55,7 @@ export function ActivityFeedItem({
     const composed = [
         "flex items-start gap-3 px-4 py-3 transition-colors duration-150",
         href !== undefined
-            ? "hover:bg-[color:var(--accent-soft)]/60 focus-visible:bg-[color:var(--accent-soft)]/70 focus-visible:outline-none"
+            ? "hover:bg-[#fff0eb]/60 focus-visible:bg-[#fff0eb]/70 focus-visible:outline-none"
             : "",
         className ?? "",
     ]

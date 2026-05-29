@@ -61,7 +61,7 @@ const TONE_CLASSES: Record<
 > = {
     soft: {
         wrapper:
-            "bg-gradient-to-b from-[color:var(--accent-soft)]/70 to-surface border border-[color:var(--accent)]/20",
+            "bg-gradient-to-b from-[#fff0eb]/70 to-surface border border-[#ec7b5b]/20",
         value: "text-text-primary",
         label: "text-[color:var(--accent-deep)]",
         meta: "text-text-secondary",

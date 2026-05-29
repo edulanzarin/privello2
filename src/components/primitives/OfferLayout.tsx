@@ -52,15 +52,15 @@ export function OfferLayout({
         <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16">
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-[color:var(--accent-soft)]/60 via-white to-[color:var(--accent-soft)]"
+                className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-[#fff0eb]/70 via-white to-[color:var(--accent-soft)]"
             />
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-40 -left-32 -z-10 h-[28rem] w-[28rem] rounded-full bg-[color:var(--accent)]/30 blur-3xl animate-blob-1"
+                className="pointer-events-none absolute -top-40 -left-32 -z-10 h-[28rem] w-[28rem] rounded-full bg-[#ec7b5b]/30 blur-3xl animate-blob-1"
             />
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -bottom-40 -right-32 -z-10 h-[32rem] w-[32rem] rounded-full bg-[color:var(--accent-deep)]/25 blur-3xl animate-blob-2"
+                className="pointer-events-none absolute -bottom-40 -right-32 -z-10 h-[32rem] w-[32rem] rounded-full bg-[#c5523a]/25 blur-3xl animate-blob-2"
             />
 
             <div className="w-full max-w-5xl animate-fade-in">

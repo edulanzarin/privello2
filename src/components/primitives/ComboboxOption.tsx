@@ -72,7 +72,7 @@ export function ComboboxOption({
         // caso do mouse sem que o pai precise sincronizar.
         active
             ? "bg-[color:var(--accent-soft)] text-text-primary"
-            : "text-text-primary hover:bg-[color:var(--accent-soft)]/60",
+            : "text-text-primary hover:bg-[#fff0eb]/60",
         selected ? "font-medium text-[color:var(--accent-deep)]" : "",
     ]
         .filter(Boolean)

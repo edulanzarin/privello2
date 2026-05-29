@@ -94,12 +94,12 @@ export function FilterChips({
                 // label funcione dentro da grade `fixed` (sem ele a
                 // célula expande para o conteúdo intrínseco).
                 const baseClass =
-                    "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium tracking-tight transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40";
+                    "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium tracking-tight transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40";
                 const stateClass = opt.locked
                     ? "border-neutral-200 bg-neutral-50 text-text-disabled hover:bg-neutral-100"
                     : isActive
                         ? "border-[color:var(--accent)] bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)]"
-                        : "border-border bg-surface text-text-secondary hover:border-[color:var(--accent)]/35 hover:text-text-primary";
+                        : "border-border bg-surface text-text-secondary hover:border-[#ec7b5b]/35 hover:text-text-primary";
                 return (
                     <button
                         key={opt.value}

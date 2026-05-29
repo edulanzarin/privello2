@@ -196,7 +196,7 @@ export function CityCombobox({
             <div
                 className={[
                     "flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 transition-all duration-200",
-                    "focus-within:border-[color:var(--accent)]/50 focus-within:ring-2 focus-within:ring-[color:var(--accent)]/20",
+                    "focus-within:border-[#ec7b5b]/50 focus-within:ring-2 focus-within:ring-[#ec7b5b]/20",
                     disabled ? "opacity-60 pointer-events-none" : "",
                 ]
                     .filter(Boolean)
@@ -231,7 +231,7 @@ export function CityCombobox({
                     onClick={handleSubmitClick}
                     disabled={disabled || loading}
                     aria-label="Buscar"
-                    className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)] transition-transform hover:scale-105 disabled:bg-neutral-300 disabled:from-neutral-300 disabled:to-neutral-300 disabled:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+                    className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)] transition-transform hover:scale-105 disabled:bg-neutral-300 disabled:from-neutral-300 disabled:to-neutral-300 disabled:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
                 >
                     <ArrowRightIcon size={16} />
                 </button>

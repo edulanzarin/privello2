@@ -99,7 +99,7 @@ export function IconSegmented({
                         title={opt.label}
                         onClick={() => onChange(opt.value)}
                         className={[
-                            "inline-flex flex-none items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium tracking-tight transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40",
+                            "inline-flex flex-none items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium tracking-tight transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
                             isActive
                                 ? "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)]"
                                 : "text-text-disabled hover:text-text-primary",

@@ -173,7 +173,7 @@ export function CommentInput({
                     className="mt-1"
                 />
             ) : null}
-            <div className="flex min-w-0 flex-1 items-end gap-2 rounded-full border border-border bg-surface px-3 py-1.5 transition-all focus-within:border-[color:var(--accent)]/40 focus-within:ring-2 focus-within:ring-[color:var(--accent)]/25">
+            <div className="flex min-w-0 flex-1 items-end gap-2 rounded-full border border-border bg-surface px-3 py-1.5 transition-all focus-within:border-[#ec7b5b]/40 focus-within:ring-2 focus-within:ring-[#ec7b5b]/25">
                 <textarea
                     rows={1}
                     value={value}
@@ -187,7 +187,7 @@ export function CommentInput({
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="flex-none rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] px-3 py-1 text-xs font-semibold text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                    className="flex-none rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] px-3 py-1 text-xs font-semibold text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                 >
                     Enviar
                 </button>

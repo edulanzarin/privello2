@@ -49,7 +49,7 @@ export interface TagChipProps {
 
 const TONE_CLASSES: Record<TagChipTone, string> = {
     soft:
-        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-1 ring-[color:var(--accent)]/15",
+        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-1 ring-[#ec7b5b]/15",
     neutral: "bg-surface-muted text-text-secondary border border-border",
     outline: "border border-border bg-transparent text-text-primary",
     primary:

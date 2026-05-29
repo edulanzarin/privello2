@@ -72,7 +72,7 @@ export function SectionHeader({
                 <span
                     aria-hidden="true"
                     className={[
-                        "inline-flex h-10 w-10 flex-none items-center justify-center rounded-full ring-4 ring-[color:var(--accent)]/12",
+                        "inline-flex h-10 w-10 flex-none items-center justify-center rounded-full ring-4 ring-[#ec7b5b]/15",
                         ICON_TONE_CLASSES[tone],
                     ].join(" ")}
                 >

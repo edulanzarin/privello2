@@ -164,7 +164,7 @@ export function Avatar({
         "group relative inline-flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]",
         hasRing ? "ring-2 ring-surface" : "ring-1 ring-neutral-200",
         onClick !== undefined
-            ? "cursor-pointer transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            ? "cursor-pointer transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/50"
             : "",
     ]
         .filter(Boolean)

@@ -42,7 +42,7 @@ export interface FeatureTileProps {
 
 const TONE_CIRCLE: Record<FeatureTileTone, string> = {
     accent:
-        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[color:var(--accent)]/15",
+        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[#ec7b5b]/15",
     neutral:
         "bg-neutral-100 text-text-primary ring-4 ring-neutral-200/60",
 };
@@ -90,7 +90,7 @@ export function FeatureTile({
 
     const composed = [
         "flex flex-col items-center gap-3 rounded-3xl border border-border bg-surface px-4 py-6 text-center",
-        href ? "lift focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40" : "",
+        href ? "lift focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40" : "",
         className ?? "",
     ]
         .filter(Boolean)

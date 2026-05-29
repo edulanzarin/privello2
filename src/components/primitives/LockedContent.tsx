@@ -83,7 +83,7 @@ export function LockedContent({
 
     const heroClasses =
         tone === "accent"
-            ? "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[color:var(--accent)]/15"
+            ? "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[#ec7b5b]/15"
             : "bg-neutral-100 text-text-primary ring-4 ring-neutral-200";
 
     return (

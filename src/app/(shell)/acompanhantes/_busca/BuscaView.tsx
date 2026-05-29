@@ -533,7 +533,7 @@ export function BuscaView({
                     <button
                         type="button"
                         onClick={limparCidade}
-                        className="inline-flex max-w-full items-center gap-2 rounded-full border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)] px-3 py-1.5 text-sm font-semibold text-[color:var(--accent-deep)] transition-colors hover:bg-[color:var(--accent-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+                        className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#ec7b5b]/25 bg-[color:var(--accent-soft)] px-3 py-1.5 text-sm font-semibold text-[color:var(--accent-deep)] transition-colors hover:bg-[color:var(--accent-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
                     >
                         <MapPinIcon size={14} />
                         <span className="truncate">
@@ -1114,7 +1114,7 @@ function ChipsFilter({
                                 "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                                 active
                                     ? "border-primary-600 bg-[color:var(--accent)] text-white"
-                                    : "border-neutral-200 bg-surface text-text-secondary hover:border-[color:var(--accent)]/40 hover:text-text-primary",
+                                    : "border-neutral-200 bg-surface text-text-secondary hover:border-[#ec7b5b]/40 hover:text-text-primary",
                             ].join(" ")}
                         >
                             {opt.label}

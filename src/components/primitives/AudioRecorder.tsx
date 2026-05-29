@@ -340,7 +340,7 @@ export function AudioRecorder({
 
     if (state === "recording") {
         return (
-            <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-gradient-to-br from-[color:var(--accent-soft)]/40 via-surface to-surface px-4 py-6">
+            <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-gradient-to-br from-[#fff0eb]/70 via-surface to-surface px-4 py-6">
                 <LiveWave bars={bars} />
                 <button
                     type="button"
@@ -424,7 +424,7 @@ function LiveWave({ bars }: { bars: ReadonlyArray<number> }): React.ReactElement
                         key={i}
                         aria-hidden="true"
                         style={{ height: `${heightPct}%` }}
-                        className="w-[3px] flex-1 rounded-full bg-[color:var(--accent)]/85"
+                        className="w-[3px] flex-1 rounded-full bg-[#ec7b5b]/85"
                     />
                 );
             })}

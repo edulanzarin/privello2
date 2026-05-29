@@ -374,7 +374,7 @@ export function HomeView({
 
             {/* ── CTA final ──────────────────────────────────────── */}
             {isAnonimo ? (
-                <section className="overflow-hidden rounded-3xl border border-primary-100 bg-gradient-to-br from-primary-50 via-surface to-secondary-50 p-8 sm:p-12">
+                <section className="overflow-hidden rounded-3xl border border-[#ec7b5b]/15 bg-gradient-to-br from-primary-50 via-surface to-secondary-50 p-8 sm:p-12">
                     <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex flex-col gap-2">
                             <h2 className="text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">

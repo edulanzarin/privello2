@@ -169,7 +169,7 @@ export function ProfileFeedCard({
                 aria-label={`Ver perfil de ${name}`}
                 className={[
                     "group relative block overflow-hidden rounded-3xl border border-border bg-surface",
-                    "transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/30",
+                    "transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/30",
                     className ?? "",
                 ]
                     .filter(Boolean)
@@ -238,7 +238,7 @@ export function ProfileFeedCard({
             aria-label={`Ver perfil de ${name}`}
             className={[
                 "group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-surface lift",
-                "transition-all duration-300 hover:border-[color:var(--accent)]/30 hover:shadow-[0_18px_36px_-22px_rgba(26,20,16,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40",
+                "transition-all duration-300 hover:border-[#ec7b5b]/30 hover:shadow-[0_18px_36px_-22px_rgba(26,20,16,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
                 className ?? "",
             ]
                 .filter(Boolean)

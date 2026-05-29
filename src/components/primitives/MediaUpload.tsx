@@ -210,10 +210,10 @@ export function MediaUpload({
         value !== null
             ? "border-neutral-200 bg-neutral-100"
             : dragOver
-                ? "border-[color:var(--accent)]/50 bg-[color:var(--accent-soft)]"
+                ? "border-[#ec7b5b]/50 bg-[color:var(--accent-soft)]"
                 : error !== null
                     ? "border-danger-300 bg-danger-50/30 border-dashed"
-                    : "border-border border-dashed bg-neutral-50 hover:border-[color:var(--accent)]/35 hover:bg-[color:var(--accent-soft)]/40",
+                    : "border-border border-dashed bg-neutral-50 hover:border-[#ec7b5b]/35 hover:bg-[#fff0eb]/40",
         disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer",
         className ?? "",
     ]
@@ -294,7 +294,7 @@ function EmptySurface({
         <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 px-6 py-8 text-center">
             <span
                 aria-hidden="true"
-                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[color:var(--accent)]/15"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[#ec7b5b]/15"
             >
                 {accept === "video" ? (
                     <PlayIcon size={22} />

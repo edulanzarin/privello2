@@ -218,7 +218,7 @@ export function Modal({
                             type="button"
                             onClick={onClose}
                             aria-label="Fechar"
-                            className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-neutral-100 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+                            className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-neutral-100 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
                         >
                             <XIcon size={16} />
                         </button>

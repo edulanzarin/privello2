@@ -232,7 +232,7 @@ function PerguntaPainelCard({
 
                 {/* Resposta — read-only quando há e não está editando */}
                 {isAnswered && !editing ? (
-                    <div className="ml-11 rounded-2xl border border-primary-100 bg-[color:var(--accent-soft)]/50 px-3 py-2">
+                    <div className="ml-11 rounded-2xl border border-[#ec7b5b]/15 bg-[#fff0eb]/50 px-3 py-2">
                         <div className="mb-1 flex items-center justify-between gap-2">
                             <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-[color:var(--accent-deep)]">
                                 Sua resposta ·{" "}

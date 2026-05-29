@@ -123,7 +123,7 @@ export function ProfileHeader({
                 type="button"
                 onClick={onStoryClick}
                 aria-label="Ver Stories"
-                className="inline-flex shrink-0 rounded-full transition-transform hover:scale-[1.03] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+                className="inline-flex shrink-0 rounded-full transition-transform hover:scale-[1.03] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
             >
                 <Avatar
                     src={photoUrl}

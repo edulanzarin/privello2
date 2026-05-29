@@ -85,12 +85,12 @@ export function Switch({
     const showError = Boolean(error) && Boolean(errorMessage);
 
     const cardBase =
-        "flex items-center gap-3 rounded-2xl border bg-surface px-4 py-3 transition-all duration-150 focus-within:ring-2 focus-within:ring-[color:var(--accent)]/30 focus-within:border-[color:var(--accent)]/50";
+        "flex items-center gap-3 rounded-2xl border bg-surface px-4 py-3 transition-all duration-150 focus-within:ring-2 focus-within:ring-[#ec7b5b]/30 focus-within:border-[#ec7b5b]/50";
     const cardTone = error
         ? "border-danger-400"
         : value
-            ? "border-[color:var(--accent)]/40 bg-[color:var(--accent-soft)]/40"
-            : "border-border hover:border-[color:var(--accent)]/30";
+            ? "border-[#ec7b5b]/40 bg-[#fff0eb]/40"
+            : "border-border hover:border-[#ec7b5b]/30";
     const cardDisabled = disabled
         ? "cursor-not-allowed opacity-60"
         : "cursor-pointer";

@@ -201,7 +201,7 @@ export function ReportDialog({
                                         className={[
                                             "flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition-colors",
                                             checked
-                                                ? "border-[color:var(--accent)]/40 bg-[color:var(--accent-soft)]"
+                                                ? "border-[#ec7b5b]/40 bg-[color:var(--accent-soft)]"
                                                 : "border-border bg-surface hover:bg-surface-muted",
                                         ].join(" ")}
                                     >
@@ -239,7 +239,7 @@ export function ReportDialog({
                                 maxLength={500}
                                 disabled={enviando}
                                 placeholder="Explique brevemente, se necessário."
-                                className="resize-none rounded-2xl border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-[color:var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]/25"
+                                className="resize-none rounded-2xl border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-[#ec7b5b]/50 focus:outline-none focus:ring-2 focus:ring-[#ec7b5b]/25"
                             />
                             <span className="text-right text-[10px] text-text-secondary">
                                 {descricao.length}/500

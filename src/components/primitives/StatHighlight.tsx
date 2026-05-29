@@ -41,12 +41,12 @@ export interface StatHighlightProps {
 const TONE_CLASSES: Record<StatHighlightTone, { wrapper: string; icon: string }> = {
     primary: {
         wrapper:
-            "bg-gradient-to-br from-[color:var(--accent-soft)] via-surface to-[color:var(--accent-soft)]/60 border-[color:var(--accent)]/25",
+            "bg-gradient-to-br from-[color:var(--accent-soft)] via-surface to-[#fff0eb]/60 border-[#ec7b5b]/25",
         icon:
             "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-3px_rgba(197,82,58,0.45)]",
     },
     accent: {
-        wrapper: "bg-surface border-[color:var(--accent)]/35",
+        wrapper: "bg-surface border-[#ec7b5b]/35",
         icon: "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]",
     },
     neutral: {

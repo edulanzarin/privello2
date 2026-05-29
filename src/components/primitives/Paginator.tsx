@@ -116,7 +116,7 @@ export function Paginator<T>({
                         <button
                             type="button"
                             onClick={handleClick}
-                            className="glass-cta inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/40"
+                            className="glass-cta inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
                         >
                             <PlayCircleIcon size={16} />
                             {loadMoreLabel}
