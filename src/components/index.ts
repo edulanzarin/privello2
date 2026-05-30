@@ -108,6 +108,12 @@ export type { EmptyStateProps } from "./primitives/EmptyState";
 export { Skeleton } from "./primitives/Skeleton";
 export type { SkeletonProps, SkeletonVariant } from "./primitives/Skeleton";
 
+export { ProgressRing } from "./primitives/ProgressRing";
+export type {
+    ProgressRingProps,
+    ProgressRingSize,
+} from "./primitives/ProgressRing";
+
 export {
     LoadingSpinner,
     PageLoader,

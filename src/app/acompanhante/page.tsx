@@ -1,4 +1,5 @@
 import {
+    Badge,
     BookmarkIcon,
     HeartIcon,
     CrownIcon,
@@ -24,6 +25,7 @@ import { obterVigente } from "@/server/planos";
 import { contarLikesTotais } from "@/server/acompanhante-profile/likesTotal";
 import { listarStatsDiarias } from "@/server/acompanhante-profile/stats";
 import { contarFavoritosDoOwner } from "@/server/favorites";
+import { obterCompletude } from "@/server/acompanhante-profile/completude";
 import {
     contarPerguntasPendentes,
     listarPerguntasPublicas,
@@ -44,6 +46,7 @@ import { EstatisticasTab } from "./_painel/EstatisticasTab";
 import { ConfiguracoesTab } from "./_painel/ConfiguracoesTab";
 import { VerificacaoTab } from "./_painel/VerificacaoTab";
 import { PerfilOcultoBanner } from "./_painel/PerfilOcultoBanner";
+import { CompletudeCard } from "./_painel/CompletudeCard";
 import type { MediaItem } from "@/components";
 import { obterStatusVerificacao } from "@/server/verification";
 
@@ -141,6 +144,7 @@ export default async function AcompanhantePainelPage() {
         statsDiarias,
         statusVerificacao,
         favoritosCount,
+        completude,
     ] = await Promise.all([
         contarLikesTotais(session.userId),
         contarPerguntasPendentes(session.userId),
@@ -151,6 +155,7 @@ export default async function AcompanhantePainelPage() {
         listarStatsDiarias(session.userId, { dias: 30 }),
         obterStatusVerificacao(session.userId),
         contarFavoritosDoOwner(session.userId),
+        obterCompletude(session.userId),
     ]);
 
     const isPremium = planoVigente.tipo === "PREMIUM";
@@ -166,6 +171,16 @@ export default async function AcompanhantePainelPage() {
                 avatarCornerBadge={
                     isPremium ? <CrownIcon size={11} /> : null
                 }
+                badge={
+                    completude.percentual >= 100 ? (
+                        <Badge
+                            tone="primaryGradient"
+                            icon={<SparklesIcon size={10} />}
+                        >
+                            Perfil 100%
+                        </Badge>
+                    ) : undefined
+                }
                 actions={<LogoutButton variant="button" />}
             />
 
@@ -174,6 +189,11 @@ export default async function AcompanhantePainelPage() {
                 Acompanhante não precise descobrir a aba Configurações
                 pra publicar. Some assim que `perfilVisivel` vira true. */}
             <PerfilOcultoBanner perfilVisivel={perfil.perfilVisivel} />
+
+            {/* Card "complete seu perfil" — só aparece quando < 100%.
+                Mostra ProgressRing grande + lista de itens faltantes
+                com link direto pra cada aba/seção. */}
+            <CompletudeCard completude={completude} />
 
             {/* Linha de métricas — 4 pills (2 colunas em mobile, 4
                 em tablet+). Visualizações = total acumulado de
