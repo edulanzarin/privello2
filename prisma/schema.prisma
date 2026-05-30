@@ -368,6 +368,13 @@ model Media {
   // carrega. Outros `role`s ignoram.
   posterStorageKey String?   @map("poster_storage_key")
 
+  /// Ordem manual da galeria (apenas `role=GALLERY`). Quanto menor,
+  /// mais à frente. Em queries de leitura ordenamos por `sort_order
+  /// asc, created_at desc` — itens que nunca foram reordenados ficam
+  /// em `0` e caem no tiebreaker por `createdAt` (preserva o
+  /// comportamento atual quando ninguém arrastou nada).
+  sortOrder      Int         @default(0) @map("sort_order")
+
   createdAt      DateTime    @default(now()) @map("created_at")
 
   acompanhanteAsProfile AcompanhanteProfile? @relation("FotoDePerfil")

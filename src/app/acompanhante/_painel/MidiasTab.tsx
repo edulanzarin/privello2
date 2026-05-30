@@ -14,10 +14,14 @@ import {
     IconButton,
     IconSegmented,
     ImageIcon,
+    InlineAlert,
+    LinkButton,
     MediaCarousel,
     MediaUploadModal,
     MediaGrid,
+    MediaThumbnail,
     MetricPill,
+    PencilIcon,
     PlayCircleIcon,
     PlayIcon,
     PlusIcon,
@@ -183,6 +187,84 @@ export function MidiasTab({
         return items;
     }, [filtro, items]);
 
+    // -----------------------------------------------------------------
+    // Reorder mode (drag-and-drop)
+    //
+    // Estado local com a ordem corrente; só persiste ao salvar. Em
+    // modo reorder, não filtra (todos os itens são reordenáveis em
+    // conjunto — filtrar mostraria apenas um subset e o sortOrder
+    // global ficaria inconsistente).
+    // -----------------------------------------------------------------
+    const [reorderMode, setReorderMode] = React.useState(false);
+    const [orderDraft, setOrderDraft] = React.useState<ReadonlyArray<MediaItem>>(
+        items,
+    );
+    const [savingOrder, setSavingOrder] = React.useState(false);
+    const [orderError, setOrderError] = React.useState<string | null>(null);
+    const [draggingId, setDraggingId] = React.useState<string | null>(null);
+    const [overId, setOverId] = React.useState<string | null>(null);
+
+    // Sincroniza com a prop quando o painel recarrega (ex.: depois
+    // de publicar uma mídia nova).
+    React.useEffect(() => {
+        setOrderDraft(items);
+    }, [items]);
+
+    function entrarReorder(): void {
+        setOrderDraft(items);
+        setOrderError(null);
+        setReorderMode(true);
+    }
+
+    function cancelarReorder(): void {
+        setOrderDraft(items);
+        setOrderError(null);
+        setReorderMode(false);
+        setDraggingId(null);
+        setOverId(null);
+    }
+
+    function moverItem(fromId: string, toId: string): void {
+        if (fromId === toId) return;
+        setOrderDraft((prev) => {
+            const next = [...prev];
+            const fromIdx = next.findIndex((m) => m.id === fromId);
+            const toIdx = next.findIndex((m) => m.id === toId);
+            if (fromIdx === -1 || toIdx === -1) return prev;
+            const [moved] = next.splice(fromIdx, 1);
+            if (!moved) return prev;
+            next.splice(toIdx, 0, moved);
+            return next;
+        });
+    }
+
+    async function salvarReorder(): Promise<void> {
+        setSavingOrder(true);
+        setOrderError(null);
+        try {
+            const ids = orderDraft.map((m) => m.id);
+            const res = await fetch("/api/acompanhante/midias/order", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids }),
+            });
+            if (!res.ok) {
+                setOrderError(
+                    "Não foi possível salvar a nova ordem. Tente novamente.",
+                );
+                return;
+            }
+            setReorderMode(false);
+            setDraggingId(null);
+            setOverId(null);
+            router.refresh();
+        } catch {
+            setOrderError("Falha de rede. Tente novamente.");
+        } finally {
+            setSavingOrder(false);
+        }
+    }
+
     const totals = React.useMemo(() => {
         const fotos = items.filter((m) => m.type === "photo").length;
         const videos = items.filter((m) => m.type === "video").length;
@@ -222,20 +304,50 @@ export function MidiasTab({
                 <SectionHeader
                     title="Galeria"
                     trailing={
-                        <div className="flex items-center gap-2">
-                            <IconSegmented
-                                options={filterOptions}
-                                value={filtro}
-                                onChange={(v) => setFiltro(v as Filtro)}
-                                aria-label="Filtrar tipo de mídia"
-                            />
-                            <IconButton
-                                onClick={upload.open}
-                                icon={<PlusIcon size={20} />}
-                                aria-label="Adicionar mídia"
-                                tone="primary"
-                            />
-                        </div>
+                        reorderMode ? (
+                            <div className="flex items-center gap-2">
+                                <LinkButton
+                                    onClick={cancelarReorder}
+                                    disabled={savingOrder}
+                                >
+                                    Cancelar
+                                </LinkButton>
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => {
+                                        void salvarReorder();
+                                    }}
+                                    disabled={savingOrder}
+                                >
+                                    {savingOrder ? "Salvando…" : "Salvar ordem"}
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <IconSegmented
+                                    options={filterOptions}
+                                    value={filtro}
+                                    onChange={(v) => setFiltro(v as Filtro)}
+                                    aria-label="Filtrar tipo de mídia"
+                                />
+                                {items.length > 1 ? (
+                                    <IconButton
+                                        onClick={entrarReorder}
+                                        icon={<PencilIcon size={18} />}
+                                        aria-label="Reordenar mídias"
+                                        tone="neutral"
+                                    />
+                                ) : null}
+                                <IconButton
+                                    onClick={upload.open}
+                                    icon={<PlusIcon size={20} />}
+                                    aria-label="Adicionar mídia"
+                                    tone="primary"
+                                />
+                            </div>
+                        )
                     }
                 />
 
@@ -258,8 +370,82 @@ export function MidiasTab({
                     />
                 </div>
 
-                {/* Conteúdo: grid quando há itens, EmptyState quando vazio. */}
-                {filteredItems.length > 0 ? (
+                {/* Erro inline da reordenação (visível enquanto persiste). */}
+                {orderError !== null ? (
+                    <InlineAlert tone="danger">{orderError}</InlineAlert>
+                ) : null}
+
+                {/* Conteúdo: grid quando há itens, EmptyState quando vazio.
+                    Em modo reorder, exibe lista drag-and-drop com todos
+                    os itens (ignora filtro — sortOrder é global). */}
+                {reorderMode ? (
+                    <div
+                        role="list"
+                        aria-label="Arraste para reordenar mídias"
+                        className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5"
+                    >
+                        {orderDraft.map((item) => {
+                            const isDragging = draggingId === item.id;
+                            const isOver = overId === item.id && !isDragging;
+                            return (
+                                <div
+                                    key={item.id}
+                                    role="listitem"
+                                    draggable
+                                    onDragStart={(e) => {
+                                        setDraggingId(item.id);
+                                        e.dataTransfer.effectAllowed = "move";
+                                        // Hint visual padrão do browser.
+                                        try {
+                                            e.dataTransfer.setData(
+                                                "text/plain",
+                                                item.id,
+                                            );
+                                        } catch {
+                                            // Algumas envs (ex.: jsdom)
+                                            // não suportam — silencioso.
+                                        }
+                                    }}
+                                    onDragEnter={() => {
+                                        setOverId(item.id);
+                                        if (
+                                            draggingId !== null &&
+                                            draggingId !== item.id
+                                        ) {
+                                            moverItem(draggingId, item.id);
+                                        }
+                                    }}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.dataTransfer.dropEffect = "move";
+                                    }}
+                                    onDragEnd={() => {
+                                        setDraggingId(null);
+                                        setOverId(null);
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        setDraggingId(null);
+                                        setOverId(null);
+                                    }}
+                                    className={[
+                                        "relative cursor-grab transition-all duration-150 active:cursor-grabbing",
+                                        isDragging
+                                            ? "opacity-40 scale-95"
+                                            : "opacity-100",
+                                        isOver
+                                            ? "ring-2 ring-[#ec7b5b]/60 ring-offset-1 ring-offset-surface rounded-md"
+                                            : "",
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                                >
+                                    <MediaThumbnail item={item} />
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : filteredItems.length > 0 ? (
                     <MediaGrid
                         items={filteredItems}
                         onOpen={carousel.openAt}

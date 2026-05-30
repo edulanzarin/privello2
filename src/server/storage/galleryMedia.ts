@@ -267,9 +267,14 @@ class GaleriaLimiteError extends Error {
 // ---------------------------------------------------------------------------
 
 /**
- * Lista todas as mídias publicadas do usuário, ordenadas da mais
- * recente para a mais antiga. Inclui apenas `status: COMMITTED` (sem
- * `PENDING_REPAIR` ou `DELETED`).
+ * Lista todas as mídias publicadas do usuário, ordenadas por:
+ *   1. `sortOrder asc` — ordem manual definida pelo dono via
+ *      drag-and-drop. Default 0.
+ *   2. `createdAt desc` — tiebreaker. Sem reordenação manual,
+ *      ordem natural é "mais recente primeiro".
+ *
+ * Inclui apenas `status: COMMITTED` (sem `PENDING_REPAIR` ou
+ * `DELETED`).
  */
 export async function listarGaleria(
     userId: string,
@@ -280,7 +285,10 @@ export async function listarGaleria(
             role: "GALLERY",
             status: "COMMITTED",
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [
+            { sortOrder: "asc" },
+            { createdAt: "desc" },
+        ],
         select: {
             id: true,
             kind: true,
@@ -336,4 +344,82 @@ export function toMediaItem(row: GaleriaItem): {
         likes: row.likesCount,
         comments: row.commentsCount,
     };
+}
+
+// ---------------------------------------------------------------------------
+// Reordenar
+// ---------------------------------------------------------------------------
+
+export type ReordenarResult =
+    | { ok: true; total: number }
+    | {
+        ok: false;
+        reason: "INPUT_INVALIDO" | "ALVO_INVALIDO" | "PERSISTENCIA";
+    };
+
+/**
+ * Atualiza `sortOrder` de cada mídia conforme posição em `ids`.
+ * Posição 0 → menor `sortOrder` (vem primeiro).
+ *
+ * Validação:
+ *   - `ids` não pode ser vazio nem ter duplicatas.
+ *   - Todos os ids precisam pertencer ao `userId`, ter
+ *     `role=GALLERY` e `status=COMMITTED`. Caller que envia ids
+ *     "fantasma" recebe `ALVO_INVALIDO` — defesa contra mass-assign
+ *     vindo do client.
+ *   - Não exigimos que `ids` cubra toda a galeria: enviar um subset
+ *     é OK (UI tipicamente envia tudo, mas o service não força).
+ *     Itens fora da lista mantêm seu `sortOrder` atual e por isso
+ *     ficam em posição relativa estável.
+ *
+ * Atualização em transação atômica — se um update falhar, a
+ * ordenação inteira é revertida (consistência do produto).
+ */
+export async function reordenarGaleria(input: {
+    userId: string;
+    ids: ReadonlyArray<string>;
+}): Promise<ReordenarResult> {
+    if (input.ids.length === 0) {
+        return { ok: false, reason: "INPUT_INVALIDO" };
+    }
+    const seen = new Set<string>();
+    for (const id of input.ids) {
+        if (typeof id !== "string" || id.length === 0) {
+            return { ok: false, reason: "INPUT_INVALIDO" };
+        }
+        if (seen.has(id)) {
+            return { ok: false, reason: "INPUT_INVALIDO" };
+        }
+        seen.add(id);
+    }
+
+    // Confirma que todos os ids pertencem ao dono e estão no estado
+    // esperado. Em uma única query.
+    const rows = await db.media.findMany({
+        where: {
+            id: { in: input.ids as string[] },
+            ownerId: input.userId,
+            role: "GALLERY",
+            status: "COMMITTED",
+        },
+        select: { id: true },
+    });
+    if (rows.length !== input.ids.length) {
+        return { ok: false, reason: "ALVO_INVALIDO" };
+    }
+
+    try {
+        await db.$transaction(
+            input.ids.map((id, index) =>
+                db.media.update({
+                    where: { id },
+                    data: { sortOrder: index },
+                }),
+            ),
+        );
+    } catch {
+        return { ok: false, reason: "PERSISTENCIA" };
+    }
+
+    return { ok: true, total: input.ids.length };
 }
