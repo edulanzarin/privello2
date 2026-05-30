@@ -82,20 +82,20 @@ completo" quando 100%.
 - [x] Badge "Perfil 100%" próximo ao nome quando completo
       (separado do VerifiedBadge).
 
-### ⬜ T05 — PWA install prompt
+### ✅ T05 — PWA install prompt
 **Esforço**: ~3h.
 Site vira instalável no celular (ícone na tela inicial,
 abre fullscreen).
 
-- [ ] `public/sw.js` — service worker com cache de assets
+- [x] `public/sw.js` — service worker com cache de assets
       estáticos (ícones, CSS) + estratégia network-first pra
       HTML.
-- [ ] Primitivo `InstallPromptBanner` que detecta evento
+- [x] Primitivo `InstallPromptBanner` que detecta evento
       `beforeinstallprompt` e mostra banner.
-- [ ] Modal de instruções pra iOS (Safari não tem o evento;
+- [x] Modal de instruções pra iOS (Safari não tem o evento;
       manual via "Compartilhar → Adicionar à tela inicial").
-- [ ] Persistir "dispensado" em localStorage pra não enchecher.
-- [ ] Adicionar ícones 192/512 + apple-touch-icon no
+- [x] Persistir "dispensado" em localStorage pra não enchecher.
+- [x] Adicionar ícones 192/512 + apple-touch-icon no
       `manifest.webmanifest`.
 
 ### ⬜ T06 — Stories Highlights (Destaques)
@@ -286,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 4 / 15 concluídas (T01, T02, T03, T04).
+- 5 / 15 concluídas (T01, T02, T03, T04, T05).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
