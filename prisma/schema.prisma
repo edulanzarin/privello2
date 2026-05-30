@@ -687,7 +687,16 @@ model Verification {
   revisadaEm          DateTime?           @map("revisada_em")
   revisadaPorUserId   String?             @map("revisada_por_user_id") @db.Uuid
   revisadaPor         User?               @relation("VerificationReviewer", fields: [revisadaPorUserId], references: [id], onDelete: SetNull)
+  /// Quando a verificação aprovada deixa de valer. Set ao
+  /// `revisadaEm + 180 dias` no `aprovarVerificacao`. NULL pra
+  /// PENDENTE/REJEITADA. Cleanup noturno rebaixa
+  /// `acompanhante_profiles.verificada` quando `expira_em < now()`.
+  expiraEm            DateTime?           @map("expira_em")
 
+  // Index parcial em (expira_em) WHERE status='APROVADA' AND
+  // expira_em IS NOT NULL — declarado em SQL na migration
+  // 20260721000000_verification_expiry porque Prisma DSL não
+  // suporta partial indexes.
   @@map("verifications")
 }
 

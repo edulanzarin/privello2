@@ -111,6 +111,12 @@ export interface VerificacaoStatus {
     submetidaEm: Date;
     revisadaEm: Date | null;
     motivoRejeicao: string | null;
+    /**
+     * Quando a verificação aprovada deixa de valer. NULL quando
+     * status != APROVADA. UI pode usar pra avisar a Acompanhante
+     * com antecedência.
+     */
+    expiraEm: Date | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -228,6 +234,7 @@ export async function obterStatusVerificacao(
             submetidaEm: true,
             revisadaEm: true,
             motivoRejeicao: true,
+            expiraEm: true,
         },
     });
     if (!row) return null;
@@ -236,6 +243,7 @@ export async function obterStatusVerificacao(
         submetidaEm: row.submetidaEm,
         revisadaEm: row.revisadaEm,
         motivoRejeicao: row.motivoRejeicao,
+        expiraEm: row.expiraEm,
     };
 }
 
@@ -307,9 +315,18 @@ export async function listarFilaVerificacoes(options: {
 }
 
 /**
+ * Janela de validade da verificação aprovada (em dias). Após esse
+ * período, o cleanup noturno rebaixa `verificada` pra `false` e
+ * o selo desaparece até o reenvio.
+ */
+const VERIFICATION_VALIDITY_DAYS = 180;
+
+/**
  * Aprova uma verificação. Atualiza `Verification.status =
  * APROVADA` e `AcompanhanteProfile.verificada = true` em uma
- * transação.
+ * transação. Seta também `expiraEm = now + 180d` — quando o
+ * cleanup detectar a expiração, o flag `verificada` é rebaixado
+ * (Acompanhante reenvia documento pra renovar).
  */
 export async function aprovarVerificacao(input: {
     verificationId: string;
@@ -320,6 +337,9 @@ export async function aprovarVerificacao(input: {
     | { ok: false; reason: "NAO_ENCONTRADA" | "PERSISTENCIA" }
 > {
     const now = input.now ?? new Date();
+    const expiraEm = new Date(
+        now.getTime() + VERIFICATION_VALIDITY_DAYS * 24 * 60 * 60 * 1000,
+    );
 
     const verification = await db.verification.findUnique({
         where: { id: input.verificationId },
@@ -338,6 +358,7 @@ export async function aprovarVerificacao(input: {
                     motivoRejeicao: null,
                     revisadaEm: now,
                     revisadaPorUserId: input.adminUserId,
+                    expiraEm,
                 },
             });
             await tx.acompanhanteProfile.update({
@@ -448,4 +469,72 @@ export async function lerImagemVerificacao(
     } catch {
         return null;
     }
+}
+
+// ---------------------------------------------------------------------------
+// Cleanup: rebaixa verificações expiradas
+// ---------------------------------------------------------------------------
+
+/**
+ * Resultado do {@link rebaixarVerificacoesExpiradas}.
+ */
+export interface ReverificacaoCleanupResult {
+    /** Quantas verificações tiveram status APROVADA mantido mas
+     *  `verificada=false` aplicado por estarem expiradas. */
+    rebaixadas: number;
+}
+
+/**
+ * Roda durante o cleanup noturno: encontra verificações
+ * `status=APROVADA` com `expiraEm < now` e:
+ *   1. Mantém `Verification.status = APROVADA` (preserva
+ *      histórico — admin não precisa re-revisar).
+ *   2. Limpa `expiraEm = NULL` pra não re-processar.
+ *   3. Seta `acompanhante_profiles.verificada = false` —
+ *      Acompanhante perde o selo até reenviar o pedido.
+ *
+ * UX consequente: a Acompanhante vê na aba "Verificação" um
+ * estado "Verificação expirada — reenvie pra renovar".
+ *
+ * Idempotente: re-rodar não tem efeito porque `expiraEm = NULL`
+ * sai do filtro WHERE.
+ */
+export async function rebaixarVerificacoesExpiradas(
+    options: { now?: Date } = {},
+): Promise<ReverificacaoCleanupResult> {
+    const now = options.now ?? new Date();
+
+    const expiradas = await db.verification.findMany({
+        where: {
+            status: "APROVADA",
+            expiraEm: { lt: now, not: null },
+        },
+        select: { id: true, userId: true },
+    });
+
+    if (expiradas.length === 0) {
+        return { rebaixadas: 0 };
+    }
+
+    let rebaixadas = 0;
+    for (const v of expiradas) {
+        try {
+            await db.$transaction(async (tx) => {
+                await tx.verification.update({
+                    where: { id: v.id },
+                    data: { expiraEm: null },
+                });
+                await tx.acompanhanteProfile.update({
+                    where: { userId: v.userId },
+                    data: { verificada: false },
+                });
+            });
+            rebaixadas += 1;
+        } catch {
+            // Se uma falhar, segue pras próximas — cleanup
+            // best-effort. Próxima rodada tenta de novo.
+        }
+    }
+
+    return { rebaixadas };
 }

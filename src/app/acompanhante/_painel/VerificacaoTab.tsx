@@ -28,6 +28,7 @@ interface VerificacaoStatusUI {
     submetidaEm: string;
     revisadaEm: string | null;
     motivoRejeicao: string | null;
+    expiraEm: string | null;
 }
 
 export interface VerificacaoTabProps {
@@ -69,7 +70,14 @@ export function VerificacaoTab({
     const [erro, setErro] = React.useState<string | null>(null);
 
     const podeReenviar =
-        status === null || status.status === "REJEITADA";
+        status === null ||
+        status.status === "REJEITADA" ||
+        // Aprovadas próximas da expiração (≤ 14 dias) podem
+        // renovar antecipadamente sem perder o selo.
+        (status.status === "APROVADA" &&
+            status.expiraEm !== null &&
+            new Date(status.expiraEm).getTime() - Date.now() <
+                14 * 24 * 60 * 60 * 1000);
     const aprovada = status?.status === "APROVADA";
     const pendente = status?.status === "PENDENTE";
     const rejeitada = status?.status === "REJEITADA";
@@ -124,27 +132,63 @@ export function VerificacaoTab({
             />
 
             {aprovada ? (
-                <Card>
-                    <div className="flex flex-col items-center gap-3 px-4 py-6 text-center">
-                        <VerifiedBadge size="lg" />
-                        <div className="flex flex-col gap-1">
-                            <span className="text-base font-semibold text-text-primary">
-                                Identidade verificada
-                            </span>
-                            <span className="text-xs text-text-secondary">
-                                Aprovada{" "}
-                                {status?.revisadaEm
-                                    ? formatRelativeTime(
-                                          new Date(status.revisadaEm),
-                                      )
-                                    : ""}
-                            </span>
+                <>
+                    <Card>
+                        <div className="flex flex-col items-center gap-3 px-4 py-6 text-center">
+                            <VerifiedBadge size="lg" />
+                            <div className="flex flex-col gap-1">
+                                <span className="text-base font-semibold text-text-primary">
+                                    Identidade verificada
+                                </span>
+                                <span className="text-xs text-text-secondary">
+                                    Aprovada{" "}
+                                    {status?.revisadaEm
+                                        ? formatRelativeTime(
+                                              new Date(status.revisadaEm),
+                                          )
+                                        : ""}
+                                </span>
+                                {status?.expiraEm ? (
+                                    <span className="text-xs text-text-secondary">
+                                        Válida até{" "}
+                                        {new Date(
+                                            status.expiraEm,
+                                        ).toLocaleDateString("pt-BR")}
+                                    </span>
+                                ) : null}
+                            </div>
+                            <Badge tone="primary" icon={<VerifiedBadgeIcon size={12} />}>
+                                Verificada
+                            </Badge>
                         </div>
-                        <Badge tone="primary" icon={<VerifiedBadgeIcon size={12} />}>
-                            Verificada
-                        </Badge>
-                    </div>
-                </Card>
+                    </Card>
+                    {/* Aviso quando faltam < 14 dias pra expirar.
+                        Acompanhante reenvia documento pra renovar
+                        antes de perder o selo. */}
+                    {status?.expiraEm ? (() => {
+                        const expiraTs = new Date(status.expiraEm).getTime();
+                        const diasRestantes = Math.ceil(
+                            (expiraTs - Date.now()) / (24 * 60 * 60 * 1000),
+                        );
+                        if (diasRestantes <= 14 && diasRestantes > 0) {
+                            return (
+                                <InlineAlert tone="warning">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="font-semibold">
+                                            Verificação expira em {diasRestantes}{" "}
+                                            {diasRestantes === 1 ? "dia" : "dias"}
+                                        </span>
+                                        <span>
+                                            Reenvie selfie + documento abaixo
+                                            pra renovar e manter o selo.
+                                        </span>
+                                    </div>
+                                </InlineAlert>
+                            );
+                        }
+                        return null;
+                    })() : null}
+                </>
             ) : null}
 
             {pendente ? (
@@ -229,7 +273,11 @@ export function VerificacaoTab({
                                 !selfie || !documento || enviando
                             }
                         >
-                            {rejeitada ? "Reenviar" : "Enviar para análise"}
+                            {aprovada
+                                ? "Renovar verificação"
+                                : rejeitada
+                                    ? "Reenviar"
+                                    : "Enviar para análise"}
                         </Button>
                     </form>
                 </Card>

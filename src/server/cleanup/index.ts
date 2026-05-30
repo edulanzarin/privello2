@@ -22,6 +22,7 @@
 import { db } from "@/lib/db";
 
 import { arquivarStoriesExpiradosGlobal } from "@/server/storage/storyMedia";
+import { rebaixarVerificacoesExpiradas } from "@/server/verification";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -39,6 +40,13 @@ export interface CleanupReport {
      * Operação idempotente — rodar de novo não muda nada.
      */
     fansClienteExpirados: number;
+    /**
+     * Quantas verificações `APROVADA` com `expiraEm < now`
+     * tiveram `acompanhante_profiles.verificada` rebaixado pra
+     * `false`. Acompanhante perde o selo até reenviar selfie +
+     * documento.
+     */
+    verificacoesExpiradas: number;
 }
 
 /**
@@ -57,6 +65,7 @@ export async function runCleanup(
         passwordResetTokensDeleted: 0,
         storiesArchived: 0,
         fansClienteExpirados: 0,
+        verificacoesExpiradas: 0,
     };
 
     // 1) Sessões revogadas há > 7 dias OU expiradas há > 7 dias.
@@ -140,6 +149,16 @@ export async function runCleanup(
             },
         });
         report.fansClienteExpirados = result.count;
+    } catch {
+        // best-effort
+    }
+
+    // 7) Verificações expiradas → rebaixa `verificada` no
+    //    AcompanhanteProfile. Acompanhante reenvia documento pra
+    //    renovar (validade de 180 dias).
+    try {
+        const result = await rebaixarVerificacoesExpiradas({ now });
+        report.verificacoesExpiradas = result.rebaixadas;
     } catch {
         // best-effort
     }

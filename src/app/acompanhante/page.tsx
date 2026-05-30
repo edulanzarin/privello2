@@ -286,6 +286,9 @@ export default async function AcompanhantePainelPage() {
                                           null,
                                       motivoRejeicao:
                                           statusVerificacao.motivoRejeicao,
+                                      expiraEm:
+                                          statusVerificacao.expiraEm?.toISOString() ??
+                                          null,
                                   }
                                 : null
                         }
