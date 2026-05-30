@@ -149,17 +149,6 @@ export interface PerfilAcompanhantePainel
 }
 
 /**
- * Alias retrocompatível. Código antigo importava
- * `PerfilAcompanhanteResumo` quando havia só um tipo único; novos
- * consumidores devem importar {@link PerfilAcompanhantePainel}
- * diretamente.
- *
- * @deprecated Use `PerfilAcompanhantePainel` (painel privado) ou
- *   `PerfilAcompanhantePublico` (perfil público).
- */
-export type PerfilAcompanhanteResumo = PerfilAcompanhantePainel;
-
-/**
  * Lê o perfil de painel (painel privado) da Acompanhante por
  * `userId`. Inclui PII — só pode ser usado em rotas autenticadas
  * onde o próprio usuário é a Acompanhante.

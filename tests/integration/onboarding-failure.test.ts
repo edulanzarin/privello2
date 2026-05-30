@@ -566,6 +566,29 @@ async function walkUntilFinalize(
         cidadeNome: fixture.cidadeNome,
     });
     await atualizarEtapa(onboardingId, { descricao: fixture.descricao });
+    // Aparência (obrigatório no schema atual).
+    await atualizarEtapa(onboardingId, {
+        pesoKg: 60,
+        alturaCm: 170,
+        tamanhoPe: 37,
+        etnia: "BRANCA",
+        corOlhos: "CASTANHO",
+        estiloCabelo: "LISO",
+        tamanhoCabelo: "MEDIO",
+        idiomas: ["PORTUGUES"],
+    });
+    // Atendimento (obrigatório no schema atual).
+    await atualizarEtapa(onboardingId, {
+        genero: "MULHER",
+        atendePublicos: ["HOMEM"],
+        realizaPraticas: [],
+    });
+    // Atendimento comercial (obrigatório no schema atual).
+    await atualizarEtapa(onboardingId, {
+        valorHoraCents: 30000,
+        formasPagamento: ["DINHEIRO"],
+        diasAtende: ["SEG", "TER", "QUA", "QUI", "SEX"],
+    });
     await atualizarEtapa(onboardingId, {
         fotoPerfil: {
             mimeType: fixture.fotoMime,

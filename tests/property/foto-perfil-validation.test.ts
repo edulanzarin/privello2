@@ -43,7 +43,8 @@ const MIMES_PROIBIDOS = [
     "",
 ] as const;
 
-const TEN_MB = 10 * 1024 * 1024;
+import { LIMITE_FOTO_BYTES } from "@/domain/limites";
+const TEN_MB = LIMITE_FOTO_BYTES;
 
 /** Yields permitted and forbidden mimes with comparable frequency. */
 const mimeArb: fc.Arbitrary<string> = fc.oneof(

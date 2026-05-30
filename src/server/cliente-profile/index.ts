@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
  * adicionais, estendemos este tipo aqui em vez de espalhar `findUnique`s
  * por componentes.
  *
- * Espelha `PerfilAcompanhanteResumo` em `@/server/acompanhante-profile`,
+ * Espelha `PerfilAcompanhantePainel` em `@/server/acompanhante-profile`,
  * adaptado às colunas de `ClientProfile`.
  */
 export type PerfilClienteResumo = {

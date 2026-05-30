@@ -213,7 +213,7 @@ export function HomeView({
                         items={cidades.map((c) => ({
                             label: c.cidadeNome,
                             sublabel: c.estadoSigla,
-                            href: `/acompanhantes?estado=${encodeURIComponent(
+                            href: `/acompanhantes?uf=${encodeURIComponent(
                                 c.estadoSigla,
                             )}&cidade=${encodeURIComponent(c.cidadeNome)}`,
                             photoUrl: c.photoUrl,

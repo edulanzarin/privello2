@@ -77,7 +77,7 @@ export default async function AcompanhantePainelPage() {
     // Layout garante presença de sessão; assert estrutural defensivo:
     if (!session) {
         // Fallback inalcançável em produção. Lançar um erro em vez de
-        // redirecionar mantém o tipo `PerfilAcompanhanteResumo`
+        // redirecionar mantém o tipo `PerfilAcompanhantePainel`
         // não-nulo abaixo sem complicar a UI com guarda extra.
         throw new Error("Painel acessado sem sessão resolvida.");
     }

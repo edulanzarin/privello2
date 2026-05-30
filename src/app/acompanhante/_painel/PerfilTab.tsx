@@ -32,7 +32,7 @@ import {
 } from "@/domain/atendimentoComercial";
 import { GENEROS } from "@/domain/genero";
 
-import type { PerfilAcompanhanteResumo } from "@/server/acompanhante-profile";
+import type { PerfilAcompanhantePainel } from "@/server/acompanhante-profile";
 
 import { EditarLocalizacaoModal } from "./EditarLocalizacaoModal";
 import { EditarPerfilModal } from "./EditarPerfilModal";
@@ -55,7 +55,7 @@ import { EditarPerfilModal } from "./EditarPerfilModal";
  * Tudo read-only — toda edição mora no modal.
  */
 export interface PerfilTabProps {
-    perfil: PerfilAcompanhanteResumo;
+    perfil: PerfilAcompanhantePainel;
 }
 
 export function PerfilTab({ perfil }: PerfilTabProps): React.ReactElement {

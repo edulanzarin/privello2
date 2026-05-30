@@ -592,6 +592,32 @@ describe("Integration 13.2: Onboarding_Acompanhante completo + Selecao_de_Plano"
             descricao: fixture.descricao,
         });
 
+        // Step 4a — aparência (campos obrigatórios no schema atual).
+        await atualizarEtapa(onboardingId, {
+            pesoKg: 60,
+            alturaCm: 170,
+            tamanhoPe: 37,
+            etnia: "BRANCA",
+            corOlhos: "CASTANHO",
+            estiloCabelo: "LISO",
+            tamanhoCabelo: "MEDIO",
+            idiomas: ["PORTUGUES"],
+        });
+
+        // Step 4b — atendimento.
+        await atualizarEtapa(onboardingId, {
+            genero: "MULHER",
+            atendePublicos: ["HOMEM"],
+            realizaPraticas: [],
+        });
+
+        // Step 4c — atendimento comercial.
+        await atualizarEtapa(onboardingId, {
+            valorHoraCents: 30000,
+            formasPagamento: ["DINHEIRO"],
+            diasAtende: ["SEG", "TER", "QUA", "QUI", "SEX"],
+        });
+
         // Step 5 — foto metadata + upload
         // `finalizar` reads `mimeType`/`sizeBytes` from the payload and
         // merges `stagedKey` from the dedicated column, so both halves
