@@ -14,6 +14,7 @@
  *   - `precoMin`/`precoMax`: faixa em centavos.
  *   - `comAudio`: apenas perfis com áudio publicado.
  *   - `comBoost`: apenas perfis com boost ativo.
+ *   - `verificada`: apenas perfis com identidade verificada (selo).
  *
  * Ordenação:
  *   - `relevancia` (default): boost ativo → premium → demais, depois
@@ -76,6 +77,12 @@ export interface BuscaFiltros {
     precoMax?: number;
     comAudio?: boolean;
     comBoost?: boolean;
+    /**
+     * Apenas perfis com identidade verificada (`verificada = true`).
+     * Premia quem fez a verificação e dá ao Cliente um filtro de
+     * confiança ao buscar.
+     */
+    verificada?: boolean;
 }
 
 export interface BuscaInput {
@@ -218,6 +225,9 @@ function buildWhere(
     }
     if (filtros.comBoost === true) {
         where.boostUntil = { gt: now };
+    }
+    if (filtros.verificada === true) {
+        where.verificada = true;
     }
 
     return where;

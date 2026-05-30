@@ -18,7 +18,7 @@ import {
  *     `estilo_cabelo`, `tamanho_cabelo`
  *   - `idiomas`, `pagamento`, `dias`, `atende`, `praticas` (CSV)
  *   - `preco_min`, `preco_max`
- *   - `audio=1`, `boost=1`
+ *   - `audio=1`, `boost=1`, `verificada=1`
  *   - `ordenar`: relevancia | recentes | preco_asc | preco_desc | popular
  *   - `pagina`: 1-based
  *
@@ -75,6 +75,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         precoMax: parseNumber(sp.get("preco_max")),
         comAudio: sp.get("audio") === "1",
         comBoost: sp.get("boost") === "1",
+        verificada: sp.get("verificada") === "1",
     };
 
     const ordenar = parseOrdenar(sp.get("ordenar"));

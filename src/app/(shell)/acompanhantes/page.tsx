@@ -34,6 +34,7 @@ interface SearchParamsRaw {
     preco_max?: string;
     audio?: string;
     boost?: string;
+    verificada?: string;
     ordenar?: string;
     pagina?: string;
 }
@@ -164,6 +165,7 @@ export default async function AcompanhantesPage({
         params.ordenar ||
             params.boost === "1" ||
             params.audio === "1" ||
+            params.verificada === "1" ||
             params.genero ||
             params.etnia ||
             params.cor_olhos ||
@@ -211,6 +213,7 @@ export default async function AcompanhantesPage({
         precoMax: parseNumber(params.preco_max),
         comAudio: params.audio === "1",
         comBoost: params.boost === "1",
+        verificada: params.verificada === "1",
     };
 
     const ordenar = parseOrdenar(params.ordenar);

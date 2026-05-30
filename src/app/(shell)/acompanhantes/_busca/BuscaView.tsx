@@ -188,6 +188,7 @@ function contarAtivos(filtros: BuscaFiltros): number {
     if (filtros.precoMax) n++;
     if (filtros.comAudio) n++;
     if (filtros.comBoost) n++;
+    if (filtros.verificada) n++;
     return n;
 }
 
@@ -374,6 +375,7 @@ export function BuscaView({
         if (next.precoMax) params.set("preco_max", String(next.precoMax));
         if (next.comAudio) params.set("audio", "1");
         if (next.comBoost) params.set("boost", "1");
+        if (next.verificada) params.set("verificada", "1");
         if (nextOrdenar !== "relevancia") params.set("ordenar", nextOrdenar);
         if (page > 1) params.set("pagina", String(page));
         return params;
@@ -679,6 +681,14 @@ export function BuscaView({
                 >
                     <FilterSection title="Destaques">
                         <div className="flex flex-col gap-2">
+                            <Switch
+                                label="Apenas verificadas"
+                                description="Perfis com identidade verificada (selo)."
+                                checked={draft.verificada === true}
+                                onChange={(v) =>
+                                    setDraft({ ...draft, verificada: v })
+                                }
+                            />
                             <Switch
                                 label="Em destaque (Boost)"
                                 description="Apenas perfis com boost ativo agora."
