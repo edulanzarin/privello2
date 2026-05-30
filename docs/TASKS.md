@@ -38,17 +38,17 @@ painel privado.
 - [x] Primitivo `BookmarkButton` com estado toggle animado.
 - [x] Ícone novo `BookmarkIcon` em icons.tsx.
 
-### ⬜ T02 — Filtro "Verificadas apenas" na busca
+### ✅ T02 — Filtro "Verificadas apenas" na busca
 **Esforço**: ~30min.
 **Cliente** pode filtrar pra ver só perfis com selo verificado.
 Premia quem fez a verificação e justifica o esforço.
 
-- [ ] Adicionar opção `verificada` em `BuscaFiltros` em
+- [x] Adicionar opção `verificada` em `BuscaFiltros` em
       `buscar.ts`.
-- [ ] Index parcial em `acompanhante_profiles(verificada)
+- [x] Index parcial em `acompanhante_profiles(verificada)
       WHERE verificada = true`.
-- [ ] Switch "Apenas verificadas" no `FilterPanel`.
-- [ ] Persistir no querystring `?verificada=1`.
+- [x] Switch "Apenas verificadas" no `FilterPanel`.
+- [x] Persistir no querystring `?verificada=1`.
 
 ### ⬜ T03 — Galeria reordenável
 **Esforço**: ~2h.
@@ -286,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 1 / 15 concluídas (T01).
+- 2 / 15 concluídas (T01, T02).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
