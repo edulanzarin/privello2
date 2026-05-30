@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAcompanhante, requireFile } from "@/server/auth/guards";
+import { enforceRateLimit, LIMITS } from "@/server/auth/rateLimitGuard";
 import { submeterVerificacao } from "@/server/verification";
 
 export const runtime = "nodejs";
@@ -24,6 +25,9 @@ export const maxDuration = 60;
 export async function POST(request: Request): Promise<NextResponse> {
     const auth = await requireAcompanhante(request);
     if (!auth.ok) return auth.response;
+
+    const rl = enforceRateLimit("verification", auth.userId, LIMITS.verification);
+    if (rl) return rl;
 
     // formData só pode ser parseada uma vez — usamos `requireFile`
     // pra `selfie` e depois pegamos `documento` do mesmo formData.

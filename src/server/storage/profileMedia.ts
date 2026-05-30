@@ -39,6 +39,7 @@ import {
 } from "@/domain/validation";
 import { db } from "@/lib/db";
 import { createR2Client, type R2Client } from "@/lib/storage/r2";
+import { stripExif } from "@/server/storage/stripExif";
 
 /**
  * Mapeamento determinístico entre o `mimeType` da Foto_de_Perfil (já
@@ -150,14 +151,21 @@ export async function stageProfilePhoto(file: {
     mimeType: string;
     bytes: Uint8Array | Buffer;
 }): Promise<{ stagedKey: string; mimeType: FotoPerfilMime; sizeBytes: number }> {
-    const { mimeType, sizeBytes } = validateProfilePhotoOrThrow(file);
+    const validated = validateProfilePhotoOrThrow(file);
+
+    // Strip EXIF/GPS antes de subir pra R2 (privacidade — fix C1
+    // da auditoria 2026-05). Re-codifica o buffer sem metadados,
+    // respeitando a orientação correta. Recalcula `sizeBytes`
+    // porque o re-encode pode mudar o tamanho.
+    const sanitized = await stripExif(file.bytes, file.mimeType);
+    const sizeBytes = sanitized.byteLength;
 
     const stagedKey = `staged/${randomUUID()}`;
-    await getR2Client().putStaged(stagedKey, file.bytes, file.mimeType);
+    await getR2Client().putStaged(stagedKey, sanitized, file.mimeType);
 
     return {
         stagedKey,
-        mimeType,
+        mimeType: validated.mimeType,
         sizeBytes,
     };
 }

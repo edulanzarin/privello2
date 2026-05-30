@@ -5,6 +5,7 @@ import {
     requireClienteFan,
     requireSession,
 } from "@/server/auth/guards";
+import { enforceRateLimit, LIMITS } from "@/server/auth/rateLimitGuard";
 import {
     excluirPergunta,
     removerResposta,
@@ -24,6 +25,13 @@ export async function POST(
 ): Promise<NextResponse> {
     const auth = await requireAcompanhante(request);
     if (!auth.ok) return auth.response;
+
+    const rl = enforceRateLimit(
+        "questionAnswers",
+        auth.userId,
+        LIMITS.questionAnswers,
+    );
+    if (rl) return rl;
 
     const { id } = await context.params;
     if (!id) {

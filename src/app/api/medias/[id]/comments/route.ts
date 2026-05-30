@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireClienteFan, requireSession } from "@/server/auth/guards";
+import { enforceRateLimit, LIMITS } from "@/server/auth/rateLimitGuard";
 import {
     adicionarComentario,
     listarComentarios,
@@ -63,6 +64,9 @@ export async function POST(
 ): Promise<NextResponse> {
     const auth = await requireClienteFan(request);
     if (!auth.ok) return auth.response;
+
+    const rl = enforceRateLimit("comments", auth.userId, LIMITS.comments);
+    if (rl) return rl;
 
     const { id: mediaId } = await context.params;
     if (!mediaId) {

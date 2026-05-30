@@ -720,5 +720,9 @@ model Report {
 
   @@index([targetType, targetId, criadaEm(sort: Desc)])
   @@index([reporterUserId, criadaEm(sort: Desc)])
+  // Unique parcial em (reporterUserId, targetType, targetId)
+  // WHERE status = 'PENDENTE' — declarado em SQL puro pela
+  // migration `20260720000000_report_unique_reporter_target`
+  // porque Prisma DSL não suporta partial indexes.
   @@map("reports")
 }

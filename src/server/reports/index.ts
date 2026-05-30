@@ -57,6 +57,7 @@ export type CriarReportResult =
         reason:
             | "ALVO_NAO_ENCONTRADO"
             | "DESCRICAO_INVALIDA"
+            | "JA_DENUNCIADO"
             | "PERSISTENCIA";
     };
 
@@ -159,7 +160,18 @@ export async function criarReport(
             select: { id: true },
         });
         return { ok: true, reportId: created.id };
-    } catch {
+    } catch (err) {
+        // Detecta violação do unique parcial (já existe denúncia
+        // PENDENTE do mesmo reporter pro mesmo target). Prisma
+        // emite `P2002` em conflitos de constraint unique.
+        if (
+            err !== null &&
+            typeof err === "object" &&
+            "code" in err &&
+            (err as { code?: unknown }).code === "P2002"
+        ) {
+            return { ok: false, reason: "JA_DENUNCIADO" };
+        }
         return { ok: false, reason: "PERSISTENCIA" };
     }
 }

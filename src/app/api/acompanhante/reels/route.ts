@@ -4,6 +4,7 @@ import {
     requireAcompanhanteWithPlano,
     requireFile,
 } from "@/server/auth/guards";
+import { enforceRateLimit, LIMITS } from "@/server/auth/rateLimitGuard";
 import { publicarReel } from "@/server/storage/reelMedia";
 
 export const runtime = "nodejs";
@@ -34,6 +35,9 @@ export const maxDuration = 60;
 export async function POST(request: Request): Promise<NextResponse> {
     const auth = await requireAcompanhanteWithPlano({}, request);
     if (!auth.ok) return auth.response;
+
+    const rl = enforceRateLimit("reels", auth.userId, LIMITS.reels);
+    if (rl) return rl;
 
     const fileGuard = await requireFile(request, "video");
     if (!fileGuard.ok) return fileGuard.response;

@@ -40,6 +40,7 @@ import type { MediaKind, MediaRole, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { createR2Client, type R2Client } from "@/lib/storage/r2";
+import { stripExif } from "@/server/storage/stripExif";
 
 import {
     cleanupStaged,
@@ -150,12 +151,21 @@ export type ReplaceUserMediaSlotResult =
 export async function replaceUserMediaSlot(
     input: ReplaceUserMediaSlotInput,
 ): Promise<ReplaceUserMediaSlotResult> {
-    const sizeBytes = input.bytes.byteLength;
+    // Strip EXIF/GPS quando for foto (perfil ou capa). Áudio passa
+    // direto. O re-encode pode mudar `sizeBytes`, então
+    // recalculamos. Fix C1 da auditoria 2026-05.
+    const sanitized =
+        input.mediaData.kind === "PHOTO"
+            ? await stripExif(input.bytes, input.mimeType)
+            : Buffer.isBuffer(input.bytes)
+                ? input.bytes
+                : Buffer.from(input.bytes);
+    const sizeBytes = sanitized.byteLength;
 
     // 1. Stage em R2.
     const stagedKey = `staged/${randomUUID()}`;
     try {
-        await getR2Client().putStaged(stagedKey, input.bytes, input.mimeType);
+        await getR2Client().putStaged(stagedKey, sanitized, input.mimeType);
     } catch {
         return { ok: false, reason: "PERSISTENCIA" };
     }

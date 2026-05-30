@@ -152,6 +152,14 @@ export function ReportDialog({
                     setErro("Conteúdo não encontrado. Atualize a página.");
                 } else if (reason === "DESCRICAO_INVALIDA") {
                     setErro("Descrição muito longa (máx. 2000 caracteres).");
+                } else if (reason === "JA_DENUNCIADO") {
+                    setErro(
+                        "Você já denunciou este conteúdo. Aguarde a análise.",
+                    );
+                } else if (reason === "RATE_LIMITED") {
+                    setErro(
+                        "Muitas denúncias em pouco tempo. Tente novamente daqui a pouco.",
+                    );
                 } else {
                     setErro("Erro ao enviar denúncia. Tente novamente.");
                 }

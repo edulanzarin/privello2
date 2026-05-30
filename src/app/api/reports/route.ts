@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireSession } from "@/server/auth/guards";
+import { enforceRateLimit, LIMITS } from "@/server/auth/rateLimitGuard";
 import {
     criarReport,
     type ReportMotivo,
@@ -48,6 +49,9 @@ const TARGETS_VALIDOS: ReadonlySet<ReportTargetType> = new Set([
 export async function POST(request: Request): Promise<NextResponse> {
     const auth = await requireSession(request);
     if (!auth.ok) return auth.response;
+
+    const rl = enforceRateLimit("reports", auth.userId, LIMITS.reports);
+    if (rl) return rl;
 
     let body: unknown;
     try {
@@ -114,6 +118,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     if (result.reason === "DESCRICAO_INVALIDA") {
         return NextResponse.json(result, { status: 400 });
+    }
+    if (result.reason === "JA_DENUNCIADO") {
+        return NextResponse.json(result, { status: 409 });
     }
     return NextResponse.json(result, { status: 500 });
 }

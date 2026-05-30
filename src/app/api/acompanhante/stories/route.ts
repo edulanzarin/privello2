@@ -4,6 +4,7 @@ import {
     requireAcompanhanteWithPlano,
     requireFile,
 } from "@/server/auth/guards";
+import { enforceRateLimit, LIMITS } from "@/server/auth/rateLimitGuard";
 import { publicarStory } from "@/server/storage/storyMedia";
 
 export const runtime = "nodejs";
@@ -34,6 +35,9 @@ export async function POST(request: Request): Promise<NextResponse> {
         request,
     );
     if (!auth.ok) return auth.response;
+
+    const rl = enforceRateLimit("stories", auth.userId, LIMITS.stories);
+    if (rl) return rl;
 
     const fileGuard = await requireFile(request, "foto");
     if (!fileGuard.ok) return fileGuard.response;

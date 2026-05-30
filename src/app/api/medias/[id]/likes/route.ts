@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireClienteFan } from "@/server/auth/guards";
+import { enforceRateLimit, LIMITS } from "@/server/auth/rateLimitGuard";
 import { toggleLike } from "@/server/media-interactions";
 
 /**
@@ -20,6 +21,9 @@ export async function POST(
 ): Promise<NextResponse> {
     const auth = await requireClienteFan(request);
     if (!auth.ok) return auth.response;
+
+    const rl = enforceRateLimit("likes", auth.userId, LIMITS.likes);
+    if (rl) return rl;
 
     const { id: mediaId } = await context.params;
     if (!mediaId || mediaId.length === 0) {

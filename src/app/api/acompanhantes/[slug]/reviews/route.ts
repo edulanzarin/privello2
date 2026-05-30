@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { requireClienteFan } from "@/server/auth/guards";
+import { enforceRateLimit, LIMITS } from "@/server/auth/rateLimitGuard";
 import { upsertReview } from "@/server/reviews";
 
 /**
@@ -29,6 +30,9 @@ export async function POST(
 ): Promise<NextResponse> {
     const auth = await requireClienteFan(request);
     if (!auth.ok) return auth.response;
+
+    const rl = enforceRateLimit("reviews", auth.userId, LIMITS.reviews);
+    if (rl) return rl;
 
     const { slug } = await context.params;
     const slugNorm = slug.trim().toLowerCase();
