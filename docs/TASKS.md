@@ -64,22 +64,22 @@ Hoje a ordem é fixa por `createdAt desc`.
       `MidiasTab`. Atualiza otimisticamente.
 - [x] `listarGaleria` ordena por `sort_order asc, createdAt desc`.
 
-### ⬜ T04 — Gamification: completude do perfil
+### ✅ T04 — Gamification: completude do perfil
 **Esforço**: ~2h.
 Bar de progresso "Perfil X% completo" no painel da
 Acompanhante. Cada item desbloqueado dá +bônus de visibilidade
 (implícito — engajamento). Pode ganhar selo de "Perfil
 completo" quando 100%.
 
-- [ ] Service `obterCompletude(userId)`: calcula % com base em
+- [x] Service `obterCompletude(userId)`: calcula % com base em
       checklist (foto, capa, descrição ≥ 100 chars, áudio,
       verificada, ≥ 5 mídias galeria, ≥ 3 stories histórico,
       todos campos aparência).
-- [ ] Primitivo `ProgressRing` (SVG circular animado).
-- [ ] Card "Complete seu perfil" no topo do painel quando < 100%.
-- [ ] Lista de itens faltantes com link direto pra cada (clicar
+- [x] Primitivo `ProgressRing` (SVG circular animado).
+- [x] Card "Complete seu perfil" no topo do painel quando < 100%.
+- [x] Lista de itens faltantes com link direto pra cada (clicar
       em "adicione áudio" abre AudioTab).
-- [ ] Badge "Perfil 100%" próximo ao nome quando completo
+- [x] Badge "Perfil 100%" próximo ao nome quando completo
       (separado do VerifiedBadge).
 
 ### ⬜ T05 — PWA install prompt
@@ -286,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 3 / 15 concluídas (T01, T02, T03).
+- 4 / 15 concluídas (T01, T02, T03, T04).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
