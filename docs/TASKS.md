@@ -98,23 +98,23 @@ abre fullscreen).
 - [x] Adicionar ícones 192/512 + apple-touch-icon no
       `manifest.webmanifest`.
 
-### ⬜ T06 — Stories Highlights (Destaques)
+### ✅ T06 — Stories Highlights (Destaques)
 **Esforço**: ~4h.
 Acompanhante salva story expirado (ARCHIVED) em "destaque"
 permanente. Aparece no perfil público em rail circular acima
 da galeria, estilo Instagram Highlights.
 
-- [ ] Migration: adicionar `medias.highlight_title TEXT NULL,
+- [x] Migration: adicionar `medias.highlight_title TEXT NULL,
       medias.highlight_order INT NULL` em colunas existentes
       da tabela.
-- [ ] Service: `adicionarAoDestaque(mediaId, title)`,
+- [x] Service: `adicionarAoDestaque(mediaId, title)`,
       `removerDoDestaque`, `listarDestaques(userId)`.
-- [ ] Endpoint `POST /api/acompanhante/stories/[id]/highlight`.
-- [ ] Botão "Salvar como destaque" no MediaCarousel quando
+- [x] Endpoint `POST /api/acompanhante/stories/[id]/highlight`.
+- [x] Botão "Salvar como destaque" no MediaCarousel quando
       é Story arquivado próprio.
-- [ ] Rail no perfil público (reusa `StoriesRail` com items
+- [x] Rail no perfil público (reusa `StoriesRail` com items
       construídos a partir dos destaques).
-- [ ] Modal de "criar destaque" com input de título (≤ 20 chars).
+- [x] Modal de "criar destaque" com input de título (≤ 20 chars).
 
 ---
 
@@ -286,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 5 / 15 concluídas (T01, T02, T03, T04, T05).
+- 6 / 15 concluídas (T01, T02, T03, T04, T05, T06).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
