@@ -69,6 +69,7 @@ import {
     type OnboardingData,
 } from "@/domain/schemas";
 import { db } from "@/lib/db";
+import { geocodificarAproximado } from "@/lib/geocode";
 import { createSession } from "@/server/auth/sessions";
 import { defaultLocalidadesService } from "@/server/localidades";
 import {
@@ -487,9 +488,45 @@ export async function finalizar(
         mediaId: txResult.mediaId,
     });
 
+    // Geocodificação aproximada (best-effort, fire-and-forget) pra
+    // o mapa da busca (T14). Não bloqueia o retorno do onboarding —
+    // o pin aparece assim que o Nominatim responder. Falha deixa
+    // lat/lng null (perfil só não entra no mapa até a próxima
+    // edição de localização).
+    void geocodificarPerfilOnboarding(txResult.userId, {
+        cidadeNome: data.cidadeNome,
+        estadoSigla: data.estadoSigla,
+        bairroNome: data.bairroNome ?? null,
+    });
+
     return {
         ok: true,
         userId: txResult.userId,
         sessionId: txResult.sessionId,
     };
+}
+
+/**
+ * Geocodifica e persiste `lat`/`lng` aproximados do perfil recém
+ * criado. Best-effort — silencia qualquer erro. Separado em função
+ * própria pra rodar via `void` sem segurar o retorno do onboarding.
+ */
+async function geocodificarPerfilOnboarding(
+    userId: string,
+    loc: { cidadeNome: string; estadoSigla: string; bairroNome: string | null },
+): Promise<void> {
+    try {
+        const coords = await geocodificarAproximado({
+            cidadeNome: loc.cidadeNome,
+            estadoSigla: loc.estadoSigla,
+            bairroNome: loc.bairroNome,
+        });
+        if (!coords) return;
+        await db.acompanhanteProfile.update({
+            where: { userId },
+            data: { lat: coords.lat, lng: coords.lng },
+        });
+    } catch {
+        // Best-effort.
+    }
 }

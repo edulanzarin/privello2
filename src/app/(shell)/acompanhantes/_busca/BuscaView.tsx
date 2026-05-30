@@ -54,6 +54,8 @@ import type { FeedItem } from "@/server/acompanhante-profile/feed";
 import type { PlanoExibicao } from "@/server/acompanhante-profile";
 import type { StoryOwnerResumo } from "@/server/storage/storyMedia";
 
+import { BuscaMapa } from "./BuscaMapa";
+
 /**
  * Item de Story já no shape consumido pelo `MediaCarousel` em
  * `storyMode`, com info do dono pra exibir o "header" do viewer
@@ -212,6 +214,10 @@ export function BuscaView({
     const router = useRouter();
     const searchParams = useSearchParams();
     const [panelOpen, setPanelOpen] = React.useState(false);
+    // Visão dos resultados: lista (grid de cards) ou mapa interativo.
+    // Só faz sentido com cidade selecionada — em listagem aberta
+    // mantemos lista. O mapa carrega o Maplibre dinamicamente.
+    const [viewMode, setViewMode] = React.useState<"lista" | "mapa">("lista");
 
     // Modal do viewer de Stories — controla qual story está
     // visível agora. Os stories vêm achatados (todos os ativos
@@ -636,6 +642,40 @@ export function BuscaView({
                 </Button>
 
                 <div className="ml-auto flex min-w-0 items-center gap-2">
+                    {cidadeSelecionada ? (
+                        <div
+                            role="group"
+                            aria-label="Visualização dos resultados"
+                            className="flex flex-none items-center rounded-full border border-border bg-surface p-0.5"
+                        >
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("lista")}
+                                aria-pressed={viewMode === "lista"}
+                                className={[
+                                    "rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                                    viewMode === "lista"
+                                        ? "bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                        : "text-text-secondary hover:text-text-primary",
+                                ].join(" ")}
+                            >
+                                Lista
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("mapa")}
+                                aria-pressed={viewMode === "mapa"}
+                                className={[
+                                    "rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                                    viewMode === "mapa"
+                                        ? "bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                        : "text-text-secondary hover:text-text-primary",
+                                ].join(" ")}
+                            >
+                                Mapa
+                            </button>
+                        </div>
+                    ) : null}
                     <span className="hidden text-xs text-text-secondary sm:inline">
                         Ordenar por:
                     </span>
@@ -955,7 +995,15 @@ export function BuscaView({
                         />
                     ) : null}
 
-                    {items.length > 0 ? (
+                    {viewMode === "mapa" ? (
+                        <BuscaMapa
+                            queryString={buildSearchParams(
+                                filtros,
+                                ordenar,
+                                1,
+                            ).toString()}
+                        />
+                    ) : items.length > 0 ? (
                         <>
                             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                                 {items.map((item) => (

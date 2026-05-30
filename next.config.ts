@@ -71,6 +71,15 @@ const nextConfig: NextConfig = {
             imgSources.push("https://picsum.photos");
             imgSources.push("https://fastly.picsum.photos");
         }
+        // Tiles raster do OpenStreetMap pro mapa interativo da busca
+        // (T14, Maplibre GL). Sem token — endpoint público do OSM.
+        const osmTiles = [
+            "https://tile.openstreetmap.org",
+            "https://a.tile.openstreetmap.org",
+            "https://b.tile.openstreetmap.org",
+            "https://c.tile.openstreetmap.org",
+        ];
+        imgSources.push(...osmTiles);
 
         const csp = [
             "default-src 'self'",
@@ -86,7 +95,11 @@ const nextConfig: NextConfig = {
             isProd
                 ? "script-src 'self' 'unsafe-inline'"
                 : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-            "connect-src 'self' https://servicodados.ibge.gov.br https://overpass-api.de https://nominatim.openstreetmap.org",
+            // Maplibre GL roda render num Web Worker carregado de
+            // blob: — `worker-src` precisa permitir blob: senão o
+            // mapa não inicializa.
+            "worker-src 'self' blob:",
+            `connect-src 'self' https://servicodados.ibge.gov.br https://overpass-api.de https://nominatim.openstreetmap.org ${osmTiles.join(" ")}`,
             "frame-ancestors 'none'",
             "base-uri 'self'",
             "form-action 'self'",

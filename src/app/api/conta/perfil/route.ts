@@ -25,6 +25,7 @@ import {
     validarTelefone,
 } from "@/domain/validation";
 import { db } from "@/lib/db";
+import { geocodificarAproximado } from "@/lib/geocode";
 import { requireSession } from "@/server/auth/guards";
 
 /**
@@ -357,11 +358,57 @@ export async function POST(request: Request): Promise<NextResponse> {
                 });
             }
         });
+
+        // Re-geocodifica (best-effort) quando a localização mudou —
+        // mantém o pin do mapa (T14) coerente com cidade/bairro. Não
+        // bloqueia a resposta: roda em background. Geocoding falho
+        // deixa lat/lng como estavam (ou null).
+        const localizacaoMudou =
+            auth.userType === "ACOMPANHANTE" &&
+            (acompanhantePatch.estadoSigla !== undefined ||
+                acompanhantePatch.cidadeNome !== undefined ||
+                acompanhantePatch.bairroNome !== undefined);
+        if (localizacaoMudou) {
+            void regeocodificarPerfil(auth.userId);
+        }
+
         return NextResponse.json({ ok: true }, { status: 200 });
     } catch {
         return NextResponse.json(
             { ok: false, reason: "PERSISTENCIA" },
             { status: 500 },
         );
+    }
+}
+
+/**
+ * Lê a localização atual do perfil, geocodifica de forma aproximada
+ * (com jitter) e grava `lat`/`lng`. Best-effort: qualquer falha é
+ * silenciosa (o perfil só não aparece no mapa). Roda fora do path
+ * crítico da request.
+ */
+async function regeocodificarPerfil(userId: string): Promise<void> {
+    try {
+        const profile = await db.acompanhanteProfile.findUnique({
+            where: { userId },
+            select: {
+                cidadeNome: true,
+                estadoSigla: true,
+                bairroNome: true,
+            },
+        });
+        if (!profile) return;
+        const coords = await geocodificarAproximado({
+            cidadeNome: profile.cidadeNome,
+            estadoSigla: profile.estadoSigla,
+            bairroNome: profile.bairroNome,
+        });
+        if (!coords) return;
+        await db.acompanhanteProfile.update({
+            where: { userId },
+            data: { lat: coords.lat, lng: coords.lng },
+        });
+    } catch {
+        // Geocoding é best-effort — não propaga erro.
     }
 }

@@ -353,6 +353,14 @@ model AcompanhanteProfile {
   // métrica de conversão (visualização → clique) no painel.
   whatsappClicksCount Int           @default(0) @map("whatsapp_clicks_count")
 
+  // Coordenadas aproximadas (centroide do bairro/cidade + jitter)
+  // pra exibir no mapa da busca (T14). NUNCA é endereço exato —
+  // geocodificado via Nominatim a partir de (cidade, UF[, bairro])
+  // ao salvar a localização, com ruído pra preservar privacidade.
+  // `null` quando ainda não geocodificado.
+  lat                Float?         @map("lat") @db.DoublePrecision
+  lng                Float?         @map("lng") @db.DoublePrecision
+
   // Contador de avaliações (apenas comentários textuais — nota
   // foi removida do produto). Materializado pela trigger
   // `trg_reviews_agregado` em INSERT/DELETE de

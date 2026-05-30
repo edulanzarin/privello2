@@ -389,3 +389,82 @@ export async function listarUfsDisponiveis(): Promise<ReadonlyArray<string>> {
     });
     return rows.map((r) => r.estadoSigla);
 }
+
+// ---------------------------------------------------------------------------
+// Mapa interativo (T14)
+// ---------------------------------------------------------------------------
+
+/** Pin do mapa — info mínima pra renderizar um marcador clicável. */
+export interface MapaPin {
+    identificador: string;
+    nome: string;
+    fotoUrl: string | null;
+    lat: number;
+    lng: number;
+    planoExibicao: PlanoExibicao;
+    verificada: boolean;
+}
+
+/**
+ * Lista perfis geocodificados pra o mapa da busca. Aplica os mesmos
+ * filtros do {@link buscar} (via {@link buildWhere}) + a exigência
+ * de `lat`/`lng` não-nulos.
+ *
+ * Diferente da busca paginada, devolve um conjunto maior de pins de
+ * uma vez (até `limit`, default 500) porque o mapa precisa de todos
+ * os pontos visíveis pra clusterizar no client. Sem paginação — o
+ * client clusteriza/filtra por viewport.
+ *
+ * As coordenadas já vêm com jitter aplicado na geocodificação (ver
+ * `geocode.ts`) — nunca são endereço exato.
+ */
+export async function listarPerfisParaMapa(input: {
+    filtros: BuscaFiltros;
+    limit?: number;
+    now?: Date;
+}): Promise<ReadonlyArray<MapaPin>> {
+    const now = input.now ?? new Date();
+    const limit = Math.max(1, Math.min(1000, input.limit ?? 500));
+
+    const where = buildWhere(input.filtros, now);
+    // Exige coordenadas — só perfis geocodificados entram no mapa.
+    where.lat = { not: null };
+    where.lng = { not: null };
+
+    const rows = await db.acompanhanteProfile.findMany({
+        where,
+        take: limit,
+        select: {
+            userId: true,
+            lat: true,
+            lng: true,
+            verificada: true,
+            planoVigente: true,
+            boostUntil: true,
+            user: { select: { nome: true, identificador: true } },
+            fotoPerfil: { select: { storageKey: true } },
+        },
+    });
+
+    const pins: MapaPin[] = [];
+    for (const row of rows) {
+        if (row.lat === null || row.lng === null) continue;
+        const planoExibicao: PlanoExibicao = isBoostAtivo(row.boostUntil, now)
+            ? "BOOST"
+            : row.planoVigente === "PREMIUM"
+                ? "PREMIUM"
+                : "BASICO";
+        pins.push({
+            identificador: row.user.identificador,
+            nome: row.user.nome,
+            fotoUrl: row.fotoPerfil
+                ? `/api/storage/${row.fotoPerfil.storageKey}`
+                : null,
+            lat: row.lat,
+            lng: row.lng,
+            planoExibicao,
+            verificada: row.verificada,
+        });
+    }
+    return pins;
+}
