@@ -138,18 +138,18 @@ sonora no perfil público.
 - [x] No perfil público: seção "Perguntas frequentes em áudio"
       com `AudioWavePlayer` por item.
 
-### ⬜ T08 — Vídeo de apresentação
+### ✅ T08 — Vídeo de apresentação
 **Esforço**: ~4h.
 Vídeo curto (≤60s) substituindo ou complementando o áudio.
 Premium-only.
 
-- [ ] Adicionar `MediaRole.VIDEO_PRESENTATION` ao enum +
+- [x] Adicionar `MediaRole.VIDEO_PRESENTATION` ao enum +
       coluna `acompanhante_profiles.video_apresentacao_id`.
-- [ ] Service `replaceVideoApresentacao` reusando padrão do
+- [x] Service `replaceVideoApresentacao` reusando padrão do
       `replaceUserMediaSlot` (com watermark + poster).
-- [ ] Endpoint `PUT /api/acompanhante/video-apresentacao`.
-- [ ] Aba "Vídeo" no painel (apenas Premium, condicional).
-- [ ] No perfil público: card destaque com player.
+- [x] Endpoint `PUT /api/acompanhante/video-apresentacao`.
+- [x] Aba "Vídeo" no painel (apenas Premium, condicional).
+- [x] No perfil público: card destaque com player.
 
 ### ⬜ T09 — Boost programado
 **Esforço**: ~4h.
@@ -286,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 7 / 15 concluídas (T01, T02, T03, T04, T05, T06, T07).
+- 8 / 15 concluídas (T01–T08).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
