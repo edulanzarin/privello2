@@ -812,6 +812,33 @@ export function PerfilPublicoView({
             </div>
 
             {/* Áudio de apresentação */}
+            {/* Vídeo de apresentação (T08, Premium). Em destaque
+                logo após o CTA do WhatsApp — quando presente, é
+                provavelmente o conteúdo mais persuasivo do perfil. */}
+            {perfil.videoApresentacaoUrl !== null ? (
+                <section className="flex flex-col gap-2">
+                    <SectionHeader title="Veja-me em movimento" />
+                    <Card>
+                        <video
+                            src={perfil.videoApresentacaoUrl}
+                            poster={
+                                perfil.videoApresentacaoPosterUrl ?? undefined
+                            }
+                            controls
+                            playsInline
+                            className="w-full rounded-xl"
+                        >
+                            {perfil.videoApresentacaoMimeType ? (
+                                <source
+                                    src={perfil.videoApresentacaoUrl}
+                                    type={perfil.videoApresentacaoMimeType}
+                                />
+                            ) : null}
+                        </video>
+                    </Card>
+                </section>
+            ) : null}
+
             {perfil.audioUrl !== null ? (
                 <section className="flex flex-col gap-2">
                     <SectionHeader title="Ouça minha voz" />

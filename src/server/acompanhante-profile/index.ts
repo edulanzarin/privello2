@@ -60,6 +60,15 @@ export interface PerfilAcompanhantePublicoBase {
     audioUrl: string | null;
     /** MIME type do áudio (necessário para o `<audio type>`). */
     audioMimeType: string | null;
+    /**
+     * URL do Vídeo de apresentação (Premium). `null` quando ainda
+     * não publicado.
+     */
+    videoApresentacaoUrl: string | null;
+    /** MIME type do vídeo (necessário para o `<video type>`). */
+    videoApresentacaoMimeType: string | null;
+    /** URL do poster (frame ~0.5s) — pra `<video poster>`. */
+    videoApresentacaoPosterUrl: string | null;
 
     // Identidade e atendimento.
     genero: Genero | null;
@@ -176,6 +185,14 @@ export async function obterPerfilAcompanhante(
             audioApresentacao: {
                 select: { storageKey: true, mimeType: true, status: true },
             },
+            videoApresentacao: {
+                select: {
+                    storageKey: true,
+                    mimeType: true,
+                    posterStorageKey: true,
+                    status: true,
+                },
+            },
         },
     });
 
@@ -185,6 +202,11 @@ export async function obterPerfilAcompanhante(
         profile.audioApresentacao &&
             profile.audioApresentacao.status === "COMMITTED"
             ? profile.audioApresentacao
+            : null;
+    const videoOk =
+        profile.videoApresentacao &&
+            profile.videoApresentacao.status === "COMMITTED"
+            ? profile.videoApresentacao
             : null;
 
     const planoExibicao = resolverPlanoExibicao(
@@ -210,6 +232,13 @@ export async function obterPerfilAcompanhante(
             : null,
         audioUrl: audioOk ? `/api/storage/${audioOk.storageKey}` : null,
         audioMimeType: audioOk ? audioOk.mimeType : null,
+        videoApresentacaoUrl: videoOk
+            ? `/api/storage/${videoOk.storageKey}`
+            : null,
+        videoApresentacaoMimeType: videoOk ? videoOk.mimeType : null,
+        videoApresentacaoPosterUrl: videoOk?.posterStorageKey
+            ? `/api/storage/${videoOk.posterStorageKey}`
+            : null,
 
         perfilVisivel: profile.perfilVisivel,
 
@@ -320,6 +349,14 @@ export async function obterPerfilPublico(
             audioApresentacao: {
                 select: { storageKey: true, mimeType: true, status: true },
             },
+            videoApresentacao: {
+                select: {
+                    storageKey: true,
+                    mimeType: true,
+                    posterStorageKey: true,
+                    status: true,
+                },
+            },
         },
     });
 
@@ -337,6 +374,11 @@ export async function obterPerfilPublico(
         profile.audioApresentacao &&
             profile.audioApresentacao.status === "COMMITTED"
             ? profile.audioApresentacao
+            : null;
+    const videoOk =
+        profile.videoApresentacao &&
+            profile.videoApresentacao.status === "COMMITTED"
+            ? profile.videoApresentacao
             : null;
 
     const planoExibicao = resolverPlanoExibicao(
@@ -359,6 +401,13 @@ export async function obterPerfilPublico(
             : null,
         audioUrl: audioOk ? `/api/storage/${audioOk.storageKey}` : null,
         audioMimeType: audioOk ? audioOk.mimeType : null,
+        videoApresentacaoUrl: videoOk
+            ? `/api/storage/${videoOk.storageKey}`
+            : null,
+        videoApresentacaoMimeType: videoOk ? videoOk.mimeType : null,
+        videoApresentacaoPosterUrl: videoOk?.posterStorageKey
+            ? `/api/storage/${videoOk.posterStorageKey}`
+            : null,
 
         genero: profile.genero,
         atendePublicos: profile.atendePublicos,

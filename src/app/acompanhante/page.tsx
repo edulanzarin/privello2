@@ -8,6 +8,7 @@ import {
     MetricPill,
     MicIcon,
     PageSurface,
+    PlayCircleIcon,
     ProfileCoverEditor,
     ProfilePhotoEditor,
     SparklesIcon,
@@ -50,6 +51,7 @@ import { PerguntasTab } from "./_painel/PerguntasTab";
 import { EstatisticasTab } from "./_painel/EstatisticasTab";
 import { ConfiguracoesTab } from "./_painel/ConfiguracoesTab";
 import { VerificacaoTab } from "./_painel/VerificacaoTab";
+import { VideoTab } from "./_painel/VideoTab";
 import { PerfilOcultoBanner } from "./_painel/PerfilOcultoBanner";
 import { CompletudeCard } from "./_painel/CompletudeCard";
 import type { MediaItem } from "@/components";
@@ -292,6 +294,12 @@ export default async function AcompanhantePainelPage() {
                             Áudio
                         </TabTrigger>
                     ) : null}
+                    {planoVigente.permiteAudio ? (
+                        <TabTrigger value="video">
+                            <PlayCircleIcon size={14} />
+                            Vídeo
+                        </TabTrigger>
+                    ) : null}
                     <TabTrigger value="verificacao">
                         <ShieldIcon size={14} />
                         Verificação
@@ -338,6 +346,15 @@ export default async function AcompanhantePainelPage() {
                                 url: `/api/storage/${t.storageKey}`,
                                 mimeType: t.mimeType,
                             }))}
+                        />
+                    </TabPanel>
+                ) : null}
+                {planoVigente.permiteAudio ? (
+                    <TabPanel value="video">
+                        <VideoTab
+                            videoUrl={perfil.videoApresentacaoUrl}
+                            videoMimeType={perfil.videoApresentacaoMimeType}
+                            videoPosterUrl={perfil.videoApresentacaoPosterUrl}
                         />
                     </TabPanel>
                 ) : null}
