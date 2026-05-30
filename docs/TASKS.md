@@ -120,22 +120,22 @@ da galeria, estilo Instagram Highlights.
 
 ## Médio prazo
 
-### ⬜ T07 — Áudios curtos por tópico
+### ✅ T07 — Áudios curtos por tópico
 **Esforço**: ~4h.
 Além do áudio único de apresentação, Acompanhante grava
 áudios curtos (≤30s) respondendo perguntas comuns: "Preço",
 "Atende casal?", "Disponibilidade". Aparecem como FAQ
 sonora no perfil público.
 
-- [ ] Migration: tabela `topic_audios(id, owner_id, tipo enum,
+- [x] Migration: tabela `topic_audios(id, owner_id, tipo enum,
       storage_key, duration_seconds, created_at)` ou reusar
       `Media.role = 'TOPIC_AUDIO'` + nova coluna `topic_kind`.
-- [ ] Service: `publicarTopicAudio`, `excluirTopicAudio`,
+- [x] Service: `publicarTopicAudio`, `excluirTopicAudio`,
       `listarTopicAudios`.
-- [ ] Endpoints CRUD.
-- [ ] UI no painel: aba dedicada com lista de tópicos
+- [x] Endpoints CRUD.
+- [x] UI no painel: aba dedicada com lista de tópicos
       pré-definidos. Cada tópico tem botão "Gravar".
-- [ ] No perfil público: seção "Perguntas frequentes em áudio"
+- [x] No perfil público: seção "Perguntas frequentes em áudio"
       com `AudioWavePlayer` por item.
 
 ### ⬜ T08 — Vídeo de apresentação
@@ -286,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 6 / 15 concluídas (T01, T02, T03, T04, T05, T06).
+- 7 / 15 concluídas (T01, T02, T03, T04, T05, T06, T07).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
