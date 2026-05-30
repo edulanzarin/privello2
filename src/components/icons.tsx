@@ -778,3 +778,31 @@ export function BookmarkIcon(props: IconProps): React.ReactElement {
         </Svg>
     );
 }
+
+/**
+ * Share — ícone de compartilhar. Dois nós conectados por linhas
+ * (estilo "share node"). Usado no botão "Compartilhar perfil".
+ */
+export function ShareIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
+        </Svg>
+    );
+}
+
+/**
+ * Link — ícone de elo de corrente. Usado em "Copiar link".
+ */
+export function LinkIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M9 15l6-6" />
+            <path d="M11 6.5 12.5 5a4 4 0 0 1 5.7 5.7l-1.5 1.5" />
+            <path d="M13 17.5 11.5 19a4 4 0 0 1-5.7-5.7l1.5-1.5" />
+        </Svg>
+    );
+}

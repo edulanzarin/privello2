@@ -74,6 +74,7 @@ import type { ReviewPublico } from "@/server/reviews";
 
 import { AvaliacoesSection } from "./AvaliacoesSection";
 import { PerguntasSection } from "./PerguntasSection";
+import { ShareButton } from "./ShareButton";
 
 /**
  * "Tipo de viewer" — quem está abrindo o perfil. Determina UX:
@@ -769,6 +770,14 @@ export function PerfilPublicoView({
             {perfil.whatsappUrl !== null ? (
                 <WhatsappCTA href={perfil.whatsappUrl} slug={slug} />
             ) : null}
+
+            {/* Compartilhar perfil (card-imagem pra Stories/Status). */}
+            <ShareButton
+                slug={slug}
+                nome={perfil.nome}
+                cidadeNome={perfil.cidadeNome}
+                estadoSigla={perfil.estadoSigla}
+            />
 
             {/* Valores + Localização — duas StatCards lado a lado em
                 desktop, empilhadas em mobile. Ficam logo abaixo do

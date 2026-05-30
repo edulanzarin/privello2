@@ -437,6 +437,8 @@ export {
     ScissorsIcon,
     SearchIcon,
     SecurityCheckIcon,
+    ShareIcon,
+    LinkIcon,
     SlidersIcon,
     SparklesIcon,
     StarIcon,
