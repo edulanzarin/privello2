@@ -19,6 +19,7 @@ import {
     listarGaleria,
     toMediaItem,
 } from "@/server/storage/galleryMedia";
+import { listarDestaquesPublicos, listarStoriesDoDestaque } from "@/server/storage/highlights";
 import {
     listarStoriesAtivosDoPerfil,
 } from "@/server/storage/storyMedia";
@@ -195,6 +196,38 @@ export default async function PerfilPublicoPage({
             })
             : null;
 
+    // Stories Highlights (destaques permanentes) — agrupados por
+    // título. Aparecem em rail acima da galeria. Lista vazia OK
+    // (a maioria dos perfis ainda não tem destaques).
+    const destaques = await listarDestaquesPublicos(result.userId);
+
+    // Carrega os stories de cada destaque em paralelo. Volume é
+    // baixo (poucos destaques, poucos stories cada). Manter tudo
+    // upfront evita round-trip ao abrir o viewer.
+    const destaquesComStories = await Promise.all(
+        destaques.map(async (d) => {
+            const stories = await listarStoriesDoDestaque({
+                ownerUserId: result.userId,
+                title: d.title,
+            });
+            return {
+                title: d.title,
+                total: d.total,
+                coverStorageKey: d.coverStorageKey,
+                coverKind: d.coverKind,
+                coverMediaId: d.coverMediaId,
+                stories: stories.map((s) => ({
+                    id: s.id,
+                    type: s.kind === "VIDEO" ? ("video" as const) : ("photo" as const),
+                    url: `/api/storage/${s.storageKey}`,
+                    description: s.caption,
+                    createdAt: s.createdAt,
+                    likes: s.likesCount,
+                })),
+            };
+        }),
+    );
+
     return (
         <PageSurface
             banner={<ProfileBanner photoUrl={result.perfil.coverUrl} />}
@@ -250,6 +283,14 @@ export default async function PerfilPublicoPage({
                 viewerFotoUrl={viewerClienteProfile?.fotoUrl ?? null}
                 minhaReview={minhaReview}
                 favoritoInicial={favoritoInicial}
+                destaques={destaquesComStories.map((d) => ({
+                    title: d.title,
+                    total: d.total,
+                    coverUrl: `/api/storage/${d.coverStorageKey}`,
+                    coverKind: d.coverKind,
+                    coverMediaId: d.coverMediaId,
+                    stories: d.stories,
+                }))}
             />
         </PageSurface>
     );

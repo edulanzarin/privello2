@@ -375,6 +375,16 @@ model Media {
   /// comportamento atual quando ninguém arrastou nada).
   sortOrder      Int         @default(0) @map("sort_order")
 
+  /// Título do destaque (Highlights estilo Instagram) ao qual este
+  /// Story arquivado pertence. `NULL` = não está em nenhum destaque.
+  /// Apenas Stories arquivados (`role=STORY` e `status=ARCHIVED`)
+  /// podem ser tagueados — fora isso o campo é ignorado.
+  highlightTitle String?     @map("highlight_title")
+  /// Ordem dentro do mesmo destaque (`highlight_title`). Default 0.
+  /// Em queries de leitura ordenamos por `highlight_order asc,
+  /// created_at desc`.
+  highlightOrder Int?        @map("highlight_order")
+
   createdAt      DateTime    @default(now()) @map("created_at")
 
   acompanhanteAsProfile AcompanhanteProfile? @relation("FotoDePerfil")

@@ -167,6 +167,19 @@ export interface PerfilPublicoViewProps {
      * perfil?). `null` quando não-Cliente — botão não aparece.
      */
     favoritoInicial: boolean | null;
+    /**
+     * Stories Highlights (destaques permanentes) agrupados por
+     * título. Lista vazia OK — rail simplesmente não renderiza.
+     */
+    destaques: ReadonlyArray<{
+        title: string;
+        total: number;
+        coverUrl: string;
+        coverKind: "PHOTO" | "VIDEO";
+        coverMediaId: string;
+        /** Stories do destaque, em ordem. */
+        stories: ReadonlyArray<MediaItem>;
+    }>;
 }
 
 const FORMA_PAGAMENTO_ICONS: Record<FormaPagamento, React.ReactElement> = {
@@ -208,6 +221,7 @@ export function PerfilPublicoView({
     viewerFotoUrl,
     minhaReview,
     favoritoInicial,
+    destaques,
 }: PerfilPublicoViewProps): React.ReactElement {
     const router = useRouter();
     const pathname = usePathname();
@@ -227,6 +241,19 @@ export function PerfilPublicoView({
     React.useEffect(() => {
         setStoryRingState(storyRing);
     }, [storyRing]);
+
+    // Estado do viewer de Highlights — qual destaque está aberto.
+    // Quando `null`, viewer fechado. Quando string, abrimos o
+    // MediaCarousel com os stories daquele título.
+    const [highlightAtivo, setHighlightAtivo] = React.useState<string | null>(
+        null,
+    );
+    const highlightCarousel = useMediaCarousel();
+    const storiesDoHighlight = React.useMemo<ReadonlyArray<MediaItem>>(() => {
+        if (highlightAtivo === null) return [];
+        const grupo = destaques.find((d) => d.title === highlightAtivo);
+        return grupo?.stories ?? [];
+    }, [highlightAtivo, destaques]);
 
     // Estado do bookmark — só inicializa pra Cliente logado. Owner /
     // Acompanhante / anônimo recebem `null` e o botão não aparece.
@@ -789,6 +816,67 @@ export function PerfilPublicoView({
                 </section>
             ) : null}
 
+            {/* Stories Highlights (destaques permanentes) — rail
+                circular acima da galeria. Cada item agrupa N
+                stories pelo `highlightTitle`. Clicar abre o viewer
+                em sequência. Lista vazia → seção some. */}
+            {destaques.length > 0 ? (
+                <section className="flex flex-col gap-3">
+                    <SectionHeader title="Destaques" />
+                    <div className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <ul className="flex items-start gap-4 snap-x snap-mandatory sm:gap-5">
+                            {destaques.map((d) => (
+                                <li
+                                    key={d.title}
+                                    className="snap-start shrink-0"
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setHighlightAtivo(d.title);
+                                            const first = d.stories[0];
+                                            if (first) {
+                                                highlightCarousel.openAt(
+                                                    first.id,
+                                                );
+                                            }
+                                        }}
+                                        aria-label={`Abrir destaque ${d.title}`}
+                                        className="group flex w-[6rem] flex-col items-center gap-2 rounded-2xl px-1 py-1 transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                                    >
+                                        <span className="relative block transition-transform group-hover:scale-105">
+                                            <span
+                                                className="block rounded-full p-[3px] bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)]"
+                                            >
+                                                <span className="block overflow-hidden rounded-full bg-surface p-[2px]">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={d.coverUrl}
+                                                        alt=""
+                                                        className="h-16 w-16 rounded-full object-cover"
+                                                    />
+                                                </span>
+                                            </span>
+                                            {d.coverKind === "VIDEO" ? (
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="absolute bottom-0 right-0 inline-flex h-5 w-5 items-center justify-center rounded-full bg-black/65 text-white ring-2 ring-surface"
+                                                >
+                                                    <PlayIcon size={10} />
+                                                </span>
+                                            ) : null}
+                                        </span>
+                                        <span className="block max-w-[6rem] truncate text-center text-xs font-medium text-text-primary">
+                                            {d.title}
+                                        </span>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </section>
+            ) : null}
+
             {/* Galeria */}
             <section className="flex flex-col gap-3">
                 <SectionHeader
@@ -1099,6 +1187,22 @@ export function PerfilPublicoView({
                         ? handleStoryToggleLike
                         : undefined
                 }
+            />
+
+            {/* Carrossel dos Stories de um Highlight. Mesmo
+                `storyMode` mas sem onToggleLike (highlights são
+                arquivados, viewer público não pode curtir). Fecha
+                via close → reseta o highlightAtivo. */}
+            <MediaCarousel
+                items={storiesDoHighlight}
+                activeId={highlightCarousel.activeId}
+                onActiveChange={highlightCarousel.openAt}
+                open={highlightCarousel.open && highlightAtivo !== null}
+                onClose={() => {
+                    highlightCarousel.close();
+                    setHighlightAtivo(null);
+                }}
+                storyMode
             />
 
             {/* Diálogo de denúncia de mídia. `targetId` é o id da

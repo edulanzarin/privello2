@@ -27,6 +27,10 @@ import { listarStatsDiarias } from "@/server/acompanhante-profile/stats";
 import { contarFavoritosDoOwner } from "@/server/favorites";
 import { obterCompletude } from "@/server/acompanhante-profile/completude";
 import {
+    listarDestaques,
+    mapearHighlightTitlesDoOwner,
+} from "@/server/storage/highlights";
+import {
     contarPerguntasPendentes,
     listarPerguntasPublicas,
 } from "@/server/questions";
@@ -114,6 +118,20 @@ export default async function AcompanhantePainelPage() {
     );
     const storiesArquivadosItems: ReadonlyArray<MediaItem> =
         storiesArquivados.map(toStoryMediaItem);
+
+    // Mapeia cada Story arquivado pro seu `highlightTitle` (ou null
+    // quando não está em destaque). Single query agregada — sem
+    // N+1. Lista usada pelo MidiasTab pra renderizar badge "Em
+    // destaque <Title>" em cada tile arquivado.
+    const storyHighlightMap = planoVigente.permiteStories
+        ? await mapearHighlightTitlesDoOwner(
+            session.userId,
+            storiesArquivados.map((s) => s.id),
+        )
+        : new Map<string, string>();
+    const destaquesDoOwner = planoVigente.permiteStories
+        ? await listarDestaques(session.userId)
+        : [];
 
     // Reels do dono — sempre carrega; `permiteReels` é true em
     // ambos os planos. UI mostra limite na própria aba.
@@ -283,6 +301,8 @@ export default async function AcompanhantePainelPage() {
                         items={galeriaItems}
                         storiesAtivos={storiesAtivosItems}
                         storiesExpirados={storiesArquivadosItems}
+                        storyHighlightMap={storyHighlightMap}
+                        titulosDestaque={destaquesDoOwner.map((d) => d.title)}
                     />
                 </TabPanel>
                 <TabPanel value="reels">

@@ -21,6 +21,7 @@ import {
     MediaGrid,
     MediaThumbnail,
     MetricPill,
+    Modal,
     PencilIcon,
     PlayCircleIcon,
     PlayIcon,
@@ -82,6 +83,17 @@ export interface MidiasTabProps {
      * antes do GC).
      */
     storiesExpirados?: ReadonlyArray<MediaItem>;
+    /**
+     * Map `storyId → highlightTitle` indicando quais stories
+     * arquivados já estão em algum destaque. Map vazio = nenhum.
+     */
+    storyHighlightMap?: ReadonlyMap<string, string>;
+    /**
+     * Lista de títulos de destaques existentes do dono. UI mostra
+     * como sugestões ao adicionar um story em destaque (pra reusar
+     * grupos em vez de criar novo a cada clique).
+     */
+    titulosDestaque?: ReadonlyArray<string>;
 }
 
 type Filtro = "tudo" | "fotos" | "videos";
@@ -97,6 +109,8 @@ export function MidiasTab({
     items,
     storiesAtivos = [],
     storiesExpirados = [],
+    storyHighlightMap,
+    titulosDestaque = [],
 }: MidiasTabProps): React.ReactElement {
     const [filtro, setFiltro] = React.useState<Filtro>("tudo");
     const carousel = useMediaCarousel();
@@ -160,6 +174,79 @@ export function MidiasTab({
     const [storyUploadError, setStoryUploadError] = React.useState<
         string | null
     >(null);
+
+    // -----------------------------------------------------------------
+    // Highlights (Destaques)
+    //
+    // Modal pra adicionar story arquivado a um destaque (escolher
+    // entre títulos existentes ou digitar novo). Toggle de remover é
+    // direto (sem modal — só um click).
+    // -----------------------------------------------------------------
+    const [highlightStoryId, setHighlightStoryId] = React.useState<string | null>(
+        null,
+    );
+    const [highlightTitleInput, setHighlightTitleInput] = React.useState("");
+    const [savingHighlight, setSavingHighlight] = React.useState(false);
+    const [highlightError, setHighlightError] = React.useState<string | null>(
+        null,
+    );
+
+    function abrirHighlightDialog(storyId: string): void {
+        setHighlightStoryId(storyId);
+        setHighlightTitleInput("");
+        setHighlightError(null);
+    }
+
+    async function salvarHighlight(title: string): Promise<void> {
+        if (highlightStoryId === null) return;
+        const trimmed = title.trim();
+        if (trimmed.length === 0) {
+            setHighlightError("Dá um título pro destaque.");
+            return;
+        }
+        if (trimmed.length > 20) {
+            setHighlightError("Máximo de 20 caracteres.");
+            return;
+        }
+        setSavingHighlight(true);
+        setHighlightError(null);
+        try {
+            const res = await fetch(
+                `/api/acompanhante/stories/${highlightStoryId}/highlight`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: trimmed }),
+                },
+            );
+            if (!res.ok) {
+                setHighlightError(
+                    "Não foi possível adicionar ao destaque agora.",
+                );
+                return;
+            }
+            setHighlightStoryId(null);
+            router.refresh();
+        } catch {
+            setHighlightError("Falha de rede. Tente novamente.");
+        } finally {
+            setSavingHighlight(false);
+        }
+    }
+
+    async function removerDoHighlight(storyId: string): Promise<void> {
+        try {
+            const res = await fetch(
+                `/api/acompanhante/stories/${storyId}/highlight`,
+                { method: "DELETE" },
+            );
+            if (!res.ok) return;
+            router.refresh();
+        } catch {
+            // Best-effort. UI não trava em erro de rede aqui — usuário
+            // tenta de novo.
+        }
+    }
 
     const storiesByFilter =
         filtroStory === "ativos" ? storiesAtivos : storiesExpirados;
@@ -524,37 +611,82 @@ export function MidiasTab({
                                 /* Arquivados: tiles com badge
                                    "Expirado" e contador de likes. */
                                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
-                                    {storiesByFilter.map((s) => (
-                                        <button
-                                            key={s.id}
-                                            type="button"
-                                            onClick={() =>
-                                                storyCarousel.openAt(s.id)
-                                            }
-                                            className="group flex flex-col gap-1.5 text-left focus:outline-none"
-                                        >
-                                            <span className="relative block aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-100 ring-1 ring-neutral-200">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img
-                                                    src={s.url}
-                                                    alt=""
-                                                    className="h-full w-full object-cover saturate-50 transition-all group-hover:saturate-100"
-                                                />
-                                                <span className="absolute inset-x-1.5 top-1.5 flex justify-between gap-1 text-[0.6rem] font-semibold uppercase tracking-wider">
-                                                    <span className="rounded-full bg-black/55 px-1.5 py-0.5 text-white">
-                                                        Expirado
+                                    {storiesByFilter.map((s) => {
+                                        const inHighlight =
+                                            storyHighlightMap?.get(s.id) ?? null;
+                                        return (
+                                            <div
+                                                key={s.id}
+                                                className="flex flex-col gap-1.5"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        storyCarousel.openAt(s.id)
+                                                    }
+                                                    className="group flex flex-col gap-1.5 text-left focus:outline-none"
+                                                >
+                                                    <span className="relative block aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-100 ring-1 ring-neutral-200">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={s.url}
+                                                            alt=""
+                                                            className="h-full w-full object-cover saturate-50 transition-all group-hover:saturate-100"
+                                                        />
+                                                        <span className="absolute inset-x-1.5 top-1.5 flex justify-between gap-1 text-[0.6rem] font-semibold uppercase tracking-wider">
+                                                            <span className="rounded-full bg-black/55 px-1.5 py-0.5 text-white">
+                                                                Expirado
+                                                            </span>
+                                                            {inHighlight !== null ? (
+                                                                <span className="rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] px-1.5 py-0.5 text-white">
+                                                                    Em destaque
+                                                                </span>
+                                                            ) : null}
+                                                        </span>
+                                                        <span className="absolute inset-x-1.5 bottom-1.5 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[0.65rem] text-white">
+                                                            <HeartIcon size={10} />
+                                                            {s.likes ?? 0}
+                                                        </span>
                                                     </span>
-                                                </span>
-                                                <span className="absolute inset-x-1.5 bottom-1.5 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[0.65rem] text-white">
-                                                    <HeartIcon size={10} />
-                                                    {s.likes ?? 0}
-                                                </span>
-                                            </span>
-                                            <span className="text-[0.65rem] text-text-secondary">
-                                                {formatRelativeShort(s.createdAt)}
-                                            </span>
-                                        </button>
-                                    ))}
+                                                    <span className="text-[0.65rem] text-text-secondary">
+                                                        {formatRelativeShort(
+                                                            s.createdAt,
+                                                        )}
+                                                    </span>
+                                                </button>
+                                                {inHighlight !== null ? (
+                                                    <div className="flex items-center justify-between gap-1 px-1">
+                                                        <span className="truncate text-[0.65rem] font-medium text-[color:var(--accent-deep)]">
+                                                            {inHighlight}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                void removerDoHighlight(
+                                                                    s.id,
+                                                                );
+                                                            }}
+                                                            className="text-[0.65rem] text-text-secondary hover:text-danger-700 focus:outline-none"
+                                                        >
+                                                            Remover
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            abrirHighlightDialog(
+                                                                s.id,
+                                                            )
+                                                        }
+                                                        className="px-1 text-left text-[0.65rem] text-text-secondary hover:text-[color:var(--accent-deep)] focus:outline-none"
+                                                    >
+                                                        + Adicionar a destaque
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </Card>
@@ -745,6 +877,93 @@ export function MidiasTab({
                     }
                 }}
             />
+
+            {/* Modal de adicionar story em destaque. Mostra
+                sugestões dos títulos existentes (chips clicáveis)
+                + input pra novo título. */}
+            <Modal
+                open={highlightStoryId !== null}
+                onClose={() => setHighlightStoryId(null)}
+                title="Adicionar a destaque"
+                size="sm"
+            >
+                <div className="flex flex-col gap-4">
+                    <p className="text-sm text-text-secondary">
+                        Destaques aparecem no seu perfil acima da
+                        galeria. Escolha um existente ou crie um novo.
+                    </p>
+                    {titulosDestaque.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                            {titulosDestaque.map((t) => (
+                                <button
+                                    key={t}
+                                    type="button"
+                                    onClick={() => {
+                                        void salvarHighlight(t);
+                                    }}
+                                    disabled={savingHighlight}
+                                    className="rounded-full border border-[#ec7b5b]/30 bg-[#fff0eb] px-3 py-1 text-xs font-medium text-[color:var(--accent-deep)] hover:bg-[#fff0eb]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:opacity-60"
+                                >
+                                    {t}
+                                </button>
+                            ))}
+                        </div>
+                    ) : null}
+                    <div className="flex flex-col gap-1.5">
+                        <label
+                            htmlFor="highlight-title"
+                            className="text-xs font-medium text-text-secondary"
+                        >
+                            Novo título
+                        </label>
+                        <input
+                            id="highlight-title"
+                            type="text"
+                            value={highlightTitleInput}
+                            onChange={(e) =>
+                                setHighlightTitleInput(e.target.value)
+                            }
+                            maxLength={20}
+                            placeholder="Ex: Praia, Look do dia..."
+                            disabled={savingHighlight}
+                            className="rounded-xl border border-border bg-surface px-3 py-2 text-sm focus:border-[color:var(--accent)] focus:outline-none disabled:opacity-60"
+                        />
+                        <span className="text-[0.65rem] text-text-disabled">
+                            {highlightTitleInput.length}/20
+                        </span>
+                    </div>
+                    {highlightError !== null ? (
+                        <InlineAlert tone="danger">
+                            {highlightError}
+                        </InlineAlert>
+                    ) : null}
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="md"
+                            onClick={() => setHighlightStoryId(null)}
+                            disabled={savingHighlight}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="md"
+                            onClick={() => {
+                                void salvarHighlight(highlightTitleInput);
+                            }}
+                            disabled={
+                                savingHighlight ||
+                                highlightTitleInput.trim().length === 0
+                            }
+                        >
+                            {savingHighlight ? "Salvando…" : "Salvar"}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
