@@ -50,19 +50,19 @@ Premia quem fez a verificação e justifica o esforço.
 - [x] Switch "Apenas verificadas" no `FilterPanel`.
 - [x] Persistir no querystring `?verificada=1`.
 
-### ⬜ T03 — Galeria reordenável
+### ✅ T03 — Galeria reordenável
 **Esforço**: ~2h.
 **Acompanhante** arrasta mídias pra reordenar no painel.
 Hoje a ordem é fixa por `createdAt desc`.
 
-- [ ] Migration: adicionar `medias.sort_order INT DEFAULT 0`.
-- [ ] Service: `reordenarGaleria(userId, ids: string[])` em
+- [x] Migration: adicionar `medias.sort_order INT DEFAULT 0`.
+- [x] Service: `reordenarGaleria(userId, ids: string[])` em
       `galleryMedia.ts` — atualiza `sort_order` de cada mídia
       em transação.
-- [ ] Endpoint `PATCH /api/acompanhante/midias/order`.
-- [ ] Drag-and-drop nativo HTML5 (sem libs externas) no
+- [x] Endpoint `PATCH /api/acompanhante/midias/order`.
+- [x] Drag-and-drop nativo HTML5 (sem libs externas) no
       `MidiasTab`. Atualiza otimisticamente.
-- [ ] `listarGaleria` ordena por `sort_order asc, createdAt desc`.
+- [x] `listarGaleria` ordena por `sort_order asc, createdAt desc`.
 
 ### ⬜ T04 — Gamification: completude do perfil
 **Esforço**: ~2h.
@@ -286,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 2 / 15 concluídas (T01, T02).
+- 3 / 15 concluídas (T01, T02, T03).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
