@@ -39,6 +39,7 @@ import { db } from "@/lib/db";
 
 import { applyGalleryWatermark } from "./watermark";
 import { cleanupStaged, commitProfilePhoto } from "./profileMedia";
+import { extractVideoPoster } from "./extractVideoPoster";
 import { createR2Client, type R2Client } from "@/lib/storage/r2";
 
 // ---------------------------------------------------------------------------
@@ -178,31 +179,50 @@ export async function publicarReel(
         return { ok: false, reason: "PERSISTENCIA" };
     }
 
-    // Poster opcional — se foi fornecido, sobe pro R2 também.
+    // Poster opcional — se foi fornecido pelo cliente, usa esse.
+    // Caso contrário, gera automaticamente extraindo um frame
+    // do vídeo com FFmpeg (~0.5s). Em qualquer falha cai no path
+    // sem poster (vídeo carrega preto até metadata, mas funciona).
     let posterStorageKey: string | null = null;
     let posterStagedKey: string | null = null;
+    let posterBytesFinal: Buffer | null = null;
+    let posterMimeFinal: "image/jpeg" | "image/png" | null = null;
+
     if (
         input.posterBytes !== undefined &&
-        typeof input.posterMimeType === "string"
+        typeof input.posterMimeType === "string" &&
+        (input.posterMimeType === "image/jpeg" ||
+            input.posterMimeType === "image/png")
     ) {
-        const posterMime = input.posterMimeType;
-        if (posterMime === "image/jpeg" || posterMime === "image/png") {
-            posterStagedKey = `staged/${randomUUID()}`;
-            try {
-                await getR2Client().putStaged(
-                    posterStagedKey,
-                    input.posterBytes,
-                    posterMime as GaleriaMime,
-                );
-                posterStorageKey = `committed/${input.userId}/reels/posters/${randomUUID()}.${
-                    posterMime === "image/jpeg" ? "jpg" : "png"
-                }`;
-            } catch {
-                // Poster é melhor-esforço — sem ele o player ainda
-                // funciona.
-                posterStagedKey = null;
-                posterStorageKey = null;
-            }
+        posterBytesFinal = Buffer.isBuffer(input.posterBytes)
+            ? input.posterBytes
+            : Buffer.from(input.posterBytes);
+        posterMimeFinal = input.posterMimeType as "image/jpeg" | "image/png";
+    } else {
+        // Auto-gera poster via FFmpeg quando o caller não enviou.
+        const auto = await extractVideoPoster(watermarked, mimeType);
+        if (auto !== null) {
+            posterBytesFinal = auto;
+            posterMimeFinal = "image/jpeg";
+        }
+    }
+
+    if (posterBytesFinal && posterMimeFinal) {
+        posterStagedKey = `staged/${randomUUID()}`;
+        try {
+            await getR2Client().putStaged(
+                posterStagedKey,
+                posterBytesFinal,
+                posterMimeFinal,
+            );
+            posterStorageKey = `committed/${input.userId}/reels/posters/${randomUUID()}.${
+                posterMimeFinal === "image/jpeg" ? "jpg" : "png"
+            }`;
+        } catch {
+            // Poster é melhor-esforço — sem ele o player ainda
+            // funciona.
+            posterStagedKey = null;
+            posterStorageKey = null;
         }
     }
 

@@ -47,6 +47,7 @@ import {
     commitProfilePhoto,
 } from "./profileMedia";
 import { applyGalleryWatermark } from "./watermark";
+import { extractVideoPoster } from "./extractVideoPoster";
 import { createR2Client, type R2Client } from "@/lib/storage/r2";
 
 // ---------------------------------------------------------------------------
@@ -181,6 +182,28 @@ export async function publicarStory(
         return { ok: false, reason: "PERSISTENCIA" };
     }
 
+    // Poster automático pra Stories em vídeo. Best-effort —
+    // sem ele o vídeo carrega preto até metadata, mas funciona.
+    let posterStorageKey: string | null = null;
+    let posterStagedKey: string | null = null;
+    if (tipo === "VIDEO") {
+        const auto = await extractVideoPoster(watermarked, mimeType);
+        if (auto !== null) {
+            posterStagedKey = `staged/${randomUUID()}`;
+            try {
+                await getR2Client().putStaged(
+                    posterStagedKey,
+                    auto,
+                    "image/jpeg",
+                );
+                posterStorageKey = `committed/${input.userId}/stories/posters/${randomUUID()}.jpg`;
+            } catch {
+                posterStagedKey = null;
+                posterStorageKey = null;
+            }
+        }
+    }
+
     const finalKey = buildStoryKey(input.userId, mimeType);
     const now = input.now ?? new Date();
     const expiresAt = new Date(now.getTime() + STORY_DURATION_MS);
@@ -213,6 +236,7 @@ export async function publicarStory(
                     isProfilePhoto: false,
                     expiresAt,
                     description: caption.length > 0 ? caption : null,
+                    posterStorageKey,
                 },
                 select: { id: true },
             });
@@ -220,6 +244,7 @@ export async function publicarStory(
         });
     } catch (e) {
         await cleanupStaged(stagedKey);
+        if (posterStagedKey) await cleanupStaged(posterStagedKey);
         if (e instanceof StoryLimiteError) {
             return { ok: false, reason: "LIMITE_ATIVOS" };
         }
@@ -228,6 +253,7 @@ export async function publicarStory(
 
     if (mediaId === null) {
         await cleanupStaged(stagedKey);
+        if (posterStagedKey) await cleanupStaged(posterStagedKey);
         return { ok: false, reason: "PERSISTENCIA" };
     }
 
@@ -236,6 +262,15 @@ export async function publicarStory(
         finalKey,
         mediaId,
     });
+
+    // Commit do poster (best-effort — falha não invalida o story).
+    if (posterStagedKey && posterStorageKey) {
+        try {
+            await getR2Client().commit(posterStagedKey, posterStorageKey);
+        } catch {
+            // sem poster é OK — o vídeo carrega preto até metadata.
+        }
+    }
 
     return {
         ok: true,
