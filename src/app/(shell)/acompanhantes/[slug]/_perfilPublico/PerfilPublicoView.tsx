@@ -180,6 +180,15 @@ export interface PerfilPublicoViewProps {
         /** Stories do destaque, em ordem. */
         stories: ReadonlyArray<MediaItem>;
     }>;
+    /**
+     * TopicAudios públicos da Acompanhante — FAQ sonora. Lista vazia
+     * OK (a maioria dos perfis ainda não tem).
+     */
+    topicAudios: ReadonlyArray<{
+        topicKind: string;
+        url: string;
+        mimeType: string;
+    }>;
 }
 
 const FORMA_PAGAMENTO_ICONS: Record<FormaPagamento, React.ReactElement> = {
@@ -200,6 +209,16 @@ const WEEK_DAYS_VIEW: ReadonlyArray<WeekDay> = DIAS_SEMANA.map((d) => ({
     shortLabel: d.label,
     longLabel: d.longLabel,
 }));
+
+/** Rótulo visível pra cada `topicKind` na FAQ sonora pública. */
+const TOPIC_AUDIO_PUBLIC_LABELS: Record<string, string> = {
+    PRECO: "Preço",
+    CASAL: "Atende casal?",
+    DISPONIBILIDADE: "Disponibilidade",
+    LOCAL: "Local de atendimento",
+    PRATICAS: "Práticas",
+    PAGAMENTO: "Pagamento",
+};
 
 type FiltroGaleria = "tudo" | "fotos" | "videos";
 
@@ -222,6 +241,7 @@ export function PerfilPublicoView({
     minhaReview,
     favoritoInicial,
     destaques,
+    topicAudios,
 }: PerfilPublicoViewProps): React.ReactElement {
     const router = useRouter();
     const pathname = usePathname();
@@ -813,6 +833,35 @@ export function PerfilPublicoView({
                             {perfil.descricao}
                         </p>
                     </Card>
+                </section>
+            ) : null}
+
+            {/* Perguntas frequentes em áudio (T07). FAQ sonora —
+                Acompanhante grava ≤30s respondendo perguntas
+                comuns. Lista vazia → seção some. */}
+            {topicAudios.length > 0 ? (
+                <section className="flex flex-col gap-2">
+                    <SectionHeader
+                        title="Perguntas frequentes"
+                        subtitle="Respostas em áudio"
+                    />
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {topicAudios.map((t) => (
+                            <Card key={t.topicKind}>
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-sm font-semibold text-text-primary">
+                                        {TOPIC_AUDIO_PUBLIC_LABELS[t.topicKind] ??
+                                            t.topicKind}
+                                    </span>
+                                    <AudioWavePlayer
+                                        src={t.url}
+                                        mimeType={t.mimeType}
+                                        aria-label={`Áudio de ${t.topicKind}`}
+                                    />
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
                 </section>
             ) : null}
 

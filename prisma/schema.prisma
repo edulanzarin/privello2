@@ -50,9 +50,32 @@ enum MediaRole {
   PROFILE
   COVER
   AUDIO
+  /// Áudio curto (≤30s) respondendo a uma pergunta comum
+  /// (TopicAudioKind). Diferente de `AUDIO` (que é o
+  /// Áudio_de_Apresentação único, ≤60s). Filtra por
+  /// `topicKind` na leitura.
+  TOPIC_AUDIO
   GALLERY
   STORY
   REEL
+}
+
+/// Categoria do áudio curto por tópico (T07). Conjunto fechado
+/// pra a UI mostrar uma lista pré-definida de "perguntas
+/// frequentes" que cada Acompanhante pode responder com voz.
+enum TopicAudioKind {
+  /// Preço / valores praticados.
+  PRECO
+  /// Atende casal? duo? trio?
+  CASAL
+  /// Disponibilidade / dias / horários.
+  DISPONIBILIDADE
+  /// Local de atendimento (com ou sem local).
+  LOCAL
+  /// Práticas / o que faz e o que não faz.
+  PRATICAS
+  /// Forma de pagamento aceita.
+  PAGAMENTO
 }
 
 enum BoostPaymentStatus {
@@ -384,6 +407,11 @@ model Media {
   /// Em queries de leitura ordenamos por `highlight_order asc,
   /// created_at desc`.
   highlightOrder Int?        @map("highlight_order")
+
+  /// Categoria do áudio curto por tópico (apenas quando
+  /// `role=TOPIC_AUDIO`). NULL pra outros roles. Cada User pode ter
+  /// no máximo 1 TopicAudio por `topicKind` — unique parcial garante.
+  topicKind      TopicAudioKind? @map("topic_kind")
 
   createdAt      DateTime    @default(now()) @map("created_at")
 

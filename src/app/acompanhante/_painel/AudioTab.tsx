@@ -50,11 +50,22 @@ export interface AudioTabProps {
     audioUrl: string | null;
     /** MIME type do áudio (usado em `<audio type>` quando presente). */
     audioMimeType: string | null;
+    /**
+     * TopicAudios já gravados — áudios curtos por tópico (T07).
+     * Map `topicKind → { url, mimeType }`. Tópicos sem entrada
+     * mostram "gravar" no UI.
+     */
+    topicAudios?: ReadonlyArray<{
+        topicKind: string;
+        url: string;
+        mimeType: string;
+    }>;
 }
 
 export function AudioTab({
     audioUrl,
     audioMimeType,
+    topicAudios = [],
 }: AudioTabProps): React.ReactElement {
     const router = useRouter();
     const recordModal = useModal();
@@ -63,6 +74,21 @@ export function AudioTab({
     const [error, setError] = React.useState<string | null>(null);
     const [deleting, setDeleting] = React.useState(false);
     const [deleteError, setDeleteError] = React.useState<string | null>(null);
+
+    // -----------------------------------------------------------------
+    // TopicAudios — modal compartilhado, controla qual tópico abriu.
+    // -----------------------------------------------------------------
+    const [topicAtivo, setTopicAtivo] = React.useState<string | null>(null);
+    const [topicSubmitting, setTopicSubmitting] = React.useState(false);
+    const [topicError, setTopicError] = React.useState<string | null>(null);
+
+    const topicMap = React.useMemo(() => {
+        const m = new Map<string, { url: string; mimeType: string }>();
+        for (const t of topicAudios) {
+            m.set(t.topicKind, { url: t.url, mimeType: t.mimeType });
+        }
+        return m;
+    }, [topicAudios]);
 
     async function handleSubmit(result: AudioRecordResult): Promise<void> {
         setSubmitting(true);
@@ -114,6 +140,53 @@ export function AudioTab({
             setDeleteError("Falha de rede. Tente novamente.");
         } finally {
             setDeleting(false);
+        }
+    }
+
+    async function handleTopicSubmit(
+        topicKind: string,
+        result: AudioRecordResult,
+    ): Promise<void> {
+        setTopicSubmitting(true);
+        setTopicError(null);
+        try {
+            const formData = new FormData();
+            const ext = extFromMime(result.mimeType);
+            const fileName = `topic.${ext}`;
+            const file = new File([result.blob], fileName, {
+                type: result.mimeType,
+            });
+            formData.append("audio", file);
+            const res = await fetch(
+                `/api/acompanhante/audio/topic/${encodeURIComponent(topicKind.toLowerCase())}`,
+                { method: "POST", body: formData },
+            );
+            if (!res.ok) {
+                const payload = (await res.json().catch(() => null)) as
+                    | { reason?: string }
+                    | null;
+                setTopicError(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
+                return;
+            }
+            setTopicAtivo(null);
+            router.refresh();
+        } catch {
+            setTopicError("Falha ao enviar. Tente novamente.");
+        } finally {
+            setTopicSubmitting(false);
+        }
+    }
+
+    async function handleTopicDelete(topicKind: string): Promise<void> {
+        try {
+            const res = await fetch(
+                `/api/acompanhante/audio/topic/${encodeURIComponent(topicKind.toLowerCase())}`,
+                { method: "DELETE" },
+            );
+            if (!res.ok) return;
+            router.refresh();
+        } catch {
+            // best-effort
         }
     }
 
@@ -210,9 +283,107 @@ export function AudioTab({
                 confirmLabel="Excluir"
                 loading={deleting}
             />
+
+            {/* TopicAudios — áudios curtos por tópico (T07).
+                Acompanhante grava ≤30s respondendo perguntas comuns
+                ("Preço", "Atende casal?", "Disponibilidade" etc).
+                Aparecem como FAQ sonora no perfil público. */}
+            <SectionHeader
+                title="Perguntas frequentes em áudio"
+                subtitle="Grave respostas curtas (até 30s) para as perguntas mais comuns. Vão aparecer como FAQ sonora no seu perfil."
+            />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {TOPIC_AUDIO_OPTIONS.map((opt) => {
+                    const existente = topicMap.get(opt.kind) ?? null;
+                    return (
+                        <Card key={opt.kind}>
+                            <div className="flex flex-col gap-2.5">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-semibold text-text-primary">
+                                        {opt.label}
+                                    </span>
+                                    {existente !== null ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                void handleTopicDelete(opt.kind);
+                                            }}
+                                            className="text-[0.65rem] text-text-secondary hover:text-danger-700 focus:outline-none"
+                                        >
+                                            Remover
+                                        </button>
+                                    ) : null}
+                                </div>
+                                {existente !== null ? (
+                                    <AudioWavePlayer
+                                        src={existente.url}
+                                        mimeType={existente.mimeType}
+                                        aria-label={`Áudio de ${opt.label}`}
+                                    />
+                                ) : null}
+                                <Button
+                                    type="button"
+                                    variant={
+                                        existente !== null ? "ghost" : "primary"
+                                    }
+                                    size="sm"
+                                    onClick={() => {
+                                        setTopicAtivo(opt.kind);
+                                        setTopicError(null);
+                                    }}
+                                >
+                                    <MicIcon size={12} />
+                                    {existente !== null ? "Regravar" : "Gravar"}
+                                </Button>
+                            </div>
+                        </Card>
+                    );
+                })}
+            </div>
+
+            {topicError !== null ? (
+                <InlineAlert tone="danger">{topicError}</InlineAlert>
+            ) : null}
+
+            <AudioRecordModal
+                open={topicAtivo !== null}
+                onClose={() => {
+                    setTopicAtivo(null);
+                    setTopicError(null);
+                }}
+                onSubmit={async (result) => {
+                    if (topicAtivo === null) return;
+                    await handleTopicSubmit(topicAtivo, result);
+                }}
+                submitting={topicSubmitting}
+                title={
+                    topicAtivo !== null
+                        ? `Gravar áudio: ${TOPIC_AUDIO_LABEL_MAP[topicAtivo] ?? topicAtivo}`
+                        : "Gravar áudio"
+                }
+                minSeconds={3}
+                maxSeconds={30}
+            />
         </div>
     );
 }
+
+const TOPIC_AUDIO_OPTIONS: ReadonlyArray<{ kind: string; label: string }> = [
+    { kind: "PRECO", label: "Preço" },
+    { kind: "CASAL", label: "Atende casal?" },
+    { kind: "DISPONIBILIDADE", label: "Disponibilidade" },
+    { kind: "LOCAL", label: "Local de atendimento" },
+    { kind: "PRATICAS", label: "Práticas" },
+    { kind: "PAGAMENTO", label: "Pagamento" },
+];
+
+const TOPIC_AUDIO_LABEL_MAP: Record<string, string> = TOPIC_AUDIO_OPTIONS.reduce(
+    (acc, opt) => {
+        acc[opt.kind] = opt.label;
+        return acc;
+    },
+    {} as Record<string, string>,
+);
 
 /**
  * Deriva a extensão do arquivo a partir do MIME informado pelo

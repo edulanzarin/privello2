@@ -23,6 +23,7 @@ import { listarDestaquesPublicos, listarStoriesDoDestaque } from "@/server/stora
 import {
     listarStoriesAtivosDoPerfil,
 } from "@/server/storage/storyMedia";
+import { listarTopicAudios } from "@/server/storage/topicAudio";
 import { listarPerguntasPublicas } from "@/server/questions";
 import {
     listarReviewsPublicos,
@@ -228,6 +229,9 @@ export default async function PerfilPublicoPage({
         }),
     );
 
+    // TopicAudios públicos do perfil — FAQ sonora.
+    const topicAudios = await listarTopicAudios(result.userId);
+
     return (
         <PageSurface
             banner={<ProfileBanner photoUrl={result.perfil.coverUrl} />}
@@ -290,6 +294,11 @@ export default async function PerfilPublicoPage({
                     coverKind: d.coverKind,
                     coverMediaId: d.coverMediaId,
                     stories: d.stories,
+                }))}
+                topicAudios={topicAudios.map((t) => ({
+                    topicKind: t.topicKind,
+                    url: `/api/storage/${t.storageKey}`,
+                    mimeType: t.mimeType,
                 }))}
             />
         </PageSurface>

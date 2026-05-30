@@ -30,6 +30,7 @@ import {
     listarDestaques,
     mapearHighlightTitlesDoOwner,
 } from "@/server/storage/highlights";
+import { listarTopicAudios } from "@/server/storage/topicAudio";
 import {
     contarPerguntasPendentes,
     listarPerguntasPublicas,
@@ -131,6 +132,12 @@ export default async function AcompanhantePainelPage() {
         : new Map<string, string>();
     const destaquesDoOwner = planoVigente.permiteStories
         ? await listarDestaques(session.userId)
+        : [];
+
+    // TopicAudios — áudios curtos por tópico. Apenas pra Premium
+    // (mesmo guard do áudio principal). Lista vazia OK pra Básico.
+    const topicAudiosDoOwner = planoVigente.permiteAudio
+        ? await listarTopicAudios(session.userId)
         : [];
 
     // Reels do dono — sempre carrega; `permiteReels` é true em
@@ -326,6 +333,11 @@ export default async function AcompanhantePainelPage() {
                         <AudioTab
                             audioUrl={perfil.audioUrl}
                             audioMimeType={perfil.audioMimeType}
+                            topicAudios={topicAudiosDoOwner.map((t) => ({
+                                topicKind: t.topicKind,
+                                url: `/api/storage/${t.storageKey}`,
+                                mimeType: t.mimeType,
+                            }))}
                         />
                     </TabPanel>
                 ) : null}
