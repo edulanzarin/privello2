@@ -86,6 +86,37 @@ export default async function BoostPage() {
                 />
             ) : null}
 
+            {status.agendadoParaInicio ? (
+                <Card>
+                    <div className="flex items-center gap-3">
+                        <span
+                            aria-hidden="true"
+                            className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
+                        >
+                            <FlameIcon size={20} />
+                        </span>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-semibold text-text-primary">
+                                Boost programado
+                            </span>
+                            <span className="text-xs text-text-secondary">
+                                Começa em{" "}
+                                {status.agendadoParaInicio.toLocaleString(
+                                    "pt-BR",
+                                    {
+                                        day: "2-digit",
+                                        month: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    },
+                                )}{" "}
+                                e dura 24h. Pagamento já confirmado.
+                            </span>
+                        </div>
+                    </div>
+                </Card>
+            ) : null}
+
             <Card>
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">

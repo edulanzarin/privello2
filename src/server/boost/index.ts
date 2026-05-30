@@ -34,6 +34,7 @@ import {
     BOOST_PRICE_CENTS,
     calcularNovoBoostUntil,
     isBoostAtivo,
+    normalizarBoostStartAt,
 } from "@/domain/boost/definitions";
 import { db } from "@/lib/db";
 import {
@@ -77,6 +78,14 @@ export type CriarPagamentoBoostInput = {
     baseUrl: string;
     /** Email do pagador (preenche automático no checkout). */
     payerEmail?: string;
+    /**
+     * Momento em que o boost deve começar. `null`/ausente = imediato
+     * (ativa assim que o pagamento aprovar). Quando no futuro, o
+     * boost é agendado: o webhook aprova mas não estende `boostUntil`
+     * — o cron ativa na hora. Validado/normalizado via
+     * {@link normalizarBoostStartAt}.
+     */
+    startAt?: string | Date | null;
 };
 
 export type CriarPagamentoBoostResult =
@@ -86,6 +95,7 @@ export type CriarPagamentoBoostResult =
         reason:
         | "PERFIL_NAO_ENCONTRADO"
         | "MP_NAO_CONFIGURADO"
+        | "AGENDAMENTO_INVALIDO"
         | "PERSISTENCIA";
     };
 
@@ -100,6 +110,13 @@ export type StatusBoost = {
      * andamento" enquanto o webhook não confirmou.
      */
     pendingPaymentId: string | null;
+    /**
+     * Quando há um boost pago e agendado pra começar no futuro
+     * (`startAt > now`, ainda não ativado), traz o instante de
+     * início. `null` quando não há agendamento pendente. UI mostra
+     * "Boost programado pra DD/MM às HH:mm".
+     */
+    agendadoParaInicio: Date | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -140,6 +157,15 @@ export async function criarPagamentoBoost(
         return { ok: false, reason: "MP_NAO_CONFIGURADO" };
     }
 
+    // Normaliza o agendamento. `imediato` deixa startAt nulo;
+    // `agendado` grava a data; `invalido` aborta antes de tocar no MP.
+    const agendamento = normalizarBoostStartAt(input.startAt ?? null);
+    if (agendamento.kind === "invalido") {
+        return { ok: false, reason: "AGENDAMENTO_INVALIDO" };
+    }
+    const startAt =
+        agendamento.kind === "agendado" ? agendamento.startAt : null;
+
     // 2. Cria o registro local primeiro.
     const externalReference = `boost_${randomUUID()}`;
     let payment;
@@ -151,6 +177,7 @@ export async function criarPagamentoBoost(
                 currency: BOOST_CURRENCY,
                 status: "PENDING",
                 externalReference,
+                startAt,
             },
             select: { id: true },
         });
@@ -288,7 +315,13 @@ export async function processarWebhookBoost(
 
     const local = await db.boostPayment.findUnique({
         where: { externalReference: details.externalReference },
-        select: { id: true, status: true, mpPaymentId: true, userId: true },
+        select: {
+            id: true,
+            status: true,
+            mpPaymentId: true,
+            userId: true,
+            startAt: true,
+        },
     });
     if (!local) {
         return { ok: false, reason: "PAGAMENTO_NAO_ENCONTRADO" };
@@ -306,6 +339,31 @@ export async function processarWebhookBoost(
     const status = details.status.toLowerCase();
 
     if (status === "approved") {
+        // Boost agendado pro futuro: aprova o pagamento mas NÃO
+        // estende `boostUntil` agora. `activatesAt` fica nulo —
+        // o cron (`ativarBoostsAgendados`) ativa quando `startAt`
+        // chegar. `expiresAt` também fica nulo até a ativação real.
+        const agendadoPraFuturo =
+            local.startAt !== null && local.startAt.getTime() > now.getTime();
+
+        if (agendadoPraFuturo) {
+            try {
+                await db.boostPayment.update({
+                    where: { id: local.id },
+                    data: {
+                        status: "APPROVED",
+                        mpPaymentId: details.id,
+                        // activatesAt/expiresAt continuam null →
+                        // sinaliza "aprovado mas ainda não ativado".
+                    },
+                });
+                return { ok: true, applied: true };
+            } catch {
+                return { ok: false, reason: "PERSISTENCIA" };
+            }
+        }
+
+        // Ativação imediata (startAt nulo ou já passou).
         try {
             await db.$transaction(async (tx) => {
                 const profile = await tx.acompanhanteProfile.findUnique({
@@ -386,12 +444,13 @@ export async function obterStatusBoost(
     userId: string,
     options: { now?: Date } = {},
 ): Promise<StatusBoost> {
+    const now = options.now ?? new Date();
     const profile = await db.acompanhanteProfile.findUnique({
         where: { userId },
         select: { boostUntil: true },
     });
     const boostUntil = profile?.boostUntil ?? null;
-    const ativo = isBoostAtivo(boostUntil, options.now);
+    const ativo = isBoostAtivo(boostUntil, now);
 
     // Verifica se há um pagamento pendente recente — útil para a UI
     // mostrar "aguardando confirmação" depois que o usuário voltou
@@ -402,9 +461,102 @@ export async function obterStatusBoost(
         select: { id: true },
     });
 
+    // Boost agendado: aprovado, com `startAt` no futuro e ainda não
+    // ativado (`activatesAt` nulo). UI mostra "começa em DD/MM HH:mm".
+    const agendado = await db.boostPayment.findFirst({
+        where: {
+            userId,
+            status: "APPROVED",
+            activatesAt: null,
+            startAt: { gt: now },
+        },
+        orderBy: { startAt: "asc" },
+        select: { startAt: true },
+    });
+
     return {
         ativo,
         boostUntil,
         pendingPaymentId: pending?.id ?? null,
+        agendadoParaInicio: agendado?.startAt ?? null,
     };
+}
+
+// ---------------------------------------------------------------------------
+// Ativar boosts agendados (cron noturno)
+// ---------------------------------------------------------------------------
+
+export interface AtivarBoostsAgendadosResult {
+    /** Quantos boosts agendados foram ativados nesta varredura. */
+    ativados: number;
+}
+
+/**
+ * Ativa boosts agendados cujo `startAt` já chegou.
+ *
+ * Critério: `status=APPROVED AND activatesAt IS NULL AND
+ * startAt <= now`. Pra cada um, estende `boostUntil` da
+ * Acompanhante (cumulativo via `calcularNovoBoostUntil`) e marca
+ * `activatesAt`/`expiresAt` — o que tira o registro da próxima
+ * varredura (idempotente).
+ *
+ * Cada ativação roda em sua própria transação pra que uma falha
+ * isolada não derrube as demais. Chamado pelo cleanup noturno.
+ */
+export async function ativarBoostsAgendados(
+    options: { now?: Date } = {},
+): Promise<AtivarBoostsAgendadosResult> {
+    const now = options.now ?? new Date();
+
+    const pendentes = await db.boostPayment.findMany({
+        where: {
+            status: "APPROVED",
+            activatesAt: null,
+            startAt: { not: null, lte: now },
+        },
+        select: { id: true, userId: true },
+    });
+
+    let ativados = 0;
+    for (const boost of pendentes) {
+        try {
+            await db.$transaction(async (tx) => {
+                // Re-checa dentro da transação pra evitar corrida com
+                // outra ativação concorrente (ex.: dois crons).
+                const fresh = await tx.boostPayment.findUnique({
+                    where: { id: boost.id },
+                    select: { activatesAt: true },
+                });
+                if (fresh === null || fresh.activatesAt !== null) {
+                    return; // já ativado por outra execução.
+                }
+
+                const profile = await tx.acompanhanteProfile.findUnique({
+                    where: { userId: boost.userId },
+                    select: { boostUntil: true },
+                });
+                const newBoostUntil = calcularNovoBoostUntil(
+                    profile?.boostUntil ?? null,
+                    now,
+                );
+
+                await tx.boostPayment.update({
+                    where: { id: boost.id },
+                    data: {
+                        activatesAt: now,
+                        expiresAt: newBoostUntil,
+                    },
+                });
+                await tx.acompanhanteProfile.update({
+                    where: { userId: boost.userId },
+                    data: { boostUntil: newBoostUntil },
+                });
+                ativados += 1;
+            });
+        } catch {
+            // best-effort: falha isolada não impede os demais.
+        }
+    }
+
+    return { ativados };
 }

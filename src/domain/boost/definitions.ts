@@ -80,3 +80,65 @@ export function calcularNovoBoostUntil(
             : now;
     return new Date(base.getTime() + BOOST_DURATION_MS);
 }
+
+/**
+ * Janela máxima (em ms) de antecedência pra agendar um Boost.
+ * Limita o `startAt` a no máximo 30 dias no futuro — agendar pra
+ * data muito distante não faz sentido pro produto e evita registros
+ * "fantasma" parados por meses.
+ */
+export const BOOST_AGENDAMENTO_MAX_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Folga mínima (em ms) pra considerar um `startAt` como "futuro"
+ * de fato. Abaixo disso (ex.: agendar pra daqui a 30s), tratamos
+ * como "começar agora" — não vale a pena criar um agendamento que
+ * o cron ativaria quase imediatamente.
+ */
+export const BOOST_AGENDAMENTO_MIN_MS = 5 * 60 * 1000;
+
+/**
+ * Resultado da normalização de um `startAt` informado pelo usuário.
+ *
+ * - `{ kind: "imediato" }`: ativa assim que o pagamento aprovar.
+ * - `{ kind: "agendado", startAt }`: ativa no `startAt` via cron.
+ * - `{ kind: "invalido", reason }`: data malformada ou fora dos
+ *   limites aceitos.
+ */
+export type BoostStartAtNormalizado =
+    | { kind: "imediato" }
+    | { kind: "agendado"; startAt: Date }
+    | { kind: "invalido"; reason: "DATA_INVALIDA" | "FORA_DA_JANELA" };
+
+/**
+ * Normaliza o `startAt` informado no checkout.
+ *
+ * - `null`/`undefined` → imediato.
+ * - Data inválida (não-parseável) → inválido `DATA_INVALIDA`.
+ * - Data no passado ou a menos de {@link BOOST_AGENDAMENTO_MIN_MS}
+ *   no futuro → imediato (não compensa agendar).
+ * - Data a mais de {@link BOOST_AGENDAMENTO_MAX_MS} no futuro →
+ *   inválido `FORA_DA_JANELA`.
+ * - Caso contrário → agendado.
+ */
+export function normalizarBoostStartAt(
+    raw: string | Date | null | undefined,
+    now: Date = new Date(),
+): BoostStartAtNormalizado {
+    if (raw === null || raw === undefined || raw === "") {
+        return { kind: "imediato" };
+    }
+    const date = raw instanceof Date ? raw : new Date(raw);
+    if (Number.isNaN(date.getTime())) {
+        return { kind: "invalido", reason: "DATA_INVALIDA" };
+    }
+    const delta = date.getTime() - now.getTime();
+    if (delta < BOOST_AGENDAMENTO_MIN_MS) {
+        // Passado ou quase-agora: trata como imediato.
+        return { kind: "imediato" };
+    }
+    if (delta > BOOST_AGENDAMENTO_MAX_MS) {
+        return { kind: "invalido", reason: "FORA_DA_JANELA" };
+    }
+    return { kind: "agendado", startAt: date };
+}

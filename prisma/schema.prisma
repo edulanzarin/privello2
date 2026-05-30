@@ -650,12 +650,20 @@ model BoostPayment {
   externalReference  String             @unique @map("external_reference") @db.VarChar(80)
   mpPreferenceId     String?            @unique @map("mp_preference_id") @db.VarChar(120)
   mpPaymentId        String?            @map("mp_payment_id") @db.VarChar(120)
+  /// Momento em que o boost deve COMEÇAR. `NULL` = imediato (ativa
+  /// assim que o pagamento é aprovado). Quando preenchido e no
+  /// futuro, o webhook aprova o pagamento mas NÃO estende
+  /// `boostUntil` — o cron noturno (`ativarBoostsAgendados`) faz a
+  /// ativação quando `startAt <= now`. A flag de idempotência é
+  /// `activatesAt IS NULL` (só ativa quem ainda não foi ativado).
+  startAt            DateTime?          @map("start_at")
   activatesAt        DateTime?          @map("activates_at")
   expiresAt          DateTime?          @map("expires_at")
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
 
   @@index([userId, status, createdAt(sort: Desc)])
+  @@index([status, activatesAt, startAt])
   @@map("boost_payments")
 }
 

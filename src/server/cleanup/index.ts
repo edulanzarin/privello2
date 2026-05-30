@@ -21,6 +21,7 @@
 
 import { db } from "@/lib/db";
 
+import { ativarBoostsAgendados } from "@/server/boost";
 import { arquivarStoriesExpiradosGlobal } from "@/server/storage/storyMedia";
 import { rebaixarVerificacoesExpiradas } from "@/server/verification";
 
@@ -47,6 +48,12 @@ export interface CleanupReport {
      * documento.
      */
     verificacoesExpiradas: number;
+    /**
+     * Quantos boosts agendados (`startAt <= now`, ainda não
+     * ativados) foram ativados nesta varredura — estendem o
+     * `boostUntil` da Acompanhante.
+     */
+    boostsAgendadosAtivados: number;
 }
 
 /**
@@ -66,6 +73,7 @@ export async function runCleanup(
         storiesArchived: 0,
         fansClienteExpirados: 0,
         verificacoesExpiradas: 0,
+        boostsAgendadosAtivados: 0,
     };
 
     // 1) Sessões revogadas há > 7 dias OU expiradas há > 7 dias.
@@ -159,6 +167,15 @@ export async function runCleanup(
     try {
         const result = await rebaixarVerificacoesExpiradas({ now });
         report.verificacoesExpiradas = result.rebaixadas;
+    } catch {
+        // best-effort
+    }
+
+    // 8) Boosts agendados que chegaram a hora → ativa (estende
+    //    `boostUntil`). Idempotente via `activatesAt IS NULL`.
+    try {
+        const result = await ativarBoostsAgendados({ now });
+        report.boostsAgendadosAtivados = result.ativados;
     } catch {
         // best-effort
     }

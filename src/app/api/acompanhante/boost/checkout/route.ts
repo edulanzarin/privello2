@@ -41,6 +41,19 @@ export async function POST(request: Request): Promise<NextResponse> {
         );
     }
 
+    // `startAt` opcional no body — ISO string. Ausente = imediato.
+    let startAt: string | null = null;
+    try {
+        const body = (await request.json().catch(() => null)) as
+            | { startAt?: unknown }
+            | null;
+        if (body && typeof body.startAt === "string") {
+            startAt = body.startAt;
+        }
+    } catch {
+        // body vazio é OK (boost imediato).
+    }
+
     // Email para preencher automaticamente o checkout do MP. Não é
     // obrigatório, mas melhora a UX.
     const user = await db.user.findUnique({
@@ -52,6 +65,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         userId: auth.userId,
         baseUrl,
         payerEmail: user?.email,
+        startAt,
     });
 
     if (result.ok) {
@@ -62,6 +76,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     if (result.reason === "MP_NAO_CONFIGURADO") {
         return NextResponse.json(result, { status: 503 });
+    }
+    if (result.reason === "AGENDAMENTO_INVALIDO") {
+        return NextResponse.json(result, { status: 400 });
     }
     return NextResponse.json(result, { status: 500 });
 }

@@ -23,11 +23,20 @@ import { formatarPrecoBoost } from "@/domain/boost/definitions";
  *  - `pendingPaymentId !== null`: mostra alerta informando que há
  *    pagamento aguardando confirmação. Não bloqueia nova compra
  *    (o usuário pode tentar de novo se o checkout anterior travou).
+ *
+ * # Agendamento (T09)
+ *
+ * Toggle "Começar agora" / "Programar". No modo programar, mostra
+ * um `datetime-local` — a data escolhida vira `startAt` no body do
+ * checkout. O boost só estende `boostUntil` quando a hora chegar
+ * (via cron). Datas inválidas/fora da janela são barradas no server.
  */
 export interface BoostCheckoutButtonProps {
     ativo: boolean;
     pendingPaymentId: string | null;
 }
+
+type Modo = "agora" | "programar";
 
 export function BoostCheckoutButton({
     ativo,
@@ -35,13 +44,47 @@ export function BoostCheckoutButton({
 }: BoostCheckoutButtonProps): React.ReactElement {
     const [submitting, setSubmitting] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const [modo, setModo] = React.useState<Modo>("agora");
+    const [startAtLocal, setStartAtLocal] = React.useState("");
+
+    // Mínimo do datetime-local: agora + 10min, formato
+    // "YYYY-MM-DDTHH:mm" (sem segundos/timezone — o input usa local).
+    const minDateTime = React.useMemo(() => {
+        const d = new Date(Date.now() + 10 * 60 * 1000);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+            d.getDate(),
+        )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }, []);
 
     async function handleClick(): Promise<void> {
         setSubmitting(true);
         setError(null);
+
+        // Valida o agendamento no client antes de bater no server.
+        let startAtIso: string | null = null;
+        if (modo === "programar") {
+            if (startAtLocal.length === 0) {
+                setError("Escolha a data e hora de início.");
+                setSubmitting(false);
+                return;
+            }
+            const parsed = new Date(startAtLocal);
+            if (Number.isNaN(parsed.getTime())) {
+                setError("Data inválida.");
+                setSubmitting(false);
+                return;
+            }
+            startAtIso = parsed.toISOString();
+        }
+
         try {
             const res = await fetch("/api/acompanhante/boost/checkout", {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(
+                    startAtIso !== null ? { startAt: startAtIso } : {},
+                ),
             });
             const payload = (await res.json().catch(() => null)) as
                 | { ok?: boolean; reason?: string; checkoutUrl?: string }
@@ -59,6 +102,13 @@ export function BoostCheckoutButton({
         }
     }
 
+    const ctaLabel =
+        modo === "programar"
+            ? `Programar boost (${formatarPrecoBoost()})`
+            : ativo
+                ? `Estender boost por mais 24h (${formatarPrecoBoost()})`
+                : `Comprar boost (${formatarPrecoBoost()})`;
+
     return (
         <div className="flex flex-col gap-3">
             {pendingPaymentId !== null ? (
@@ -66,6 +116,60 @@ export function BoostCheckoutButton({
                     Você tem um pagamento aguardando confirmação do Mercado Pago.
                     Se já pagou, aguarde alguns segundos e atualize a página.
                 </InlineAlert>
+            ) : null}
+
+            {/* Toggle de modo de início. */}
+            <div
+                role="group"
+                aria-label="Quando começar o boost"
+                className="grid grid-cols-2 gap-2"
+            >
+                <button
+                    type="button"
+                    onClick={() => setModo("agora")}
+                    aria-pressed={modo === "agora"}
+                    className={[
+                        "rounded-xl border px-3 py-2 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                        modo === "agora"
+                            ? "border-[#ec7b5b]/50 bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                            : "border-border bg-surface text-text-secondary hover:border-[#ec7b5b]/30",
+                    ].join(" ")}
+                >
+                    Começar agora
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setModo("programar")}
+                    aria-pressed={modo === "programar"}
+                    className={[
+                        "rounded-xl border px-3 py-2 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                        modo === "programar"
+                            ? "border-[#ec7b5b]/50 bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                            : "border-border bg-surface text-text-secondary hover:border-[#ec7b5b]/30",
+                    ].join(" ")}
+                >
+                    Programar
+                </button>
+            </div>
+
+            {modo === "programar" ? (
+                <label className="flex flex-col gap-1.5">
+                    <span className="text-xs font-medium text-text-secondary">
+                        Início (sua hora local)
+                    </span>
+                    <input
+                        type="datetime-local"
+                        value={startAtLocal}
+                        min={minDateTime}
+                        onChange={(e) => setStartAtLocal(e.target.value)}
+                        className="rounded-xl border border-border bg-surface px-3 py-2 text-sm focus:border-[color:var(--accent)] focus:outline-none"
+                    />
+                    <span className="text-[0.65rem] text-text-disabled">
+                        O boost ativa automaticamente na hora escolhida e
+                        dura 24h. Até lá, o pagamento fica confirmado e
+                        aguardando.
+                    </span>
+                </label>
             ) : null}
 
             {error !== null ? (
@@ -81,9 +185,7 @@ export function BoostCheckoutButton({
                 disabled={submitting}
             >
                 <FlameIcon size={16} />
-                {ativo
-                    ? `Estender boost por mais 24h (${formatarPrecoBoost()})`
-                    : `Comprar boost (${formatarPrecoBoost()})`}
+                {ctaLabel}
             </Button>
         </div>
     );
@@ -95,6 +197,8 @@ function reasonToMessage(reason: string): string {
             return "Perfil não encontrado.";
         case "MP_NAO_CONFIGURADO":
             return "Pagamentos indisponíveis no momento. Tente novamente mais tarde.";
+        case "AGENDAMENTO_INVALIDO":
+            return "Data de início inválida. Escolha entre agora e 30 dias à frente.";
         case "TIPO_INVALIDO":
             return "Esta conta não pode comprar boost.";
         case "NAO_AUTENTICADO":
