@@ -167,22 +167,22 @@ de semana.
       "Programar para...".
 - [x] Cleanup noturno ativa boosts agendados que chegaram a hora.
 
-### ⬜ T10 — Stats avançados
+### ✅ T10 — Stats avançados
 **Esforço**: ~5h.
 Gráficos detalhados no painel da Acompanhante: visualizações
 por hora do dia / dia da semana / origem (busca / direct /
 link compartilhado), top mídias mais curtidas, conversão
 (visualização → clique no WhatsApp).
 
-- [ ] Migration: adicionar colunas em `profile_daily_stats`
+- [x] Migration: adicionar colunas em `profile_daily_stats`
       pra agregar por `hora_do_dia` (24 buckets) e
       `origem` (enum: BUSCA / HOME / DIRECT / COMPARTILHADO).
-- [ ] `incrementarVisualizacao` recebe contexto (referrer
+- [x] `incrementarVisualizacao` recebe contexto (referrer
       header).
-- [ ] Service `obterStatsAvancadas(userId, dias)` agrega.
-- [ ] UI: tabs internas em `EstatisticasTab` (Geral /
+- [x] Service `obterStatsAvancadas(userId, dias)` agrega.
+- [x] UI: tabs internas em `EstatisticasTab` (Geral /
       Horários / Origens / Top mídias).
-- [ ] Reusa `BarChart` pra horários, novo `Heatmap` (7×24)
+- [x] Reusa `BarChart` pra horários, novo `Heatmap` (7×24)
       pra dia × hora.
 
 ### ⬜ T11 — Compartilhamento social com card-imagem
@@ -286,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 9 / 15 concluídas (T01–T09).
+- 10 / 15 concluídas (T01–T10).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
