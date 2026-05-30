@@ -185,18 +185,18 @@ link compartilhado), top mídias mais curtidas, conversão
 - [x] Reusa `BarChart` pra horários, novo `Heatmap` (7×24)
       pra dia × hora.
 
-### ⬜ T11 — Compartilhamento social com card-imagem
+### ✅ T11 — Compartilhamento social com card-imagem
 **Esforço**: ~4h.
 Botão "Compartilhar" gera uma imagem-card (estilo Spotify
 Wrapped) com foto + nome + cidade + selos. Útil pra postar
 em Instagram Story / WhatsApp Status.
 
-- [ ] Endpoint `GET /api/acompanhantes/[slug]/share-card.png`
+- [x] Endpoint `GET /api/acompanhantes/[slug]/share-card.png`
       gera PNG via `sharp` compositando template + foto.
       Cacheable (ETag).
-- [ ] Botão "Compartilhar" no perfil público que abre menu
+- [x] Botão "Compartilhar" no perfil público que abre menu
       nativo (`navigator.share`) com imagem + URL + texto.
-- [ ] Fallback (browsers sem `share`): copia link + abre
+- [x] Fallback (browsers sem `share`): copia link + abre
       modal mostrando o card-imagem.
 
 ### ❌ T12 — i18n (pt-BR / es / en)
@@ -287,7 +287,7 @@ Cada task respeita:
 
 ## Status global
 
-- 10 / 12 ativas concluídas (T01–T10).
-- Restantes ativas: T11 (card-imagem), T14 (mapa interativo).
+- 11 / 12 ativas concluídas (T01–T11).
+- Restante ativa: T14 (mapa interativo).
 - Descartadas: T12 (i18n), T13 (a11y deep-dive), T15
   (verificação ao vivo).
