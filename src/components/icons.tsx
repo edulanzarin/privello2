@@ -765,3 +765,16 @@ export function TrendingUpIcon(props: IconProps): React.ReactElement {
         </Svg>
     );
 }
+
+/**
+ * Bookmark — ícone de marcador. Usado em "Salvar / Favoritar".
+ * Versão outline (estado off) e fill via `currentColor` quando
+ * o caller passar `style={{ fill: 'currentColor' }}`.
+ */
+export function BookmarkIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
+        </Svg>
+    );
+}

@@ -211,6 +211,10 @@ model User {
   verificationsReviewed Verification[] @relation("VerificationReviewer")
   reportsAuthored Report[] @relation("ReportAuthor")
   reportsResolved Report[] @relation("ReportResolver")
+  /// Favoritos onde este User é o Cliente que marcou.
+  favoritesAuthored ClientFavorite[] @relation("ClientFavoritesAuthor")
+  /// Favoritos onde este User é a Acompanhante marcada.
+  favoritedBy       ClientFavorite[] @relation("ClientFavoritesTarget")
 
   @@index([isAdmin])
   @@map("users")
@@ -734,4 +738,26 @@ model Report {
   // migration `20260720000000_report_unique_reporter_target`
   // porque Prisma DSL não suporta partial indexes.
   @@map("reports")
+}
+
+
+// ---------------------------------------------------------------------------
+// Favoritos / Salvos
+// ---------------------------------------------------------------------------
+
+/// Marcação leve de "Cliente favoritou Acompanhante". Toggle
+/// idempotente (PK composta evita duplicata). Cada Cliente vê a
+/// própria lista; cada Acompanhante vê apenas o COUNT total
+/// (anonimizado — quem é cada favorito é privado).
+model ClientFavorite {
+  clientUserId        String   @map("client_user_id") @db.Uuid
+  client              User     @relation("ClientFavoritesAuthor", fields: [clientUserId], references: [id], onDelete: Cascade)
+  acompanhanteUserId  String   @map("acompanhante_user_id") @db.Uuid
+  acompanhante        User     @relation("ClientFavoritesTarget", fields: [acompanhanteUserId], references: [id], onDelete: Cascade)
+  criadoEm            DateTime @default(now()) @map("criado_em")
+
+  @@id([clientUserId, acompanhanteUserId])
+  @@index([clientUserId, criadoEm(sort: Desc)])
+  @@index([acompanhanteUserId])
+  @@map("client_favorites")
 }
