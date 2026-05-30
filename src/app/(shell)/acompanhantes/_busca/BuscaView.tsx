@@ -439,6 +439,33 @@ export function BuscaView({
     const ativos = contarAtivos(draft);
     const ativosUrl = contarAtivos(filtros);
 
+    /**
+     * Owner cujo grupo de stories está sendo visualizado no
+     * `MediaCarousel` em `storyMode`. Quando `null`, o carrossel
+     * está fechado. A lista de items mostrada e a barra de
+     * progresso são derivadas só dos stories desse owner — o
+     * comportamento é estilo Instagram: vê todos da Helena, depois
+     * passa pra próxima, e só fecha no fim do último owner.
+     *
+     * Declarado aqui (antes do early-return abaixo) pra respeitar
+     * rules-of-hooks.
+     */
+    const [activeOwnerId, setActiveOwnerId] = React.useState<string | null>(
+        null,
+    );
+
+    /**
+     * Stories do owner atualmente em foco. Memoizado pra que o
+     * `MediaCarousel` não re-renderize quando outros estados
+     * mudam.
+     */
+    const ownerStoryItems = React.useMemo(() => {
+        if (activeOwnerId === null) return [];
+        return storiesItems.filter(
+            (s) => s.ownerIdentificador === activeOwnerId,
+        );
+    }, [activeOwnerId, storiesItems]);
+
     // ─────────────────────────────────────────────────────────────
     // Early return: tela "selecione sua cidade".
     //
@@ -477,30 +504,6 @@ export function BuscaView({
      * Como o array `storiesItems` já vem flat e ordenado por dono,
      * basta achar o primeiro item daquele identificador.
      */
-    /**
-     * Owner cujo grupo de stories está sendo visualizado no
-     * `MediaCarousel` em `storyMode`. Quando `null`, o carrossel
-     * está fechado. A lista de items mostrada e a barra de
-     * progresso são derivadas só dos stories desse owner — o
-     * comportamento é estilo Instagram: vê todos da Helena, depois
-     * passa pra próxima, e só fecha no fim do último owner.
-     */
-    const [activeOwnerId, setActiveOwnerId] = React.useState<string | null>(
-        null,
-    );
-
-    /**
-     * Stories do owner atualmente em foco. Memoizado pra que o
-     * `MediaCarousel` não re-renderize quando outros estados
-     * mudam.
-     */
-    const ownerStoryItems = React.useMemo(() => {
-        if (activeOwnerId === null) return [];
-        return storiesItems.filter(
-            (s) => s.ownerIdentificador === activeOwnerId,
-        );
-    }, [activeOwnerId, storiesItems]);
-
     function abrirStoriesDoOwner(identificador: string): void {
         const target = storiesItems.find(
             (s) => s.ownerIdentificador === identificador,
