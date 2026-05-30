@@ -151,21 +151,21 @@ Premium-only.
 - [x] Aba "Vídeo" no painel (apenas Premium, condicional).
 - [x] No perfil público: card destaque com player.
 
-### ⬜ T09 — Boost programado
+### ✅ T09 — Boost programado
 **Esforço**: ~4h.
 Acompanhante agenda Boost pra começar em data/hora futura
 (ex: "começar sexta 18h"). Útil pra pegar tráfego de fim
 de semana.
 
-- [ ] Migration: adicionar `boost_payments.start_at DateTime
+- [x] Migration: adicionar `boost_payments.start_at DateTime
       NULL` (NULL = começar imediatamente).
-- [ ] Lógica: ao webhook MP confirmar pagamento, se
+- [x] Lógica: ao webhook MP confirmar pagamento, se
       `start_at > now`, NÃO seta `boostUntil` agora. Cron job
       verifica `start_at <= now AND boostUntil < now` e ativa.
-- [ ] Service `agendarBoost(userId, durationDays, startAt)`.
-- [ ] UI no `/acompanhante/boost`: opção "Começar agora" ou
+- [x] Service `agendarBoost(userId, durationDays, startAt)`.
+- [x] UI no `/acompanhante/boost`: opção "Começar agora" ou
       "Programar para...".
-- [ ] Cleanup noturno ativa boosts agendados que chegaram a hora.
+- [x] Cleanup noturno ativa boosts agendados que chegaram a hora.
 
 ### ⬜ T10 — Stats avançados
 **Esforço**: ~5h.
@@ -286,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 8 / 15 concluídas (T01–T08).
+- 9 / 15 concluídas (T01–T09).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
