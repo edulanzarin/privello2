@@ -15,27 +15,28 @@ Lista de tasks priorizadas. Atualizar status conforme avançamos:
 
 ## Curto prazo (alto ROI, baixo esforço)
 
-### ⬜ T01 — Favoritos / Salvos
+### ✅ T01 — Favoritos / Salvos
 **Esforço**: ~3h.
 **Cliente** marca Acompanhantes como favorita. Lista própria
 em `/cliente#favoritos` com cards mini. Contador no header da
 Acompanhante ("X clientes te salvaram") apenas pra ela ver no
 painel privado.
 
-- [ ] Migration: tabela `client_favorites(client_user_id,
+- [x] Migration: tabela `client_favorites(client_user_id,
       acompanhante_user_id, criado_em)` com unique composto +
       cascade.
-- [ ] Service `src/server/favorites/index.ts`:
+- [x] Service `src/server/favorites/index.ts`:
       `marcarFavorito`, `desmarcarFavorito`, `listarFavoritos`,
-      `contarFavoritosDoOwner`.
-- [ ] Endpoint `POST /api/acompanhantes/[slug]/favorite` (toggle).
-- [ ] Botão "Salvar" (ícone bookmark) no `ProfileHeader` —
+      `contarFavoritosDoOwner` (toggle unificado +
+      `isFavorito` pra estado inicial do botão).
+- [x] Endpoint `POST /api/acompanhantes/[slug]/favorite` (toggle).
+- [x] Botão "Salvar" (ícone bookmark) no `ProfileHeader` —
       só aparece pra Cliente logado, ao lado do CTA WhatsApp.
-- [ ] Aba nova "Favoritos" no painel `/cliente`.
-- [ ] MetricPill "Salva por X" no painel da Acompanhante (só
+- [x] Aba nova "Favoritos" no painel `/cliente`.
+- [x] MetricPill "Salva por X" no painel da Acompanhante (só
       ela vê, não vira público).
-- [ ] Primitivo `BookmarkButton` com estado toggle animado.
-- [ ] Ícone novo `BookmarkIcon` em icons.tsx.
+- [x] Primitivo `BookmarkButton` com estado toggle animado.
+- [x] Ícone novo `BookmarkIcon` em icons.tsx.
 
 ### ⬜ T02 — Filtro "Verificadas apenas" na busca
 **Esforço**: ~30min.
@@ -285,6 +286,6 @@ Cada task respeita:
 
 ## Status global
 
-- 0 / 15 concluídas.
+- 1 / 15 concluídas (T01).
 - Estimativa total: ~67h.
 - Bloqueadores externos: T15 depende de SDK pago.
