@@ -233,20 +233,20 @@ visual, idosos, navegação por teclado, e SEO.
 - [ ] Adicionar `axe-core/playwright` ao CI.
 - [ ] Audit manual com VoiceOver (macOS) / NVDA (Windows).
 
-### ⬜ T14 — Mapa interativo
+### ✅ T14 — Mapa interativo
 **Esforço**: ~6h.
 Tab "Mapa" na busca com pins agrupados por cidade/bairro.
 Útil pra cliente que quer "perto de mim".
 
-- [ ] Adotar Maplibre GL (open-source, sem token) com
+- [x] Adotar Maplibre GL (open-source, sem token) com
       tiles do MapTiler ou OSM.
-- [ ] Migration: adicionar `acompanhante_profiles.lat,lng
+- [x] Migration: adicionar `acompanhante_profiles.lat,lng
       DOUBLE PRECISION NULL` (geocodificar via Overpass do
       bairro/cidade ao salvar).
-- [ ] Component `BuscaMapa` com clusters (Mapbox/Maplibre
+- [x] Component `BuscaMapa` com clusters (Mapbox/Maplibre
       tem helper).
-- [ ] Toggle Lista/Mapa no header da busca.
-- [ ] Botão "Usar minha localização" (geolocation API).
+- [x] Toggle Lista/Mapa no header da busca.
+- [x] Botão "Usar minha localização" (geolocation API).
 
 ### ❌ T15 — Verificação ao vivo
 **Esforço**: ~12h+. **Descartada** (decisão do produto +
@@ -287,7 +287,6 @@ Cada task respeita:
 
 ## Status global
 
-- 11 / 12 ativas concluídas (T01–T11).
-- Restante ativa: T14 (mapa interativo).
+- 12 / 12 ativas concluídas (T01–T11, T14). 🎉
 - Descartadas: T12 (i18n), T13 (a11y deep-dive), T15
   (verificação ao vivo).
