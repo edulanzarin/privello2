@@ -199,8 +199,8 @@ em Instagram Story / WhatsApp Status.
 - [ ] Fallback (browsers sem `share`): copia link + abre
       modal mostrando o card-imagem.
 
-### ⬜ T12 — i18n (pt-BR / es / en)
-**Esforço**: ~8h.
+### ❌ T12 — i18n (pt-BR / es / en)
+**Esforço**: ~8h. **Descartada** (decisão do produto).
 Suporte multilíngue. Brasil tem turistas que pesquisam em
 inglês/espanhol; também útil pra atender expatriados.
 
@@ -218,8 +218,8 @@ inglês/espanhol; também útil pra atender expatriados.
 
 ## Longo prazo
 
-### ⬜ T13 — A11y deep-dive
-**Esforço**: ~6h.
+### ❌ T13 — A11y deep-dive
+**Esforço**: ~6h. **Descartada** (decisão do produto).
 Acessibilidade WCAG AA. Útil pra usuários com deficiência
 visual, idosos, navegação por teclado, e SEO.
 
@@ -248,8 +248,9 @@ Tab "Mapa" na busca com pins agrupados por cidade/bairro.
 - [ ] Toggle Lista/Mapa no header da busca.
 - [ ] Botão "Usar minha localização" (geolocation API).
 
-### ⬜ T15 — Verificação ao vivo
-**Esforço**: ~12h+.
+### ❌ T15 — Verificação ao vivo
+**Esforço**: ~12h+. **Descartada** (decisão do produto +
+depende de SDK pago).
 Chamada de vídeo curta (~30s) com admin pra confirmar
 identidade real (anti-deepfake).
 
@@ -286,6 +287,7 @@ Cada task respeita:
 
 ## Status global
 
-- 10 / 15 concluídas (T01–T10).
-- Estimativa total: ~67h.
-- Bloqueadores externos: T15 depende de SDK pago.
+- 10 / 12 ativas concluídas (T01–T10).
+- Restantes ativas: T11 (card-imagem), T14 (mapa interativo).
+- Descartadas: T12 (i18n), T13 (a11y deep-dive), T15
+  (verificação ao vivo).
