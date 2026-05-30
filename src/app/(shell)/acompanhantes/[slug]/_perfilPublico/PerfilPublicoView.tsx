@@ -7,6 +7,7 @@ import {
     AttributeTile,
     AudioWavePlayer,
     BanknoteIcon,
+    BookmarkButton,
     Button,
     Card,
     CashIcon,
@@ -161,6 +162,11 @@ export interface PerfilPublicoViewProps {
      * (ou `null`). Usado pra pré-popular o textarea "Sua avaliação".
      */
     minhaReview: { comment: string; rating: number | null } | null;
+    /**
+     * Estado inicial do bookmark (Cliente logado já salvou este
+     * perfil?). `null` quando não-Cliente — botão não aparece.
+     */
+    favoritoInicial: boolean | null;
 }
 
 const FORMA_PAGAMENTO_ICONS: Record<FormaPagamento, React.ReactElement> = {
@@ -201,6 +207,7 @@ export function PerfilPublicoView({
     viewerNome,
     viewerFotoUrl,
     minhaReview,
+    favoritoInicial,
 }: PerfilPublicoViewProps): React.ReactElement {
     const router = useRouter();
     const pathname = usePathname();
@@ -220,6 +227,40 @@ export function PerfilPublicoView({
     React.useEffect(() => {
         setStoryRingState(storyRing);
     }, [storyRing]);
+
+    // Estado do bookmark — só inicializa pra Cliente logado. Owner /
+    // Acompanhante / anônimo recebem `null` e o botão não aparece.
+    const [favorito, setFavorito] = React.useState<boolean>(
+        favoritoInicial ?? false,
+    );
+    const [favoritoLoading, setFavoritoLoading] = React.useState(false);
+
+    /**
+     * Toggle otimista do favorito. Botão só renderiza pra Cliente
+     * logado (`viewerKind === "cliente"`), então não precisamos
+     * tratar o caso anônimo aqui — UI já gateia. Erro de rede
+     * reverte o estado e mostra inline (sem alert).
+     */
+    async function handleToggleFavorito(): Promise<void> {
+        if (favoritoLoading) return;
+        const next = !favorito;
+        setFavorito(next);
+        setFavoritoLoading(true);
+        try {
+            const res = await fetch(
+                `/api/acompanhantes/${encodeURIComponent(slug)}/favorite`,
+                { method: "POST" },
+            );
+            if (!res.ok) {
+                // Reverte otimismo. Botão silencioso — sem alert.
+                setFavorito(!next);
+            }
+        } catch {
+            setFavorito(!next);
+        } finally {
+            setFavoritoLoading(false);
+        }
+    }
 
     /**
      * State do {@link ReportDialog} pra denunciar mídias do
@@ -603,12 +644,24 @@ export function PerfilPublicoView({
                 }
                 actions={
                     !viewerIsOwner && viewerKind !== "anonimo" ? (
-                        <ReportButton
-                            targetType="USER"
-                            targetId={profileUserId}
-                            tone="neutral"
-                            title="Denunciar perfil"
-                        />
+                        <>
+                            {viewerKind === "cliente" ? (
+                                <BookmarkButton
+                                    marked={favorito}
+                                    onChange={() => {
+                                        void handleToggleFavorito();
+                                    }}
+                                    disabled={favoritoLoading}
+                                    size="md"
+                                />
+                            ) : null}
+                            <ReportButton
+                                targetType="USER"
+                                targetId={profileUserId}
+                                tone="neutral"
+                                title="Denunciar perfil"
+                            />
+                        </>
                     ) : undefined
                 }
                 storyRing={storyRingState}

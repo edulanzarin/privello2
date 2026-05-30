@@ -1,4 +1,5 @@
 import {
+    BookmarkIcon,
     ChatIcon,
     DiamondIcon,
     HeartIcon,
@@ -14,6 +15,7 @@ import {
 } from "@/components";
 import { getCurrentSession } from "@/server/auth/currentSession";
 import { obterPerfilCliente } from "@/server/cliente-profile";
+import { listarFavoritos } from "@/server/favorites";
 import {
     contarInteracoesDoCliente,
     listarComentariosDoCliente,
@@ -26,6 +28,7 @@ import {
 
 import { AtividadeTab } from "./_painel/AtividadeTab";
 import { ConfiguracoesTab } from "./_painel/ConfiguracoesTab";
+import { FavoritosTab } from "./_painel/FavoritosTab";
 import { PerfilTab } from "./_painel/PerfilTab";
 
 /**
@@ -78,13 +81,14 @@ export default async function ClientePainelPage() {
         );
     }
 
-    const [reviews, reviewsCount, likes, comentarios, interacoes] =
+    const [reviews, reviewsCount, likes, comentarios, interacoes, favoritos] =
         await Promise.all([
             listarReviewsDoCliente(session.userId),
             contarReviewsDoCliente(session.userId),
             listarLikesDoCliente(session.userId),
             listarComentariosDoCliente(session.userId),
             contarInteracoesDoCliente(session.userId),
+            listarFavoritos(session.userId),
         ]);
 
     const isFan = perfil.planoVigente === "FAN";
@@ -133,6 +137,18 @@ export default async function ClientePainelPage() {
             <Tabs defaultValue="perfil" urlHash className="flex flex-col gap-5">
                 <TabList aria-label="Áreas do painel">
                     <TabTrigger value="perfil">Perfil</TabTrigger>
+                    <TabTrigger value="favoritos">
+                        <BookmarkIcon size={14} />
+                        Favoritos
+                        {favoritos.length > 0 ? (
+                            <span
+                                aria-label={`${favoritos.length} favoritos`}
+                                className="ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white"
+                            >
+                                {favoritos.length}
+                            </span>
+                        ) : null}
+                    </TabTrigger>
                     <TabTrigger value="atividade">Atividade</TabTrigger>
                     <TabTrigger value="configuracoes">
                         Configurações
@@ -141,6 +157,9 @@ export default async function ClientePainelPage() {
 
                 <TabPanel value="perfil">
                     <PerfilTab perfil={perfil} />
+                </TabPanel>
+                <TabPanel value="favoritos">
+                    <FavoritosTab favoritos={favoritos} />
                 </TabPanel>
                 <TabPanel value="atividade">
                     <AtividadeTab

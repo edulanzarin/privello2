@@ -1,4 +1,5 @@
 import {
+    BookmarkIcon,
     HeartIcon,
     CrownIcon,
     ChatIcon,
@@ -22,6 +23,7 @@ import { obterStatusBoost } from "@/server/boost";
 import { obterVigente } from "@/server/planos";
 import { contarLikesTotais } from "@/server/acompanhante-profile/likesTotal";
 import { listarStatsDiarias } from "@/server/acompanhante-profile/stats";
+import { contarFavoritosDoOwner } from "@/server/favorites";
 import {
     contarPerguntasPendentes,
     listarPerguntasPublicas,
@@ -128,7 +130,9 @@ export default async function AcompanhantePainelPage() {
 
     // Métricas reais: visualizações + curtidas totais (foto + galeria
     // + stories) + perguntas pendentes a responder + lista completa
-    // de perguntas (pra aba dedicada) + série diária pra gráfico.
+    // de perguntas (pra aba dedicada) + série diária pra gráfico +
+    // contagem de Clientes que favoritaram (privacidade: só o número,
+    // não a lista de quem foi).
     const [
         likesTotal,
         perguntasPendentes,
@@ -136,6 +140,7 @@ export default async function AcompanhantePainelPage() {
         boost,
         statsDiarias,
         statusVerificacao,
+        favoritosCount,
     ] = await Promise.all([
         contarLikesTotais(session.userId),
         contarPerguntasPendentes(session.userId),
@@ -145,6 +150,7 @@ export default async function AcompanhantePainelPage() {
         obterStatusBoost(session.userId),
         listarStatsDiarias(session.userId, { dias: 30 }),
         obterStatusVerificacao(session.userId),
+        contarFavoritosDoOwner(session.userId),
     ]);
 
     const isPremium = planoVigente.tipo === "PREMIUM";
@@ -169,16 +175,17 @@ export default async function AcompanhantePainelPage() {
                 pra publicar. Some assim que `perfilVisivel` vira true. */}
             <PerfilOcultoBanner perfilVisivel={perfil.perfilVisivel} />
 
-            {/* Linha de métricas — 3 pills sempre na mesma linha
-                (grid 3 colunas). Visualizações = total acumulado de
+            {/* Linha de métricas — 4 pills (2 colunas em mobile, 4
+                em tablet+). Visualizações = total acumulado de
                 aberturas do perfil; curtidas = soma de curtidas em
                 todas as mídias publicadas (foto, capa, galeria,
-                stories ativos); mídias = uso atual versus limite
-                do plano. */}
+                stories ativos); salvos = quantos Clientes marcaram
+                como favorita (apenas o COUNT — privacidade); mídias
+                = uso atual versus limite do plano. */}
             <div
                 role="group"
                 aria-label="Resumo do perfil"
-                className="grid grid-cols-3 gap-2"
+                className="grid grid-cols-2 gap-2 sm:grid-cols-4"
             >
                 <MetricPill
                     icon={<UsersIcon size={11} />}
@@ -197,6 +204,15 @@ export default async function AcompanhantePainelPage() {
                             : "—"
                     }
                     label="curtidas"
+                />
+                <MetricPill
+                    icon={<BookmarkIcon size={11} />}
+                    value={
+                        favoritosCount > 0
+                            ? favoritosCount.toLocaleString("pt-BR")
+                            : "—"
+                    }
+                    label={favoritosCount === 1 ? "te salvou" : "te salvaram"}
                 />
                 <MetricPill
                     icon={<SparklesIcon size={11} />}

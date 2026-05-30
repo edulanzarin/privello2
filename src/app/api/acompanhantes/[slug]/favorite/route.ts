@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { requireCliente } from "@/server/auth/guards";
-import { enforceRateLimit } from "@/server/auth/rateLimitGuard";
+import { enforceRateLimit, LIMITS } from "@/server/auth/rateLimitGuard";
 import { toggleFavorito } from "@/server/favorites";
 
 export const runtime = "nodejs";
@@ -30,10 +30,7 @@ export async function POST(
     const auth = await requireCliente(request);
     if (!auth.ok) return auth.response;
 
-    const rl = enforceRateLimit("favorites", auth.userId, {
-        max: 60,
-        windowMs: 60_000,
-    });
+    const rl = enforceRateLimit("favorites", auth.userId, LIMITS.favorites);
     if (rl) return rl;
 
     const { slug } = await context.params;

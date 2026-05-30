@@ -225,6 +225,13 @@ export type {
 export { LikeButton } from "./primitives/LikeButton";
 export type { LikeButtonProps, LikeButtonSize } from "./primitives/LikeButton";
 
+export { BookmarkButton } from "./primitives/BookmarkButton";
+export type {
+    BookmarkButtonProps,
+    BookmarkButtonSize,
+    BookmarkButtonTone,
+} from "./primitives/BookmarkButton";
+
 export { RatingStars } from "./primitives/RatingStars";
 export type {
     RatingStarsProps,
@@ -378,6 +385,7 @@ export {
     AtIcon,
     ArrowRightIcon,
     BanknoteIcon,
+    BookmarkIcon,
     CalendarIcon,
     CameraIcon,
     CameraVerifiedIcon,

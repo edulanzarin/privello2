@@ -13,6 +13,7 @@ import { obterPerfilPublico } from "@/server/acompanhante-profile";
 import { contarLikesTotais } from "@/server/acompanhante-profile/likesTotal";
 import { getCurrentSession } from "@/server/auth/currentSession";
 import { obterPerfilCliente } from "@/server/cliente-profile";
+import { isFavorito } from "@/server/favorites";
 import { obterLikesDoViewer } from "@/server/media-interactions";
 import {
     listarGaleria,
@@ -183,6 +184,17 @@ export default async function PerfilPublicoPage({
         liked: likedSet.has(row.id),
     }));
 
+    // Estado inicial do "salvar" (bookmark) — apenas Cliente logado
+    // pode favoritar Acompanhante. Owner e Acompanhante não veem o
+    // botão; passar `null` aqui sinaliza isso.
+    const favoritoInicial =
+        session?.userType === "CLIENTE"
+            ? await isFavorito({
+                clientUserId: session.userId,
+                acompanhanteUserId: result.userId,
+            })
+            : null;
+
     return (
         <PageSurface
             banner={<ProfileBanner photoUrl={result.perfil.coverUrl} />}
@@ -237,6 +249,7 @@ export default async function PerfilPublicoPage({
                 viewerNome={viewerClienteProfile?.nome ?? null}
                 viewerFotoUrl={viewerClienteProfile?.fotoUrl ?? null}
                 minhaReview={minhaReview}
+                favoritoInicial={favoritoInicial}
             />
         </PageSurface>
     );

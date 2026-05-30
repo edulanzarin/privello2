@@ -22,8 +22,8 @@ export default function Loading() {
                 </div>
 
                 {/* MetricPills */}
-                <div className="grid grid-cols-3 gap-2">
-                    {[1, 2, 3].map((i) => (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {[1, 2, 3, 4].map((i) => (
                         <Skeleton key={i} height={48} />
                     ))}
                 </div>

@@ -87,4 +87,6 @@ export const LIMITS = {
     reels: { max: 10, windowMs: 60 * 60_000 } satisfies RateLimitInput,
     /** Mídias da galeria: 30/h — onboarding pode publicar várias. */
     medias: { max: 30, windowMs: 60 * 60_000 } satisfies RateLimitInput,
+    /** Favoritos (toggle): 60/min — usuário pode salvar/desmarcar várias. */
+    favorites: { max: 60, windowMs: 60_000 } satisfies RateLimitInput,
 } as const;
