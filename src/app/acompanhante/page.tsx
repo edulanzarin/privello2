@@ -25,6 +25,7 @@ import { obterStatusBoost } from "@/server/boost";
 import { obterVigente } from "@/server/planos";
 import { contarLikesTotais } from "@/server/acompanhante-profile/likesTotal";
 import { listarStatsDiarias } from "@/server/acompanhante-profile/stats";
+import { obterStatsAvancadas } from "@/server/acompanhante-profile/stats";
 import { contarFavoritosDoOwner } from "@/server/favorites";
 import { obterCompletude } from "@/server/acompanhante-profile/completude";
 import {
@@ -172,6 +173,7 @@ export default async function AcompanhantePainelPage() {
         statusVerificacao,
         favoritosCount,
         completude,
+        statsAvancadas,
     ] = await Promise.all([
         contarLikesTotais(session.userId),
         contarPerguntasPendentes(session.userId),
@@ -183,6 +185,7 @@ export default async function AcompanhantePainelPage() {
         obterStatusVerificacao(session.userId),
         contarFavoritosDoOwner(session.userId),
         obterCompletude(session.userId),
+        obterStatsAvancadas(session.userId),
     ]);
 
     const isPremium = planoVigente.tipo === "PREMIUM";
@@ -334,6 +337,27 @@ export default async function AcompanhantePainelPage() {
                         stats={statsDiarias}
                         totalViews={perfil.viewsCount}
                         totalLikes={likesTotal}
+                        avancadas={{
+                            heatmap: statsAvancadas.heatmap.map((c) => ({
+                                weekday: c.weekday,
+                                hour: c.hour,
+                                views: c.views,
+                            })),
+                            origens: statsAvancadas.origens.map((o) => ({
+                                origin: o.origin,
+                                views: o.views,
+                            })),
+                            topMidias: statsAvancadas.topMidias.map((m) => ({
+                                mediaId: m.mediaId,
+                                kind: m.kind,
+                                url: `/api/storage/${m.storageKey}`,
+                                likesCount: m.likesCount,
+                                commentsCount: m.commentsCount,
+                            })),
+                            totalWhatsappClicks:
+                                statsAvancadas.totalWhatsappClicks,
+                            conversao: statsAvancadas.conversao,
+                        }}
                     />
                 </TabPanel>
                 {planoVigente.permiteAudio ? (

@@ -8,6 +8,7 @@ import {
     marcarViewCooldown,
     viewCooldownAtivo,
 } from "@/server/acompanhante-profile/views";
+import { classificarOrigem } from "@/domain/stats/origem";
 
 /**
  * `POST /api/acompanhantes/[slug]/view`
@@ -68,9 +69,27 @@ export async function POST(
     }
 
     const session = await getCurrentSession();
+
+    // Classifica a origem da visita a partir do referrer enviado
+    // pelo client (document.referrer) comparado com o host do site.
+    let referrer: string | null = null;
+    try {
+        const body = (await request.json().catch(() => null)) as
+            | { referrer?: unknown }
+            | null;
+        if (body && typeof body.referrer === "string") {
+            referrer = body.referrer;
+        }
+    } catch {
+        // body ausente é OK — vira DIRECT.
+    }
+    const siteHost = new URL(request.url).host;
+    const origin = classificarOrigem(referrer, siteHost);
+
     const result = await incrementarVisualizacao(
         target.id,
         session?.userId ?? null,
+        origin,
     );
 
     if (!result.applied) {

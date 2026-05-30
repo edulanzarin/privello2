@@ -94,6 +94,19 @@ enum VerificationStatus {
   REJEITADA
 }
 
+/// Origem de uma visualização de perfil público (T10 — stats
+/// avançados). Classificada server-side a partir do referrer.
+enum ViewOrigin {
+  /// Veio da página de busca (`/acompanhantes?...`).
+  BUSCA
+  /// Veio da home (`/`).
+  HOME
+  /// Acesso direto — sem referrer interno (link colado, app, etc).
+  DIRECT
+  /// Veio de fora do domínio (rede social, WhatsApp, Google).
+  COMPARTILHADO
+}
+
 enum ReportTargetType {
   USER
   MEDIA
@@ -233,6 +246,8 @@ model User {
   storyViews      StoryView[]
   reelViews       ReelView[]
   profileDailyStats ProfileDailyStat[]
+  profileHourlyStats ProfileHourlyStat[]
+  profileOriginStats ProfileOriginStat[]
   verification    Verification?
   verificationsReviewed Verification[] @relation("VerificationReviewer")
   reportsAuthored Report[] @relation("ReportAuthor")
@@ -333,6 +348,10 @@ model AcompanhanteProfile {
   // cooldown via cookie por viewer. Substituível por agregação
   // baseada em eventos quando o `Sistema_de_Estatisticas` existir.
   viewsCount         Int            @default(0) @map("views_count")
+
+  // Contador agregado de cliques no botão de WhatsApp. Alimenta a
+  // métrica de conversão (visualização → clique) no painel.
+  whatsappClicksCount Int           @default(0) @map("whatsapp_clicks_count")
 
   // Contador de avaliações (apenas comentários textuais — nota
   // foi removida do produto). Materializado pela trigger
@@ -583,10 +602,45 @@ model ProfileDailyStat {
   day    DateTime @map("day") @db.Date
   views  Int      @default(0)
   likes  Int      @default(0)
+  /// Cliques no botão de WhatsApp neste dia. Alimenta a métrica de
+  /// conversão (visualização → clique) no painel.
+  whatsappClicks Int @default(0) @map("whatsapp_clicks")
 
   @@id([userId, day])
   @@index([userId, day(sort: Desc)])
   @@map("profile_daily_stats")
+}
+
+/// Stats avançados (T10) — agregação por dia-da-semana × hora (UTC)
+/// pra alimentar um heatmap 7×24 de "quando recebo visitas". Uma
+/// linha por (userId, weekday, hour). `weekday` 0=domingo..6=sábado
+/// (igual a `Date.getUTCDay()`). `hour` 0..23 em UTC.
+///
+/// Mantida separada da daily pra que o heatmap não precise de uma
+/// tabela por-hora-por-dia (que cresceria sem limite). Aqui o
+/// espaço é fixo: no máximo 7×24=168 linhas por perfil.
+model ProfileHourlyStat {
+  userId  String @map("user_id") @db.Uuid
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekday Int    @map("weekday")
+  hour    Int    @map("hour")
+  views   Int    @default(0)
+
+  @@id([userId, weekday, hour])
+  @@map("profile_hourly_stats")
+}
+
+/// Stats avançados (T10) — agregação de visualizações por origem.
+/// Uma linha por (userId, origin). Cresce no máximo 4 linhas por
+/// perfil (uma por valor do enum `ViewOrigin`).
+model ProfileOriginStat {
+  userId String     @map("user_id") @db.Uuid
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  origin ViewOrigin
+  views  Int        @default(0)
+
+  @@id([userId, origin])
+  @@map("profile_origin_stats")
 }
 
 // ---------------------------------------------------------------------------

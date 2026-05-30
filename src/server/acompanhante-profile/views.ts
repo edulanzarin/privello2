@@ -1,8 +1,12 @@
 import { cookies } from "next/headers";
 
 import { db } from "@/lib/db";
+import type { ViewOrigin } from "@/domain/stats/origem";
 
-import { incrementarStatDiaria } from "./stats";
+import {
+    incrementarStatDiaria,
+    registrarViewAvancada,
+} from "./stats";
 
 /**
  * Cooldown padrão entre visualizações que contam para o mesmo
@@ -168,10 +172,13 @@ export type IncrementarVisualizacaoResult = { applied: boolean };
  * @param viewerUserId - `userId` do visitante autenticado, ou `null`
  *   para anônimos. Quando o visitante é a própria Acompanhante,
  *   o incremento é pulado (não faz sentido auto-view).
+ * @param origin - Origem da visita (busca/home/direct/compartilhado),
+ *   classificada server-side a partir do referrer. Default `DIRECT`.
  */
 export async function incrementarVisualizacao(
     targetUserId: string,
     viewerUserId: string | null,
+    origin: ViewOrigin = "DIRECT",
 ): Promise<IncrementarVisualizacaoResult> {
     if (viewerUserId !== null && viewerUserId === targetUserId) {
         return { applied: false };
@@ -188,6 +195,11 @@ export async function incrementarVisualizacao(
         await incrementarStatDiaria({
             userId: targetUserId,
             field: "views",
+        }).catch(() => undefined);
+        // Agregações avançadas (heatmap + origem). Best-effort.
+        await registrarViewAvancada({
+            userId: targetUserId,
+            origin,
         }).catch(() => undefined);
         return { applied: true };
     } catch {

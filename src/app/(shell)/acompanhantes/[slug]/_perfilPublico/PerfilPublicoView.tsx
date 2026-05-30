@@ -767,7 +767,7 @@ export function PerfilPublicoView({
 
             {/* CTA principal: WhatsApp */}
             {perfil.whatsappUrl !== null ? (
-                <WhatsappCTA href={perfil.whatsappUrl} />
+                <WhatsappCTA href={perfil.whatsappUrl} slug={slug} />
             ) : null}
 
             {/* Valores + Localização — duas StatCards lado a lado em
@@ -1179,7 +1179,7 @@ export function PerfilPublicoView({
                 da página. Quem rolou tudo até aqui já decidiu — não
                 obrigamos o usuário a rolar pra cima de novo. */}
             {perfil.whatsappUrl !== null ? (
-                <WhatsappCTA href={perfil.whatsappUrl} />
+                <WhatsappCTA href={perfil.whatsappUrl} slug={slug} />
             ) : null}
 
             {/* Carrossel modal */}
@@ -1352,14 +1352,42 @@ function PlanoBadge({
  * o header) e no rodapé (após Avaliações). Mantemos a duplicação
  * deliberada — visitante que rolou tudo até o fim já decidiu, e
  * não queremos forçar ele a rolar de volta pra clicar.
+ *
+ * Ao clicar, dispara um beacon fire-and-forget pra
+ * `/api/acompanhantes/[slug]/whatsapp-click` (métrica de conversão,
+ * T10) antes de seguir o link. Não bloqueia a navegação — usa
+ * `keepalive` pra que o request sobreviva ao unload da página.
  */
-function WhatsappCTA({ href }: { href: string }): React.ReactElement {
+function WhatsappCTA({
+    href,
+    slug,
+}: {
+    href: string;
+    slug: string;
+}): React.ReactElement {
+    function handleClick(): void {
+        try {
+            void fetch(
+                `/api/acompanhantes/${encodeURIComponent(slug)}/whatsapp-click`,
+                {
+                    method: "POST",
+                    keepalive: true,
+                    headers: { "Content-Type": "application/json" },
+                    body: "{}",
+                },
+            ).catch(() => undefined);
+        } catch {
+            // Métrica não bloqueia o contato.
+        }
+    }
+
     return (
         <Button
             href={href}
             variant="primary"
             size="lg"
             className="w-full"
+            onClick={handleClick}
         >
             <WhatsappIcon size={16} />
             Falar no WhatsApp

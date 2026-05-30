@@ -92,6 +92,7 @@ export function Button({
     href,
     className,
     children,
+    onClick,
     ...rest
 }: ButtonProps): React.ReactElement {
     const inactive = disabled || loading;
@@ -120,10 +121,20 @@ export function Button({
 
     // Renderiza como link quando `href` é fornecido. Mantém o mesmo
     // visual; remove props que só fazem sentido em `<button>` (type,
-    // form, etc.) para não vazar atributos inválidos no DOM.
+    // form, etc.) para não vazar atributos inválidos no DOM. O
+    // `onClick` é encaminhado (útil pra side-effects fire-and-forget
+    // antes da navegação, ex.: métrica de clique).
     if (href !== undefined && !inactive) {
         return (
-            <a href={href} className={composed}>
+            <a
+                href={href}
+                className={composed}
+                onClick={
+                    onClick as
+                        | React.MouseEventHandler<HTMLAnchorElement>
+                        | undefined
+                }
+            >
                 {inner}
             </a>
         );
@@ -136,6 +147,7 @@ export function Button({
             disabled={inactive}
             aria-busy={loading || undefined}
             className={composed}
+            onClick={onClick}
         >
             {inner}
         </button>

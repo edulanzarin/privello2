@@ -130,6 +130,9 @@ export type {
 export { BarChart } from "./primitives/BarChart";
 export type { BarChartPoint, BarChartProps } from "./primitives/BarChart";
 
+export { Heatmap } from "./primitives/Heatmap";
+export type { HeatmapCell, HeatmapProps } from "./primitives/Heatmap";
+
 export { SectionHeader } from "./primitives/SectionHeader";
 export type { SectionHeaderProps } from "./primitives/SectionHeader";
 
