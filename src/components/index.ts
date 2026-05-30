@@ -114,6 +114,9 @@ export type {
     ProgressRingSize,
 } from "./primitives/ProgressRing";
 
+export { InstallPromptBanner } from "./primitives/InstallPromptBanner";
+export type { InstallPromptBannerProps } from "./primitives/InstallPromptBanner";
+
 export {
     LoadingSpinner,
     PageLoader,

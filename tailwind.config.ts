@@ -112,6 +112,16 @@ const config: Config = {
                         transform: "translate(20px, -30px) scale(0.85)",
                     },
                 },
+                "slide-up": {
+                    "0%": {
+                        opacity: "0",
+                        transform: "translateY(16px)",
+                    },
+                    "100%": {
+                        opacity: "1",
+                        transform: "translateY(0)",
+                    },
+                },
             },
             animation: {
                 "fade-in": "fade-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both",
@@ -122,6 +132,7 @@ const config: Config = {
                 "skeleton-shimmer": "skeleton-shimmer 1.4s linear infinite",
                 "blob-1": "blob-1 18s ease-in-out infinite",
                 "blob-2": "blob-2 22s ease-in-out infinite",
+                "slide-up": "slide-up 320ms cubic-bezier(0.16, 1, 0.3, 1) both",
             },
             transitionTimingFunction: {
                 spring: "cubic-bezier(0.16, 1, 0.3, 1)",

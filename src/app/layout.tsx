@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
+import { PwaBootstrap } from "./_pwa/PwaBootstrap";
+
 /**
  * Poppins — fonte sans-serif geométrica humanista. Redondinha,
  * com proporções modernas, ótima pra UI moderna estilo
@@ -141,6 +143,7 @@ export default function RootLayout({
             <body className="min-h-screen font-sans">
                 <OrganizationJsonLd />
                 {children}
+                <PwaBootstrap />
             </body>
         </html>
     );
