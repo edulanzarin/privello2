@@ -15,11 +15,11 @@ Histórico dos últimos perfis abertos. Rail no painel do Cliente.
 - [x] `TrackVisto` registra ao abrir um perfil público.
 - [x] Rail "Vistos recentemente" no painel do Cliente.
 
-### ⬜ W2 — Ativa recentemente (presença)
+### ✅ W2 — Ativa recentemente (presença)
 Badge de atividade nos cards/perfil baseado em `Session.lastSeenAt`.
-- [ ] Service `obterAtividadeRecente(userIds)` (max lastSeenAt).
-- [ ] Campo `ativaRecentemente` no FeedItem (busca + feed).
-- [ ] Badge "Ativa hoje" em card e perfil. Granularidade grossa.
+- [x] Service `obterAtividadeRecente(userIds)` (groupBy, janela 24h).
+- [x] Campo `ativaRecentemente` no FeedItem (busca + feed home).
+- [x] Selo "Ativa hoje" no card (prop genérica `active` no primitivo).
 
 ### ⬜ W3 — Resumo semanal in-site (Acompanhante)
 Notificação "essa semana: X visitas, Y curtidas". Reusa V2.
@@ -54,4 +54,4 @@ Visão geral com contadores no admin.
 - [ ] Aba/seção "Visão geral" no admin.
 
 ## Status global
-- 1 / 8 concluídas.
+- 2 / 8 concluídas.
