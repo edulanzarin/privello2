@@ -1,24 +1,26 @@
 /**
- * Geocodificação aproximada via Nominatim (OSM) — T14.
+ * Geocodificação por região via Nominatim (OSM) — T14.
  *
- * Resolve `(cidade, UF[, bairro])` para um par lat/lng **aproximado**.
- * Usado pra posicionar o perfil no mapa da busca. O resultado é
- * intencionalmente impreciso:
+ * Resolve `(cidade, UF[, bairro])` para o **centroide** do bairro
+ * (ou da cidade, quando o bairro não é informado / não é
+ * encontrado). NÃO é endereço, rua, número ou CEP — o produto não
+ * coleta isso e o mapa é uma vitrine por região.
  *
- *   - Geocodificamos no nível de bairro/cidade — nunca endereço,
- *     número ou CEP (o produto não coleta isso).
- *   - Aplicamos um `jitter` (ruído aleatório de ~poucas centenas de
- *     metros) por cima do centroide pra que dois perfis do mesmo
- *     bairro não caiam no mesmo ponto e pra que ninguém infira
- *     localização real a partir do pin.
+ * # Por que centroide (sem jitter)
+ *
+ * O mapa agrega perfis **por bairro**: mostra "3 acompanhantes na
+ * Água Verde", "2 na Velha", etc. Pra isso, todos os perfis de um
+ * mesmo bairro precisam cair exatamente no mesmo ponto (o centroide
+ * do bairro) — assim a agregação por proximidade/igualdade funciona
+ * e nenhuma rua específica é revelada. Sem bairro, o perfil cai no
+ * centro da cidade.
  *
  * Este módulo é o único ponto de contato com o endpoint de
  * geocoding fora de `overpass.ts`. Tipos de `fetch`/`Response`
- * ficam confinados aqui — o resto da plataforma só vê
- * `{ lat, lng } | null`.
+ * ficam confinados aqui.
  *
  * Falhas (timeout, rede, cidade desconhecida) retornam `null` —
- * geocoding é best-effort: o perfil continua existindo sem pin no
+ * geocoding é best-effort: o perfil continua existindo sem ponto no
  * mapa.
  */
 
@@ -32,113 +34,81 @@ export const GEOCODE_TIMEOUT_MS = 5_000;
 /** User-Agent (política de uso do Nominatim exige identificação). */
 const GEOCODE_USER_AGENT = "Privello/1.0 (https://privello.com)";
 
-/**
- * Amplitude máxima do jitter em graus de latitude/longitude.
- * ~0.0045° ≈ 500m. Aplicado como deslocamento aleatório uniforme
- * em [-amp, +amp] nas duas coordenadas. Suficiente pra anonimizar
- * sem tirar o pin do bairro.
- */
-export const GEOCODE_JITTER_DEG = 0.0045;
-
 export interface LatLng {
     lat: number;
     lng: number;
 }
 
+/** Nível em que o centroide foi resolvido. */
+export type GeocodeNivel = "BAIRRO" | "CIDADE";
+
+export interface GeocodeResultado extends LatLng {
+    nivel: GeocodeNivel;
+}
+
 export interface GeocodeOptions {
     baseUrl?: string;
     signal?: AbortSignal;
-    /**
-     * Função de ruído determinística pra testes (retorna [0,1)).
-     * Default: `Math.random`.
-     */
-    rng?: () => number;
 }
 
 /**
- * Aplica jitter uniforme em [-amp, +amp] em torno do ponto base.
- * Exportada pra teste direto.
- */
-export function aplicarJitter(
-    base: LatLng,
-    amp: number,
-    rng: () => number,
-): LatLng {
-    const dlat = (rng() * 2 - 1) * amp;
-    const dlng = (rng() * 2 - 1) * amp;
-    return {
-        lat: clampLat(base.lat + dlat),
-        lng: clampLng(base.lng + dlng),
-    };
-}
-
-function clampLat(v: number): number {
-    return Math.max(-90, Math.min(90, v));
-}
-
-function clampLng(v: number): number {
-    // Normaliza pra [-180, 180].
-    let x = v;
-    while (x > 180) x -= 360;
-    while (x < -180) x += 360;
-    return x;
-}
-
-/**
- * Geocodifica `(cidade, UF[, bairro])` num par lat/lng aproximado
- * com jitter aplicado. Retorna `null` em qualquer falha.
+ * Geocodifica `(cidade, UF[, bairro])` no centroide da região.
  *
- * Tenta primeiro com o bairro (mais preciso); se não achar, cai pra
- * só cidade. O jitter é sempre aplicado por cima do centroide
- * retornado.
+ * - Com bairro: tenta o centroide do bairro. Se o Nominatim não
+ *   achar o bairro, cai pro centro da cidade.
+ * - Sem bairro: centro da cidade.
+ *
+ * Retorna `{ lat, lng, nivel }` ou `null` em qualquer falha. O
+ * `nivel` informa se resolveu o bairro ou caiu na cidade — útil pra
+ * UI/telemetria.
  */
-export async function geocodificarAproximado(input: {
+export async function geocodificarRegiao(input: {
     cidadeNome: string;
     estadoSigla: string;
     bairroNome?: string | null;
     options?: GeocodeOptions;
-}): Promise<LatLng | null> {
+}): Promise<GeocodeResultado | null> {
     const baseUrl = input.options?.baseUrl ?? NOMINATIM_GEOCODE_BASE_URL;
-    const rng = input.options?.rng ?? Math.random;
     const cidade = input.cidadeNome.trim();
     const uf = input.estadoSigla.trim();
     if (cidade.length === 0 || uf.length === 0) return null;
 
     const bairro = input.bairroNome?.trim();
 
-    // 1ª tentativa: com bairro (quando houver).
+    // 1ª tentativa: centroide do bairro (quando houver).
     if (bairro && bairro.length > 0) {
         const comBairro = await nominatimSearch(
             baseUrl,
-            {
-                city: cidade,
-                state: uf,
-                neighbourhood: bairro,
-            },
+            { city: cidade, state: uf, neighbourhood: bairro },
             input.options?.signal,
         );
         if (comBairro) {
-            return aplicarJitter(comBairro, GEOCODE_JITTER_DEG, rng);
+            return { ...comBairro, nivel: "BAIRRO" };
         }
     }
 
-    // 2ª tentativa: só cidade.
+    // Fallback: centro da cidade.
     const soCidade = await nominatimSearch(
         baseUrl,
         { city: cidade, state: uf },
         input.options?.signal,
     );
     if (soCidade) {
-        return aplicarJitter(soCidade, GEOCODE_JITTER_DEG, rng);
+        return { ...soCidade, nivel: "CIDADE" };
     }
 
     return null;
 }
 
 /**
- * Faz uma busca estruturada no Nominatim e devolve o lat/lng do
- * primeiro resultado, ou `null`. Best-effort — qualquer erro vira
- * `null`.
+ * Faz uma busca no Nominatim e devolve o lat/lng do primeiro
+ * resultado, ou `null`. Best-effort — qualquer erro vira `null`.
+ *
+ * Quando há bairro, usa busca **free-form** (`q=Bairro, Cidade, UF,
+ * Brasil`) porque o parâmetro estruturado `neighbourhood=` é
+ * ignorado pelo Nominatim em bairros brasileiros (devolve o
+ * município no mesmo ponto). A free-form resolve o `suburb`
+ * corretamente. Sem bairro, usa a busca estruturada por cidade.
  */
 async function nominatimSearch(
     baseUrl: string,
@@ -150,14 +120,21 @@ async function nominatimSearch(
     externalSignal?: AbortSignal,
 ): Promise<LatLng | null> {
     const qs = new URLSearchParams({
-        city: params.city,
-        state: params.state,
-        country: "Brasil",
         format: "jsonv2",
         limit: "1",
     });
     if (params.neighbourhood) {
-        qs.set("neighbourhood", params.neighbourhood);
+        // Free-form: o Nominatim resolve bairro BR só assim, e NÃO
+        // aceita `q` misturado com parâmetros estruturados
+        // (`city`/`state`/`country`) — então tudo vai no `q`.
+        qs.set(
+            "q",
+            `${params.neighbourhood}, ${params.city}, ${params.state}, Brasil`,
+        );
+    } else {
+        qs.set("city", params.city);
+        qs.set("state", params.state);
+        qs.set("country", "Brasil");
     }
     const url = `${baseUrl}/search?${qs.toString()}`;
 

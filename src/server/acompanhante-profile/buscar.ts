@@ -391,43 +391,50 @@ export async function listarUfsDisponiveis(): Promise<ReadonlyArray<string>> {
 }
 
 // ---------------------------------------------------------------------------
-// Mapa interativo (T14)
+// Mapa interativo (T14) — agregação por bairro
 // ---------------------------------------------------------------------------
 
-/** Pin do mapa — info mínima pra renderizar um marcador clicável. */
-export interface MapaPin {
-    identificador: string;
-    nome: string;
-    fotoUrl: string | null;
+/**
+ * Agregado de um bairro (ou cidade, quando o perfil não informa
+ * bairro) pro mapa da busca. Um marcador por região, com a
+ * contagem de perfis. NÃO carrega identidade de perfil — o mapa é
+ * só uma vitrine de "quantas atendem em cada bairro".
+ */
+export interface MapaBairro {
+    /** Rótulo da região (nome do bairro, ou da cidade no fallback). */
+    label: string;
+    /** Centroide da região (mesmo ponto pra todos do bairro). */
     lat: number;
     lng: number;
-    planoExibicao: PlanoExibicao;
-    verificada: boolean;
+    /** Quantos perfis nesta região (após os filtros). */
+    count: number;
+    /** `true` quando é o centro da cidade (perfis sem bairro). */
+    cidadeFallback: boolean;
 }
 
 /**
- * Lista perfis geocodificados pra o mapa da busca. Aplica os mesmos
- * filtros do {@link buscar} (via {@link buildWhere}) + a exigência
- * de `lat`/`lng` não-nulos.
+ * Agrega perfis geocodificados por bairro pra o mapa. Aplica os
+ * mesmos filtros do {@link buscar} (via {@link buildWhere}) + a
+ * exigência de `lat`/`lng` não-nulos.
  *
- * Diferente da busca paginada, devolve um conjunto maior de pins de
- * uma vez (até `limit`, default 500) porque o mapa precisa de todos
- * os pontos visíveis pra clusterizar no client. Sem paginação — o
- * client clusteriza/filtra por viewport.
+ * Agrupa por `(lat, lng)` arredondado — como a geocodificação usa o
+ * **centroide do bairro** (sem jitter, ver `geocode.ts`), todos os
+ * perfis de um mesmo bairro caem no mesmo ponto e somam num único
+ * marcador. Perfis sem bairro caem no centro da cidade e somam ali.
  *
- * As coordenadas já vêm com jitter aplicado na geocodificação (ver
- * `geocode.ts`) — nunca são endereço exato.
+ * O rótulo de cada agregado vem do `bairroNome` (ou da `cidadeNome`
+ * quando todos do grupo são fallback de cidade). Não devolve
+ * nenhuma info de perfil individual — privacidade by design.
  */
-export async function listarPerfisParaMapa(input: {
+export async function listarBairrosParaMapa(input: {
     filtros: BuscaFiltros;
     limit?: number;
     now?: Date;
-}): Promise<ReadonlyArray<MapaPin>> {
+}): Promise<ReadonlyArray<MapaBairro>> {
     const now = input.now ?? new Date();
-    const limit = Math.max(1, Math.min(1000, input.limit ?? 500));
+    const limit = Math.max(1, Math.min(2000, input.limit ?? 1000));
 
     const where = buildWhere(input.filtros, now);
-    // Exige coordenadas — só perfis geocodificados entram no mapa.
     where.lat = { not: null };
     where.lng = { not: null };
 
@@ -435,36 +442,78 @@ export async function listarPerfisParaMapa(input: {
         where,
         take: limit,
         select: {
-            userId: true,
             lat: true,
             lng: true,
-            verificada: true,
-            planoVigente: true,
-            boostUntil: true,
-            user: { select: { nome: true, identificador: true } },
-            fotoPerfil: { select: { storageKey: true } },
+            bairroNome: true,
+            cidadeNome: true,
         },
     });
 
-    const pins: MapaPin[] = [];
+    // Agrupa por coordenada arredondada (5 casas ≈ 1m de resolução,
+    // suficiente pra colapsar centroides idênticos do mesmo bairro
+    // mesmo com ruído de ponto flutuante).
+    interface Acc {
+        lat: number;
+        lng: number;
+        count: number;
+        bairros: Map<string, number>;
+        cidade: string;
+        semBairro: number;
+    }
+    const grupos = new Map<string, Acc>();
+
     for (const row of rows) {
         if (row.lat === null || row.lng === null) continue;
-        const planoExibicao: PlanoExibicao = isBoostAtivo(row.boostUntil, now)
-            ? "BOOST"
-            : row.planoVigente === "PREMIUM"
-                ? "PREMIUM"
-                : "BASICO";
-        pins.push({
-            identificador: row.user.identificador,
-            nome: row.user.nome,
-            fotoUrl: row.fotoPerfil
-                ? `/api/storage/${row.fotoPerfil.storageKey}`
-                : null,
-            lat: row.lat,
-            lng: row.lng,
-            planoExibicao,
-            verificada: row.verificada,
+        const key = `${row.lat.toFixed(5)}:${row.lng.toFixed(5)}`;
+        let acc = grupos.get(key);
+        if (!acc) {
+            acc = {
+                lat: row.lat,
+                lng: row.lng,
+                count: 0,
+                bairros: new Map(),
+                cidade: row.cidadeNome,
+                semBairro: 0,
+            };
+            grupos.set(key, acc);
+        }
+        acc.count += 1;
+        const bairro = row.bairroNome?.trim();
+        if (bairro && bairro.length > 0) {
+            acc.bairros.set(bairro, (acc.bairros.get(bairro) ?? 0) + 1);
+        } else {
+            acc.semBairro += 1;
+        }
+    }
+
+    const out: MapaBairro[] = [];
+    for (const acc of grupos.values()) {
+        // Rótulo: bairro dominante do grupo; se ninguém tem bairro,
+        // é o centro da cidade.
+        let label = acc.cidade;
+        let cidadeFallback = true;
+        if (acc.bairros.size > 0) {
+            let topBairro = "";
+            let topCount = -1;
+            for (const [nome, c] of acc.bairros) {
+                if (c > topCount) {
+                    topCount = c;
+                    topBairro = nome;
+                }
+            }
+            label = topBairro;
+            cidadeFallback = false;
+        }
+        out.push({
+            label,
+            lat: acc.lat,
+            lng: acc.lng,
+            count: acc.count,
+            cidadeFallback,
         });
     }
-    return pins;
+    // Maiores primeiro (só por estabilidade de render).
+    out.sort((a, b) => b.count - a.count);
+    return out;
 }
+

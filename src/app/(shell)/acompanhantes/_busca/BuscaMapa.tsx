@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import type {
-    GeoJSONSource,
+    LngLatBounds as MaplibreLngLatBounds,
     Map as MaplibreMap,
+    MapOptions,
+    Marker as MaplibreMarker,
+    NavigationControl as MaplibreNavigationControl,
     StyleSpecification,
 } from "maplibre-gl";
 
@@ -13,75 +15,70 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Button, EmptyState, MapPinIcon, UsersIcon } from "@/components";
 
 /**
- * Pin serializado vindo de `/api/acompanhantes/mapa`.
+ * Agregado por bairro vindo de `/api/acompanhantes/mapa`.
  */
-export interface MapaPin {
-    identificador: string;
-    nome: string;
-    fotoUrl: string | null;
+export interface MapaBairro {
+    label: string;
     lat: number;
     lng: number;
-    planoExibicao: "BOOST" | "PREMIUM" | "BASICO";
-    verificada: boolean;
+    count: number;
+    cidadeFallback: boolean;
 }
 
 /**
- * Mapa interativo da busca (T14).
+ * Mapa da busca (T14) — agregação por bairro.
  *
- * Usa Maplibre GL com tiles raster do OpenStreetMap (sem token) e
- * clustering nativo via GeoJSON source. Clicar num pin individual
- * navega pro perfil; clicar num cluster dá zoom.
+ * Em vez de mostrar um ponto por perfil (o que sugeriria endereço
+ * exato — as Acompanhantes não informam rua), o mapa mostra **um
+ * marcador por bairro com a contagem**: "3 na Água Verde", "2 na
+ * Velha", etc. Perfis sem bairro caem no centro da cidade.
+ *
+ * Os marcadores NÃO são clicáveis (não navegam pra perfil) — o mapa
+ * é só uma leitura visual de "onde tem mais gente atendendo". A
+ * busca em si (clicar em perfil) é a visão em Lista.
  *
  * # Carregamento
  *
- * O `maplibre-gl` (~800KB) é importado dinamicamente só quando o
+ * `maplibre-gl` (~800KB) é importado dinamicamente só quando o
  * componente monta — não entra no bundle inicial da busca. O CSS é
- * importado estaticamente (Next bundla) pra respeitar a CSP (sem
- * `<link>` externo).
- *
- * # Privacidade
- *
- * As coordenadas vêm com jitter aplicado server-side (centroide do
- * bairro/cidade + ruído). O mapa nunca mostra endereço exato — é
- * uma vitrine aproximada de "quem atende nessa região".
+ * importado estaticamente (Next bundla) pra respeitar a CSP.
  */
 export interface BuscaMapaProps {
     /** Querystring atual (sem o `?`) pra repassar os filtros à API. */
     queryString: string;
 }
 
-// Centro aproximado do Brasil (fallback quando não há pins nem
-// geolocalização) + zoom nacional.
+// Centro aproximado do Brasil (fallback quando não há nada) + zoom
+// nacional.
 const BRASIL_CENTER: [number, number] = [-51.9253, -14.235];
 const BRASIL_ZOOM = 3.4;
 
+// Zoom máximo: nível de bairro/região. Nunca rua.
+const MAX_ZOOM = 14;
+
 export function BuscaMapa({ queryString }: BuscaMapaProps): React.ReactElement {
-    const router = useRouter();
     const containerRef = React.useRef<HTMLDivElement | null>(null);
     const mapRef = React.useRef<MaplibreMap | null>(null);
+    const markersRef = React.useRef<MaplibreMarker[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [erro, setErro] = React.useState<string | null>(null);
     const [vazio, setVazio] = React.useState(false);
 
-    // ----------------------------------------------------------------
-    // Boot do mapa (uma vez por mount / mudança de filtros).
-    // ----------------------------------------------------------------
     React.useEffect(() => {
         let cancelado = false;
         let mapInstance: MaplibreMap | null = null;
 
         async function boot(): Promise<void> {
             try {
-                const maplibre = await import("maplibre-gl");
-                const MapCtor = maplibre.Map;
-
+                const maplibre = await loadMaplibre();
                 if (cancelado || !containerRef.current) return;
 
-                const map = new MapCtor({
+                const map = new maplibre.Map({
                     container: containerRef.current,
                     style: rasterStyle(),
                     center: BRASIL_CENTER,
                     zoom: BRASIL_ZOOM,
+                    maxZoom: MAX_ZOOM,
                 });
                 mapInstance = map;
                 mapRef.current = map;
@@ -93,157 +90,58 @@ export function BuscaMapa({ queryString }: BuscaMapaProps): React.ReactElement {
 
                 map.on("load", () => {
                     if (cancelado) return;
-                    void carregarPins(map);
+                    void carregarBairros(map, maplibre);
                 });
-            } catch {
+            } catch (err) {
                 if (!cancelado) {
+                    console.error("[BuscaMapa] falha ao iniciar o mapa", err);
                     setErro("Não foi possível carregar o mapa.");
                     setLoading(false);
                 }
             }
         }
 
-        async function carregarPins(map: MaplibreMap): Promise<void> {
+        async function carregarBairros(
+            map: MaplibreMap,
+            maplibre: MaplibreModule,
+        ): Promise<void> {
             try {
                 const res = await fetch(
                     `/api/acompanhantes/mapa${queryString ? `?${queryString}` : ""}`,
                 );
                 const payload = (await res.json().catch(() => null)) as
-                    | { ok: boolean; pins: MapaPin[] }
+                    | { ok: boolean; bairros: MapaBairro[] }
                     | null;
                 if (cancelado) return;
-                const pins = payload?.pins ?? [];
-                if (pins.length === 0) {
+                const bairros = payload?.bairros ?? [];
+                if (bairros.length === 0) {
                     setVazio(true);
                     setLoading(false);
                     return;
                 }
 
-                const maplibre = await import("maplibre-gl");
-
-                map.addSource("perfis", {
-                    type: "geojson",
-                    data: {
-                        type: "FeatureCollection",
-                        features: pins.map((p) => ({
-                            type: "Feature",
-                            geometry: {
-                                type: "Point",
-                                coordinates: [p.lng, p.lat],
-                            },
-                            properties: {
-                                slug: p.identificador,
-                                nome: p.nome,
-                            },
-                        })),
-                    },
-                    cluster: true,
-                    clusterMaxZoom: 13,
-                    clusterRadius: 50,
-                });
-
-                map.addLayer({
-                    id: "clusters",
-                    type: "circle",
-                    source: "perfis",
-                    filter: ["has", "point_count"],
-                    paint: {
-                        "circle-color": "#ec7b5b",
-                        "circle-opacity": 0.85,
-                        "circle-radius": [
-                            "step",
-                            ["get", "point_count"],
-                            18,
-                            10,
-                            24,
-                            50,
-                            32,
-                        ],
-                    },
-                });
-                map.addLayer({
-                    id: "cluster-count",
-                    type: "symbol",
-                    source: "perfis",
-                    filter: ["has", "point_count"],
-                    layout: {
-                        "text-field": ["get", "point_count_abbreviated"],
-                        "text-size": 13,
-                    },
-                    paint: { "text-color": "#ffffff" },
-                });
-                map.addLayer({
-                    id: "pin",
-                    type: "circle",
-                    source: "perfis",
-                    filter: ["!", ["has", "point_count"]],
-                    paint: {
-                        "circle-color": "#c5523a",
-                        "circle-radius": 8,
-                        "circle-stroke-width": 2,
-                        "circle-stroke-color": "#ffffff",
-                    },
-                });
-
-                // Zoom ao clicar num cluster.
-                map.on("click", "clusters", (e) => {
-                    const features = map.queryRenderedFeatures(e.point, {
-                        layers: ["clusters"],
-                    });
-                    const feature = features[0];
-                    if (!feature) return;
-                    const clusterId = feature.properties?.cluster_id as
-                        | number
-                        | undefined;
-                    const source = map.getSource("perfis") as
-                        | GeoJSONSource
-                        | undefined;
-                    if (clusterId == null || !source) return;
-                    void source
-                        .getClusterExpansionZoom(clusterId)
-                        .then((zoom) => {
-                            if (feature.geometry.type !== "Point") return;
-                            map.easeTo({
-                                center: feature.geometry.coordinates as [
-                                    number,
-                                    number,
-                                ],
-                                zoom,
-                            });
-                        })
-                        .catch(() => undefined);
-                });
-
-                // Navega pro perfil ao clicar num pin.
-                map.on("click", "pin", (e) => {
-                    const slug = e.features?.[0]?.properties?.slug;
-                    if (typeof slug === "string" && slug.length > 0) {
-                        router.push(`/acompanhantes/${slug}`);
-                    }
-                });
-
-                for (const layer of ["clusters", "pin"]) {
-                    map.on("mouseenter", layer, () => {
-                        map.getCanvas().style.cursor = "pointer";
-                    });
-                    map.on("mouseleave", layer, () => {
-                        map.getCanvas().style.cursor = "";
-                    });
-                }
-
-                // Enquadra os pins.
+                // Marcador HTML custom por bairro: pílula com a
+                // contagem + label. Não clicável (apenas leitura).
                 const bounds = new maplibre.LngLatBounds();
-                for (const p of pins) {
-                    bounds.extend([p.lng, p.lat]);
-                }
-                if (!bounds.isEmpty()) {
-                    map.fitBounds(bounds, { padding: 64, maxZoom: 13 });
+                for (const b of bairros) {
+                    const el = construirMarcador(b);
+                    const marker = new maplibre.Marker({
+                        element: el,
+                        anchor: "bottom",
+                    })
+                        .setLngLat([b.lng, b.lat])
+                        .addTo(map);
+                    markersRef.current.push(marker);
+                    bounds.extend([b.lng, b.lat]);
                 }
 
+                if (!bounds.isEmpty()) {
+                    map.fitBounds(bounds, { padding: 72, maxZoom: 12 });
+                }
                 setLoading(false);
             } catch {
                 if (!cancelado) {
-                    setErro("Não foi possível carregar os perfis no mapa.");
+                    setErro("Não foi possível carregar os bairros no mapa.");
                     setLoading(false);
                 }
             }
@@ -253,10 +151,12 @@ export function BuscaMapa({ queryString }: BuscaMapaProps): React.ReactElement {
 
         return () => {
             cancelado = true;
+            for (const m of markersRef.current) m.remove();
+            markersRef.current = [];
             if (mapInstance) mapInstance.remove();
             mapRef.current = null;
         };
-    }, [queryString, router]);
+    }, [queryString]);
 
     // ----------------------------------------------------------------
     // Geolocalização ("usar minha localização")
@@ -286,7 +186,7 @@ export function BuscaMapa({ queryString }: BuscaMapaProps): React.ReactElement {
             <div
                 ref={containerRef}
                 className="h-[28rem] w-full overflow-hidden rounded-2xl bg-neutral-100 ring-1 ring-border sm:h-[34rem]"
-                aria-label="Mapa de perfis"
+                aria-label="Mapa de bairros"
             />
 
             {/* Botão "usar minha localização" sobreposto. */}
@@ -327,12 +227,114 @@ export function BuscaMapa({ queryString }: BuscaMapaProps): React.ReactElement {
                         size="sm"
                         icon={<UsersIcon size={20} />}
                         title="Nenhum perfil no mapa"
-                        description="Ainda não há perfis geolocalizados para estes filtros. Tente a visão em lista."
+                        description="Ainda não há perfis localizados para estes filtros. Tente a visão em lista."
                     />
                 </div>
             ) : null}
         </div>
     );
+}
+
+// ---------------------------------------------------------------------------
+// Marcador HTML por bairro (pílula: número + nome).
+// ---------------------------------------------------------------------------
+
+/**
+ * Constrói o elemento DOM do marcador de um bairro. Estilo inline
+ * (sem Tailwind aqui porque o elemento vive fora da árvore React,
+ * dentro do canvas do maplibre). Não é clicável — `pointer-events`
+ * só pra cursor, sem handler de navegação.
+ */
+function construirMarcador(b: MapaBairro): HTMLElement {
+    const wrap = document.createElement("div");
+    wrap.style.display = "flex";
+    wrap.style.alignItems = "center";
+    wrap.style.gap = "6px";
+    wrap.style.padding = "4px 10px 4px 4px";
+    wrap.style.borderRadius = "9999px";
+    wrap.style.background = "rgba(255,255,255,0.96)";
+    wrap.style.boxShadow = "0 4px 14px -4px rgba(0,0,0,0.3)";
+    wrap.style.border = "1px solid rgba(197,82,58,0.25)";
+    wrap.style.fontFamily = "var(--font-inter, sans-serif)";
+    wrap.style.cursor = "default";
+    wrap.style.userSelect = "none";
+
+    const badge = document.createElement("span");
+    badge.textContent = String(b.count);
+    badge.style.display = "inline-flex";
+    badge.style.alignItems = "center";
+    badge.style.justifyContent = "center";
+    badge.style.minWidth = "26px";
+    badge.style.height = "26px";
+    badge.style.padding = "0 6px";
+    badge.style.borderRadius = "9999px";
+    badge.style.background =
+        "linear-gradient(135deg, #ec7b5b 0%, #c5523a 100%)";
+    badge.style.color = "#fff";
+    badge.style.fontSize = "13px";
+    badge.style.fontWeight = "700";
+    badge.style.lineHeight = "1";
+
+    const label = document.createElement("span");
+    const sufixo = b.cidadeFallback ? " (centro)" : "";
+    label.textContent = `${b.label}${sufixo}`;
+    label.style.fontSize = "12px";
+    label.style.fontWeight = "600";
+    label.style.color = "#3a2a25";
+    label.style.maxWidth = "150px";
+    label.style.whiteSpace = "nowrap";
+    label.style.overflow = "hidden";
+    label.style.textOverflow = "ellipsis";
+
+    const plural = b.count === 1 ? "perfil" : "perfis";
+    wrap.setAttribute(
+        "aria-label",
+        `${b.count} ${plural} em ${b.label}${
+            b.cidadeFallback ? " (centro da cidade)" : ""
+        }`,
+    );
+
+    wrap.appendChild(badge);
+    wrap.appendChild(label);
+    return wrap;
+}
+
+// ---------------------------------------------------------------------------
+// Interop ESM/CJS do maplibre-gl (UMD sem campo `module`/`exports`).
+// ---------------------------------------------------------------------------
+
+interface MaplibreModule {
+    Map: new (opts: MapOptions) => MaplibreMap;
+    NavigationControl: new (opts?: {
+        showCompass?: boolean;
+    }) => MaplibreNavigationControl;
+    LngLatBounds: new () => MaplibreLngLatBounds;
+    Marker: new (opts?: {
+        element?: HTMLElement;
+        anchor?: string;
+    }) => MaplibreMarker;
+}
+
+/**
+ * Resolve o módulo do maplibre lidando com os dois shapes de
+ * interop (named na raiz OU aninhado em `.default`). Pura e
+ * testável.
+ */
+export function resolveMaplibreModule(mod: unknown): MaplibreModule {
+    const root = mod as { Map?: unknown; default?: unknown } | null;
+    if (root && typeof root.Map === "function") {
+        return root as unknown as MaplibreModule;
+    }
+    const inner = root?.default as { Map?: unknown } | undefined;
+    if (inner && typeof inner.Map === "function") {
+        return inner as unknown as MaplibreModule;
+    }
+    throw new Error("maplibre-gl: export 'Map' não encontrado.");
+}
+
+async function loadMaplibre(): Promise<MaplibreModule> {
+    const mod = await import("maplibre-gl");
+    return resolveMaplibreModule(mod);
 }
 
 // ---------------------------------------------------------------------------

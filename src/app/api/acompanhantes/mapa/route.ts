@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
 
 import {
-    listarPerfisParaMapa,
+    listarBairrosParaMapa,
     type BuscaFiltros,
 } from "@/server/acompanhante-profile/buscar";
 
 /**
- * `GET /api/acompanhantes/mapa` — pins do mapa da busca (T14).
+ * `GET /api/acompanhantes/mapa` — agregação por bairro pro mapa
+ * da busca (T14).
  *
- * Espelha a query string da busca (`/acompanhantes`) e devolve até
- * 500 pins geocodificados (`{ identificador, nome, fotoUrl, lat,
- * lng, planoExibicao, verificada }`). O client (Maplibre) clusteriza
- * e filtra por viewport.
+ * Espelha a query string da busca (`/acompanhantes`) e devolve um
+ * agregado por bairro: `{ label, lat, lng, count, cidadeFallback }`.
+ * NÃO devolve perfis individuais — o mapa mostra só "quantas
+ * atendem em cada bairro". Perfis sem bairro caem no centro da
+ * cidade.
  *
- * Coordenadas já vêm com jitter — nunca endereço exato.
- *
- * Resposta: `{ ok: true, pins }`.
+ * Resposta: `{ ok: true, bairros }`.
  */
 export const dynamic = "force-dynamic";
 
@@ -59,11 +59,11 @@ export async function GET(request: Request): Promise<NextResponse> {
     };
 
     try {
-        const pins = await listarPerfisParaMapa({ filtros });
-        return NextResponse.json({ ok: true, pins }, { status: 200 });
+        const bairros = await listarBairrosParaMapa({ filtros });
+        return NextResponse.json({ ok: true, bairros }, { status: 200 });
     } catch {
         return NextResponse.json(
-            { ok: false, pins: [] },
+            { ok: false, bairros: [] },
             { status: 500 },
         );
     }

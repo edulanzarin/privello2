@@ -69,7 +69,7 @@ import {
     type OnboardingData,
 } from "@/domain/schemas";
 import { db } from "@/lib/db";
-import { geocodificarAproximado } from "@/lib/geocode";
+import { geocodificarRegiao } from "@/lib/geocode";
 import { createSession } from "@/server/auth/sessions";
 import { defaultLocalidadesService } from "@/server/localidades";
 import {
@@ -516,7 +516,7 @@ async function geocodificarPerfilOnboarding(
     loc: { cidadeNome: string; estadoSigla: string; bairroNome: string | null },
 ): Promise<void> {
     try {
-        const coords = await geocodificarAproximado({
+        const coords = await geocodificarRegiao({
             cidadeNome: loc.cidadeNome,
             estadoSigla: loc.estadoSigla,
             bairroNome: loc.bairroNome,

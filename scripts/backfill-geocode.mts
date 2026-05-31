@@ -8,7 +8,7 @@
 
 import { PrismaClient } from "@prisma/client";
 
-import { geocodificarAproximado } from "../src/lib/geocode";
+import { geocodificarRegiao } from "../src/lib/geocode";
 
 const db = new PrismaClient();
 
@@ -34,7 +34,7 @@ async function main(): Promise<void> {
     console.log(`Geocodificando ${perfis.length} perfis…`);
     let ok = 0;
     for (const p of perfis) {
-        const coords = await geocodificarAproximado({
+        const coords = await geocodificarRegiao({
             cidadeNome: p.cidadeNome,
             estadoSigla: p.estadoSigla,
             bairroNome: p.bairroNome,

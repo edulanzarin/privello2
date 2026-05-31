@@ -25,7 +25,7 @@ import {
     validarTelefone,
 } from "@/domain/validation";
 import { db } from "@/lib/db";
-import { geocodificarAproximado } from "@/lib/geocode";
+import { geocodificarRegiao } from "@/lib/geocode";
 import { requireSession } from "@/server/auth/guards";
 
 /**
@@ -398,7 +398,7 @@ async function regeocodificarPerfil(userId: string): Promise<void> {
             },
         });
         if (!profile) return;
-        const coords = await geocodificarAproximado({
+        const coords = await geocodificarRegiao({
             cidadeNome: profile.cidadeNome,
             estadoSigla: profile.estadoSigla,
             bairroNome: profile.bairroNome,

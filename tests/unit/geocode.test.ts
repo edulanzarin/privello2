@@ -1,59 +1,23 @@
 /**
- * Unit test do geocoding aproximado (T14).
+ * Unit test do geocoding por região (T14).
  *
- * Foca na parte pura/determinística: `aplicarJitter` e o fluxo de
- * `geocodificarAproximado` com `fetch` mockado (sem rede real).
- *   1. aplicarJitter desloca dentro de [-amp, +amp] e clampa.
- *   2. geocodificarAproximado: cidade/UF vazios → null.
- *   3. tenta bairro primeiro, cai pra cidade quando bairro não acha.
- *   4. retorna null quando nada acha.
- *   5. aplica jitter por cima do centroide retornado.
+ * `geocodificarRegiao` resolve o centroide do bairro (ou da cidade
+ * no fallback), sem jitter — perfis do mesmo bairro caem no mesmo
+ * ponto pra agregação por bairro no mapa.
+ *
+ *   1. cidade/UF vazios → null (sem chamar fetch).
+ *   2. com bairro: resolve o centroide do bairro (nivel=BAIRRO).
+ *   3. bairro não encontrado → cai pro centro da cidade (nivel=CIDADE).
+ *   4. sem bairro → centro da cidade direto.
+ *   5. nada encontrado → null.
+ *   6. erro de rede → null (best-effort).
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-    aplicarJitter,
-    geocodificarAproximado,
-    GEOCODE_JITTER_DEG,
-} from "@/lib/geocode";
+import { geocodificarRegiao } from "@/lib/geocode";
 
-describe("aplicarJitter", () => {
-    it("rng=0.5 (centro) não desloca", () => {
-        const base = { lat: -22.9, lng: -43.2 };
-        const out = aplicarJitter(base, 0.01, () => 0.5);
-        expect(out.lat).toBeCloseTo(-22.9, 10);
-        expect(out.lng).toBeCloseTo(-43.2, 10);
-    });
-
-    it("rng=0 desloca -amp nas duas coords", () => {
-        const base = { lat: 0, lng: 0 };
-        const out = aplicarJitter(base, 0.01, () => 0);
-        expect(out.lat).toBeCloseTo(-0.01, 10);
-        expect(out.lng).toBeCloseTo(-0.01, 10);
-    });
-
-    it("rng→1 desloca +amp", () => {
-        const base = { lat: 10, lng: 20 };
-        const out = aplicarJitter(base, 0.02, () => 0.999999);
-        expect(out.lat).toBeGreaterThan(10);
-        expect(out.lat).toBeLessThanOrEqual(10.02);
-        expect(out.lng).toBeGreaterThan(20);
-    });
-
-    it("clampa latitude em [-90, 90]", () => {
-        const out = aplicarJitter({ lat: 89.999, lng: 0 }, 1, () => 1);
-        expect(out.lat).toBeLessThanOrEqual(90);
-    });
-
-    it("normaliza longitude pra [-180, 180]", () => {
-        const out = aplicarJitter({ lat: 0, lng: 179.999 }, 1, () => 1);
-        expect(out.lng).toBeLessThanOrEqual(180);
-        expect(out.lng).toBeGreaterThanOrEqual(-180);
-    });
-});
-
-describe("geocodificarAproximado", () => {
+describe("geocodificarRegiao", () => {
     afterEach(() => {
         vi.restoreAllMocks();
     });
@@ -61,84 +25,76 @@ describe("geocodificarAproximado", () => {
     it("cidade ou UF vazios → null sem chamar fetch", async () => {
         const spy = vi.spyOn(globalThis, "fetch");
         expect(
-            await geocodificarAproximado({
-                cidadeNome: "",
-                estadoSigla: "RJ",
-            }),
+            await geocodificarRegiao({ cidadeNome: "", estadoSigla: "RJ" }),
         ).toBe(null);
         expect(
-            await geocodificarAproximado({
-                cidadeNome: "Rio",
-                estadoSigla: "",
-            }),
+            await geocodificarRegiao({ cidadeNome: "Rio", estadoSigla: "" }),
         ).toBe(null);
         expect(spy).not.toHaveBeenCalled();
     });
 
-    it("acha pelo bairro na 1ª tentativa (com jitter aplicado)", async () => {
+    it("com bairro: resolve o centroide do bairro (nivel BAIRRO)", async () => {
         vi.spyOn(globalThis, "fetch").mockResolvedValue(
             jsonResponse([{ lat: "-22.95", lon: "-43.18" }]),
         );
-        const out = await geocodificarAproximado({
+        const out = await geocodificarRegiao({
             cidadeNome: "Rio de Janeiro",
             estadoSigla: "RJ",
             bairroNome: "Copacabana",
-            options: { rng: () => 0.5 }, // centro → sem deslocamento
         });
         expect(out).not.toBe(null);
         expect(out?.lat).toBeCloseTo(-22.95, 6);
         expect(out?.lng).toBeCloseTo(-43.18, 6);
+        expect(out?.nivel).toBe("BAIRRO");
     });
 
-    it("cai pra cidade quando bairro não retorna resultado", async () => {
+    it("bairro não encontrado → cai pro centro da cidade (nivel CIDADE)", async () => {
         const fetchMock = vi
             .spyOn(globalThis, "fetch")
-            // 1ª chamada (com bairro): vazio.
-            .mockResolvedValueOnce(jsonResponse([]))
-            // 2ª chamada (só cidade): acha.
+            .mockResolvedValueOnce(jsonResponse([])) // bairro: vazio
             .mockResolvedValueOnce(
                 jsonResponse([{ lat: "-23.0", lon: "-43.0" }]),
-            );
-        const out = await geocodificarAproximado({
+            ); // cidade: acha
+        const out = await geocodificarRegiao({
             cidadeNome: "Rio de Janeiro",
             estadoSigla: "RJ",
             bairroNome: "BairroInexistente",
-            options: { rng: () => 0.5 },
         });
         expect(fetchMock).toHaveBeenCalledTimes(2);
         expect(out?.lat).toBeCloseTo(-23.0, 6);
+        expect(out?.nivel).toBe("CIDADE");
     });
 
-    it("retorna null quando nada acha", async () => {
+    it("sem bairro → centro da cidade direto (1 chamada)", async () => {
+        const fetchMock = vi
+            .spyOn(globalThis, "fetch")
+            .mockResolvedValue(jsonResponse([{ lat: "-23.5", lon: "-46.6" }]));
+        const out = await geocodificarRegiao({
+            cidadeNome: "São Paulo",
+            estadoSigla: "SP",
+        });
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(out?.nivel).toBe("CIDADE");
+    });
+
+    it("nada encontrado → null", async () => {
         vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse([]));
-        const out = await geocodificarAproximado({
+        const out = await geocodificarRegiao({
             cidadeNome: "CidadeFantasma",
             estadoSigla: "ZZ",
         });
         expect(out).toBe(null);
     });
 
-    it("retorna null em erro de rede (best-effort)", async () => {
+    it("erro de rede → null (best-effort)", async () => {
         vi.spyOn(globalThis, "fetch").mockRejectedValue(
             new Error("network down"),
         );
-        const out = await geocodificarAproximado({
+        const out = await geocodificarRegiao({
             cidadeNome: "Rio",
             estadoSigla: "RJ",
         });
         expect(out).toBe(null);
-    });
-
-    it("jitter real desloca o resultado (rng != 0.5)", async () => {
-        vi.spyOn(globalThis, "fetch").mockResolvedValue(
-            jsonResponse([{ lat: "-22.95", lon: "-43.18" }]),
-        );
-        const out = await geocodificarAproximado({
-            cidadeNome: "Rio",
-            estadoSigla: "RJ",
-            options: { rng: () => 0 }, // -amp
-        });
-        expect(out?.lat).toBeCloseTo(-22.95 - GEOCODE_JITTER_DEG, 6);
     });
 });
 
