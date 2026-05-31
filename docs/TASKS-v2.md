@@ -77,18 +77,20 @@ compartilhar a busca.
 - [x] Botão "Compartilhar" na `/acompanhantes` (share nativo +
       fallback Modal com preview e copiar link).
 
-### ⬜ V7 — Observabilidade (sem dep paga)
+### ✅ V7 — Observabilidade (sem dep paga)
 **Esforço**: ~2h.
 Logs estruturados + error boundaries. Pronto pra plugar Sentry
 depois, mas sem adicionar dependência não-configurada.
 
-- [ ] `lib/observability/logger.ts` (log estruturado JSON).
-- [ ] `app/error.tsx` + `app/global-error.tsx` (boundaries).
-- [ ] Trocar `console.*` crus por logger nos pontos críticos.
+- [x] `lib/observability/logger.ts` (log estruturado JSON, scopes,
+      normalização de Error, ponto único de saída).
+- [x] `app/error.tsx` + `app/global-error.tsx` (boundaries da marca).
+- [x] Trocar `console.*` crus por logger nos pontos críticos
+      (webhook MP, cleanup/cron, notifications, watermark).
 
 ## Status global
 
-- 5 / 7 concluídas.
+- 6 / 7 concluídas.
 - Descartado: bloqueio de Cliente (não faz sentido — visitante
   pode estar deslogado). V4 (sidebar desktop) — implementada e
   revertida a pedido do produto.
