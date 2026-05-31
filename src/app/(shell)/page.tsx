@@ -74,7 +74,7 @@ export default async function HomePage() {
     let midiasCollage: ReadonlyArray<MidiaCollageItem> = [];
     try {
         const [f, s, c, m] = await Promise.all([
-            listarFeedHome({ limite: { boost: 30, alta: 30 } }),
+            listarFeedHome({ limite: { boost: 30, alta: 20 } }),
             obterStatsHome(),
             listarCidadesEmDestaque({ limit: 10 }),
             listarMidiasAleatoriasParaCollage({ limit: 4 }),
