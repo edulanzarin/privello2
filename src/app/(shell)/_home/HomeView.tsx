@@ -645,8 +645,8 @@ function CollageTile({
                 loading="lazy"
                 className="h-full w-full object-cover"
                 style={{
-                    filter: "blur(14px) saturate(1.1)",
-                    transform: "scale(1.15)",
+                    filter: "blur(4px) saturate(1.1)",
+                    transform: "scale(1.06)",
                 }}
             />
             {/* Overlay warm sutil pra unificar com o resto do hero */}
