@@ -59,6 +59,7 @@ import type { StoryOwnerResumo } from "@/server/storage/storyMedia";
 import { buscaFiltrosParaParams } from "@/domain/busca/queryParams";
 
 import { BuscaMapa } from "./BuscaMapa";
+import { ShareCityButton } from "./ShareCityButton";
 
 /**
  * Item de Story já no shape consumido pelo `MediaCarousel` em
@@ -683,6 +684,16 @@ export function BuscaView({
                 </Button>
 
                 <div className="ml-auto flex min-w-0 items-center gap-2">
+                    {cidadeSelecionada &&
+                    filtros.cidadeNome &&
+                    filtros.estadoSigla &&
+                    resultado.total > 0 ? (
+                        <ShareCityButton
+                            cidadeNome={filtros.cidadeNome}
+                            estadoSigla={filtros.estadoSigla}
+                            total={resultado.total}
+                        />
+                    ) : null}
                     {podeSalvarBusca && cidadeSelecionada ? (
                         <button
                             type="button"
