@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 import { validateEnv } from "./src/lib/env";
+import { devAllowedOrigins } from "./src/lib/lanHosts";
 
 // Valida as variáveis de ambiente o mais cedo possível no boot do Next.js.
 // Em `next build` (em CI) e `next start` (em runtime), este módulo é avaliado
@@ -15,9 +16,19 @@ if (process.env.SKIP_ENV_VALIDATION !== "1") {
     validateEnv();
 }
 
+// Origens de dev confiáveis (LAN). Permite acessar de qualquer
+// dispositivo da rede via `http://192.168.x.y:PORT` sem o Next
+// bloquear Server Actions (que validam Origin vs Host) nem emitir
+// o aviso de cross-origin. Auto-detecta os IPs da máquina; pode
+// estender via env `DEV_ALLOWED_HOSTS` (CSV).
+const ALLOWED_ORIGINS = devAllowedOrigins();
+
 const nextConfig: NextConfig = {
     reactStrictMode: true,
     output: "standalone",
+    // Reconhece as origens da LAN no dev (Next 15.5+). Sem isso, o
+    // dev server avisa/bloqueia requests vindas de outro IP.
+    allowedDevOrigins: ALLOWED_ORIGINS,
     // Mantém `sharp` e `ffmpeg-static` como dependências externas em
     // vez de empacotá-las pelo webpack. `sharp` carrega .node nativo
     // e `ffmpeg-static` resolve o caminho do binário via __dirname,
@@ -28,6 +39,10 @@ const nextConfig: NextConfig = {
     experimental: {
         serverActions: {
             bodySizeLimit: "64mb",
+            // Permite Server Actions (cadastro, onboarding) quando o
+            // app é acessado via IP da LAN — senão o Next rejeita por
+            // mismatch de Origin/Host.
+            allowedOrigins: ALLOWED_ORIGINS,
         },
     },
     /**
