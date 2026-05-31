@@ -8,6 +8,7 @@ import {
     PageSurface,
     PlayCircleIcon,
     ProfilePhotoEditor,
+    SearchIcon,
     TabList,
     TabPanel,
     TabTrigger,
@@ -25,10 +26,12 @@ import {
     contarReviewsDoCliente,
     listarReviewsDoCliente,
 } from "@/server/reviews";
+import { listarBuscas } from "@/server/saved-search";
 
 import { AtividadeTab } from "./_painel/AtividadeTab";
 import { ConfiguracoesTab } from "./_painel/ConfiguracoesTab";
 import { FavoritosTab } from "./_painel/FavoritosTab";
+import { BuscasSalvasTab } from "./_painel/BuscasSalvasTab";
 import { PerfilTab } from "./_painel/PerfilTab";
 
 /**
@@ -81,7 +84,7 @@ export default async function ClientePainelPage() {
         );
     }
 
-    const [reviews, reviewsCount, likes, comentarios, interacoes, favoritos] =
+    const [reviews, reviewsCount, likes, comentarios, interacoes, favoritos, buscasSalvas] =
         await Promise.all([
             listarReviewsDoCliente(session.userId),
             contarReviewsDoCliente(session.userId),
@@ -89,6 +92,7 @@ export default async function ClientePainelPage() {
             listarComentariosDoCliente(session.userId),
             contarInteracoesDoCliente(session.userId),
             listarFavoritos(session.userId),
+            listarBuscas(session.userId),
         ]);
 
     const isFan = perfil.planoVigente === "FAN";
@@ -150,6 +154,18 @@ export default async function ClientePainelPage() {
                         ) : null}
                     </TabTrigger>
                     <TabTrigger value="atividade">Atividade</TabTrigger>
+                    <TabTrigger value="buscas">
+                        <SearchIcon size={14} />
+                        Buscas
+                        {buscasSalvas.length > 0 ? (
+                            <span
+                                aria-label={`${buscasSalvas.length} buscas salvas`}
+                                className="ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white"
+                            >
+                                {buscasSalvas.length}
+                            </span>
+                        ) : null}
+                    </TabTrigger>
                     <TabTrigger value="configuracoes">
                         Configurações
                     </TabTrigger>
@@ -168,6 +184,9 @@ export default async function ClientePainelPage() {
                         likes={likes}
                         comentarios={comentarios}
                     />
+                </TabPanel>
+                <TabPanel value="buscas">
+                    <BuscasSalvasTab buscas={buscasSalvas} />
                 </TabPanel>
                 <TabPanel value="configuracoes">
                     <ConfiguracoesTab perfil={perfil} />

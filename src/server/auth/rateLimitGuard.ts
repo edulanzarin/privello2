@@ -89,4 +89,6 @@ export const LIMITS = {
     medias: { max: 30, windowMs: 60 * 60_000 } satisfies RateLimitInput,
     /** Favoritos (toggle): 60/min — usuário pode salvar/desmarcar várias. */
     favorites: { max: 60, windowMs: 60_000 } satisfies RateLimitInput,
+    /** Buscas salvas: 20/h — salvar busca é ato pontual. */
+    savedSearch: { max: 20, windowMs: 60 * 60_000 } satisfies RateLimitInput,
 } as const;

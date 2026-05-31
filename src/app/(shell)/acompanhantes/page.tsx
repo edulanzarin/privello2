@@ -265,12 +265,17 @@ export default async function AcompanhantesPage({
         };
     }
 
+    // O botão "Salvar busca" (V3) só aparece pra Cliente logado.
+    const sessaoAtual = await getCurrentSession();
+    const podeSalvarBusca = sessaoAtual?.userType === "CLIENTE";
+
     return (
         <PageSurface width="lg">
             <BuscaView
                 filtros={filtros}
                 ordenar={ordenar}
                 resultado={resultado}
+                podeSalvarBusca={podeSalvarBusca}
                 storiesOwners={storiesOwners}
                 storiesItems={storiesItems.map((s) => ({
                     id: s.id,

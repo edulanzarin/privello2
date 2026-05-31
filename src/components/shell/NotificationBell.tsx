@@ -8,6 +8,7 @@ import {
     BookmarkIcon,
     ChatIcon,
     FlameIcon,
+    SearchIcon,
     ShieldIcon,
     XIcon,
 } from "@/components";
@@ -300,6 +301,24 @@ function describe(n: NotificationItem): NotificacaoView {
                     </>
                 ),
                 href: "/acompanhante#estatisticas",
+            };
+        case "BUSCA_NOVA_CORRESPONDENCIA":
+            return {
+                icon: <SearchIcon size={15} />,
+                iconClasses: "bg-[#ec7b5b]/12 text-[color:var(--accent-deep)]",
+                texto: (
+                    <>
+                        <strong className="font-semibold">
+                            {n.payload.perfilNome}
+                        </strong>{" "}
+                        apareceu na sua busca salva{" "}
+                        <span className="text-text-secondary">
+                            {n.payload.buscaLabel}
+                        </span>
+                        .
+                    </>
+                ),
+                href: `/acompanhantes/${n.payload.perfilIdentificador}`,
             };
         default:
             return {

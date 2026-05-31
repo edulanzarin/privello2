@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { requireAcompanhante } from "@/server/auth/guards";
+import { casarBuscasSalvas } from "@/server/saved-search";
 
 /**
  * Endpoint de toggle de visibilidade do perfil público da
@@ -60,6 +61,18 @@ export async function POST(request: Request): Promise<NextResponse> {
             { ok: false, reason: "PERSISTENCIA" },
             { status: 500 },
         );
+    }
+
+    // Quando o perfil passa a ficar VISÍVEL, casa contra as buscas
+    // salvas dos Clientes e dispara alertas in-site (V3). Best-effort
+    // — não bloqueia nem derruba a resposta. `await` pra garantir que
+    // roda antes do handler encerrar (serverless).
+    if (visivel) {
+        try {
+            await casarBuscasSalvas(auth.userId);
+        } catch {
+            // alerta é secundário — ignora falha.
+        }
     }
 
     return NextResponse.json({ ok: true, visivel }, { status: 200 });

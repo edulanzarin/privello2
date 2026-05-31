@@ -27,7 +27,9 @@ import {
     Switch,
     UsersIcon,
     XIcon,
+    BookmarkIcon,
     useMediaCarousel,
+    useToast,
     type CityComboboxValue,
     type StoriesRailItem,
 } from "@/components";
@@ -54,6 +56,7 @@ import type {
 import type { FeedItem } from "@/server/acompanhante-profile/feed";
 import type { PlanoExibicao } from "@/server/acompanhante-profile";
 import type { StoryOwnerResumo } from "@/server/storage/storyMedia";
+import { buscaFiltrosParaParams } from "@/domain/busca/queryParams";
 
 import { BuscaMapa } from "./BuscaMapa";
 
@@ -167,6 +170,12 @@ export interface BuscaViewProps {
      * o gating de seleção de cidade.
      */
     modoListagemAberta: boolean;
+    /**
+     * `true` quando o visitante é um Cliente logado — habilita o
+     * botão "Salvar busca" (V3). Visitante anônimo/Acompanhante
+     * não vê o botão.
+     */
+    podeSalvarBusca?: boolean;
 }
 
 /**
@@ -211,6 +220,7 @@ export function BuscaView({
     storiesItems,
     cidadeSelecionada,
     modoListagemAberta,
+    podeSalvarBusca = false,
 }: BuscaViewProps): React.ReactElement {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -226,6 +236,40 @@ export function BuscaView({
     // da cidade), na ordem boost → premium → básico definida
     // pelo backend.
     const storyCarousel = useMediaCarousel();
+
+    const toast = useToast();
+    const [salvandoBusca, setSalvandoBusca] = React.useState(false);
+
+    // Salva a busca atual (cidade + filtros) pro Cliente receber
+    // alerta in-site quando surgir perfil novo que casa (V3).
+    async function salvarBuscaAtual(): Promise<void> {
+        if (salvandoBusca) return;
+        setSalvandoBusca(true);
+        try {
+            const res = await fetch("/api/saved-searches", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ filtros }),
+            });
+            const data = (await res.json().catch(() => null)) as {
+                ok?: boolean;
+                reason?: string;
+            } | null;
+            if (res.ok && data?.ok) {
+                toast.success("Busca salva. Avisamos quando surgir perfil novo.");
+            } else if (data?.reason === "CIDADE_OBRIGATORIA") {
+                toast.info("Escolha uma cidade antes de salvar a busca.");
+            } else if (data?.reason === "LIMITE") {
+                toast.info("Você atingiu o limite de buscas salvas.");
+            } else {
+                toast.danger("Não foi possível salvar a busca.");
+            }
+        } catch {
+            toast.danger("Falha de rede. Tente novamente.");
+        } finally {
+            setSalvandoBusca(false);
+        }
+    }
 
     // ─────────────────────────────────────────────────────────────
     // SessionStorage da última cidade
@@ -359,35 +403,7 @@ export function BuscaView({
         nextOrdenar: BuscaOrdenacao = ordenar,
         page = 1,
     ): URLSearchParams {
-        const params = new URLSearchParams();
-        if (next.q) params.set("q", next.q);
-        if (next.cidadeNome) params.set("cidade", next.cidadeNome);
-        if (next.estadoSigla) params.set("uf", next.estadoSigla);
-        if (next.bairroNome) params.set("bairro", next.bairroNome);
-        if (next.genero) params.set("genero", next.genero);
-        if (next.etnia) params.set("etnia", next.etnia);
-        if (next.corOlhos) params.set("cor_olhos", next.corOlhos);
-        if (next.estiloCabelo) params.set("estilo_cabelo", next.estiloCabelo);
-        if (next.tamanhoCabelo)
-            params.set("tamanho_cabelo", next.tamanhoCabelo);
-        if (next.idiomas?.length)
-            params.set("idiomas", next.idiomas.join(","));
-        if (next.formasPagamento?.length)
-            params.set("pagamento", next.formasPagamento.join(","));
-        if (next.diasAtende?.length)
-            params.set("dias", next.diasAtende.join(","));
-        if (next.atendePublicos?.length)
-            params.set("atende", next.atendePublicos.join(","));
-        if (next.praticas?.length)
-            params.set("praticas", next.praticas.join(","));
-        if (next.precoMin) params.set("preco_min", String(next.precoMin));
-        if (next.precoMax) params.set("preco_max", String(next.precoMax));
-        if (next.comAudio) params.set("audio", "1");
-        if (next.comBoost) params.set("boost", "1");
-        if (next.verificada) params.set("verificada", "1");
-        if (nextOrdenar !== "relevancia") params.set("ordenar", nextOrdenar);
-        if (page > 1) params.set("pagina", String(page));
-        return params;
+        return buscaFiltrosParaParams(next, nextOrdenar, page);
     }
 
     function navegar(
@@ -667,6 +683,17 @@ export function BuscaView({
                 </Button>
 
                 <div className="ml-auto flex min-w-0 items-center gap-2">
+                    {podeSalvarBusca && cidadeSelecionada ? (
+                        <button
+                            type="button"
+                            onClick={() => void salvarBuscaAtual()}
+                            disabled={salvandoBusca}
+                            className="inline-flex flex-none items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:opacity-60"
+                        >
+                            <BookmarkIcon size={14} />
+                            Salvar busca
+                        </button>
+                    ) : null}
                     {cidadeSelecionada ? (
                         <button
                             type="button"

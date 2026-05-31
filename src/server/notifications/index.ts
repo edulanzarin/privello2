@@ -74,6 +74,14 @@ export interface NotificationPayloadMap {
         /** Quando o boost deixa de valer (ISO). */
         expiraEm: string;
     };
+    BUSCA_NOVA_CORRESPONDENCIA: {
+        /** Rótulo amigável da busca salva que casou. */
+        buscaLabel: string;
+        /** Nome de exibição do perfil novo que apareceu. */
+        perfilNome: string;
+        /** `@identificador` do perfil novo (link). */
+        perfilIdentificador: string;
+    };
 }
 
 /** União dos tipos de notificação. */

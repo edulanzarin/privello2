@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components";
 import { buildNavItems } from "@/components/shell/navItems";
+import { NotificationBell } from "@/components/shell/NotificationBell";
 import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
 
@@ -59,5 +60,9 @@ export default async function ClienteLayout({
     }
 
     const navItems = buildNavItems("CLIENTE");
-    return <AppShell navItems={navItems}>{children}</AppShell>;
+    return (
+        <AppShell navItems={navItems} topTrailing={<NotificationBell />}>
+            {children}
+        </AppShell>
+    );
 }

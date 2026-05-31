@@ -214,6 +214,8 @@ enum NotificationType {
   VERIFICACAO_REJEITADA
   /// Boost foi ativado (imediato ou agendado).
   BOOST_ATIVADO
+  /// Surgiu um perfil novo que casa com uma busca salva do Cliente (V3).
+  BUSCA_NOVA_CORRESPONDENCIA
 }
 
 enum DiaSemana {
@@ -275,6 +277,8 @@ model User {
   favoritedBy       ClientFavorite[] @relation("ClientFavoritesTarget")
   /// Notificações in-site endereçadas a este User (V2).
   notifications     Notification[]
+  /// Buscas salvas pelo Cliente (V3).
+  savedSearches     SavedSearch[]
 
   @@index([isAdmin])
   @@map("users")
@@ -933,4 +937,33 @@ model Notification {
   // lidas (filtra lidaEm IS NULL). O índice composto cobre ambos.
   @@index([userId, criadoEm(sort: Desc)])
   @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Buscas salvas (Cliente)
+// ---------------------------------------------------------------------------
+
+/// Busca salva por um Cliente (V3): cidade + filtros serializados.
+/// Quando um perfil novo passa a aparecer nas buscas (a Acompanhante
+/// publica) e casa com os filtros salvos, o Cliente recebe uma
+/// notificação in-site (reusa V2). `lastNotifiedAt` evita reenviar a
+/// mesma correspondência repetidamente.
+///
+/// O `filtros` guarda o shape `BuscaFiltros` (JSON). `label` é um
+/// rótulo amigável derivado da cidade/filtros, gerado no salvamento.
+///
+/// Cascade: deletar o Cliente limpa as buscas salvas.
+model SavedSearch {
+  id              String    @id @default(uuid()) @db.Uuid
+  clientUserId    String    @map("client_user_id") @db.Uuid
+  client          User      @relation(fields: [clientUserId], references: [id], onDelete: Cascade)
+  label           String    @db.VarChar(160)
+  filtros         Json
+  /// Última vez que disparamos notificação por correspondência
+  /// nova. Usado pelo matcher pra não notificar o mesmo perfil 2x.
+  lastNotifiedAt  DateTime? @map("last_notified_at")
+  criadoEm        DateTime  @default(now()) @map("criado_em")
+
+  @@index([clientUserId, criadoEm(sort: Desc)])
+  @@map("saved_searches")
 }
