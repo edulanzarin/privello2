@@ -24,6 +24,7 @@ import { db } from "@/lib/db";
 import { ativarBoostsAgendados } from "@/server/boost";
 import { arquivarStoriesExpiradosGlobal } from "@/server/storage/storyMedia";
 import { rebaixarVerificacoesExpiradas } from "@/server/verification";
+import { enviarResumosSemanais } from "@/server/notifications/resumoSemanal";
 import { logger } from "@/lib/observability/logger";
 
 const log = logger("cleanup");
@@ -57,6 +58,11 @@ export interface CleanupReport {
      * `boostUntil` da Acompanhante.
      */
     boostsAgendadosAtivados: number;
+    /**
+     * Quantas Acompanhantes receberam o resumo semanal in-site
+     * nesta execução (W3). Guarda de cadência interna (1×/7d).
+     */
+    resumosSemanaisEnviados: number;
 }
 
 /**
@@ -77,6 +83,7 @@ export async function runCleanup(
         fansClienteExpirados: 0,
         verificacoesExpiradas: 0,
         boostsAgendadosAtivados: 0,
+        resumosSemanaisEnviados: 0,
     };
 
     // 1) Sessões revogadas há > 7 dias OU expiradas há > 7 dias.
@@ -181,6 +188,15 @@ export async function runCleanup(
         report.boostsAgendadosAtivados = result.ativados;
     } catch (err) {
         log.error("falha ao ativar boosts agendados", err);
+    }
+
+    // 9) Resumo semanal in-site (W3). Guarda de cadência por perfil
+    //    (1×/7d) garante idempotência mesmo com cron horário.
+    try {
+        const result = await enviarResumosSemanais({ now });
+        report.resumosSemanaisEnviados = result.enviados;
+    } catch (err) {
+        log.error("falha ao enviar resumos semanais", err);
     }
 
     log.info("cleanup concluído", { ...report });

@@ -216,6 +216,8 @@ enum NotificationType {
   BOOST_ATIVADO
   /// Surgiu um perfil novo que casa com uma busca salva do Cliente (V3).
   BUSCA_NOVA_CORRESPONDENCIA
+  /// Resumo semanal de atividade do perfil da Acompanhante (W3).
+  RESUMO_SEMANAL
 }
 
 enum DiaSemana {

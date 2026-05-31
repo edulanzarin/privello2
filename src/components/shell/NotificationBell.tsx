@@ -10,6 +10,7 @@ import {
     FlameIcon,
     SearchIcon,
     ShieldIcon,
+    TrendingUpIcon,
     XIcon,
 } from "@/components";
 
@@ -319,6 +320,42 @@ function describe(n: NotificationItem): NotificacaoView {
                     </>
                 ),
                 href: `/acompanhantes/${n.payload.perfilIdentificador}`,
+            };
+        case "RESUMO_SEMANAL":
+            return {
+                icon: <TrendingUpIcon size={15} />,
+                iconClasses: "bg-[#ec7b5b]/12 text-[color:var(--accent-deep)]",
+                texto: (
+                    <>
+                        Sua semana:{" "}
+                        <strong className="font-semibold">
+                            {n.payload.visitas}
+                        </strong>{" "}
+                        {n.payload.visitas === 1 ? "visita" : "visitas"},{" "}
+                        <strong className="font-semibold">
+                            {n.payload.curtidas}
+                        </strong>{" "}
+                        {n.payload.curtidas === 1 ? "curtida" : "curtidas"} e{" "}
+                        <strong className="font-semibold">
+                            {n.payload.novosFavoritos}
+                        </strong>{" "}
+                        {n.payload.novosFavoritos === 1
+                            ? "novo salvamento"
+                            : "novos salvamentos"}
+                        .
+                        {n.payload.perguntasPendentes > 0 ? (
+                            <>
+                                {" "}
+                                {n.payload.perguntasPendentes}{" "}
+                                {n.payload.perguntasPendentes === 1
+                                    ? "pergunta aguarda"
+                                    : "perguntas aguardam"}{" "}
+                                resposta.
+                            </>
+                        ) : null}
+                    </>
+                ),
+                href: "/acompanhante#estatisticas",
             };
         default:
             return {

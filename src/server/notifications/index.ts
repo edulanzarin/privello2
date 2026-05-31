@@ -85,6 +85,16 @@ export interface NotificationPayloadMap {
         /** `@identificador` do perfil novo (link). */
         perfilIdentificador: string;
     };
+    RESUMO_SEMANAL: {
+        /** Visitas ao perfil na semana. */
+        visitas: number;
+        /** Curtidas recebidas na semana. */
+        curtidas: number;
+        /** Novos favoritos na semana. */
+        novosFavoritos: number;
+        /** Perguntas pendentes de resposta (snapshot atual). */
+        perguntasPendentes: number;
+    };
 }
 
 /** União dos tipos de notificação. */
