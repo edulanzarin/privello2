@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import {
+    ChatIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     FlagIcon,
@@ -198,14 +199,19 @@ export function MediaCarousel({
     onComplete,
 }: MediaCarouselProps): React.ReactElement | null {
     const [draft, setDraft] = React.useState("");
+    // Painel de comentários recolhível (não-story): a mídia +
+    // descrição ocupam tudo; clicar no botão de comentários
+    // abre/fecha a seção. Começa fechado.
+    const [comentariosAbertos, setComentariosAbertos] = React.useState(false);
     const storyVideoRef = React.useRef<HTMLVideoElement>(null);
     // Em story mode, comentários sempre escondidos.
     const effectiveHideComments = hideComments || storyMode;
 
     // Limpa o rascunho ao trocar de item para evitar postar texto
-    // pensado para outra mídia.
+    // pensado para outra mídia. Recolhe o painel de comentários também.
     React.useEffect(() => {
         setDraft("");
+        setComentariosAbertos(false);
     }, [activeId]);
 
     // Setas navegam quando o modal está aberto.
@@ -479,12 +485,12 @@ export function MediaCarousel({
         >
             {/* Container interno com altura fixa — 85% do viewport.
                 Garante que o modal não cresce/encolhe com a mídia e
-                que a seção de comentários tem scroll interno com
-                input fixo no fundo (estilo Instagram). */}
-            <div className="flex h-full w-full flex-col md:flex-row">
-                {/* Mídia — em mobile ocupa no máximo 50% da altura
-                    do modal; em desktop ocupa 60% da largura. */}
-                <div className="relative flex max-h-[50%] flex-1 items-center justify-center bg-black md:max-h-full md:w-[60%]">
+                que a seção de comentários (recolhível) tem scroll
+                interno com input fixo no fundo. */}
+            <div className="flex h-full w-full flex-col">
+                {/* Mídia — ocupa todo o espaço disponível; encolhe
+                    quando o painel de comentários abre. */}
+                <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black">
                     <CarouselMedia item={active} />
 
                     {/* Botão de fechar próprio do carrossel — fica
@@ -539,14 +545,12 @@ export function MediaCarousel({
                     </span>
                 </div>
 
-                {/* Painel lateral: stats + comentários.
-                    `min-h-0` é essencial pra que `flex-1` + 
-                    `overflow-y-auto` na lista de comentários
-                    funcione — sem ele o flex item não encolhe
-                    abaixo do conteúdo intrínseco. */}
-                <aside className="flex min-h-0 flex-1 flex-col bg-surface md:w-[40%] md:max-w-md">
+                {/* Barra inferior fixa sobre a mídia: like + botão
+                    de comentários (toggle) + ações + data. Não cresce
+                    — a mídia acima ocupa o resto. */}
+                <aside className="flex flex-none flex-col bg-surface">
                     {/* Toolbar: like grande à esquerda + ações + data à direita */}
-                    <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-4 py-3">
+                    <div className="flex items-center justify-between gap-3 border-t border-neutral-200 px-4 py-3">
                         <LikeButton
                             liked={Boolean(active.liked)}
                             count={active.likes}
@@ -557,6 +561,39 @@ export function MediaCarousel({
                             size="lg"
                         />
                         <div className="flex items-center gap-2">
+                            {/* Botão de comentários — abre/fecha a
+                                seção. Só aparece quando há comentários
+                                pra mostrar (lista, lock ou input) e o
+                                modo não esconde comentários. */}
+                            {!effectiveHideComments ? (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setComentariosAbertos((v) => !v)
+                                    }
+                                    aria-expanded={comentariosAbertos}
+                                    aria-label={
+                                        comentariosAbertos
+                                            ? "Ocultar comentários"
+                                            : "Ver comentários"
+                                    }
+                                    className={[
+                                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                                        comentariosAbertos
+                                            ? "border-[#ec7b5b]/40 bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                            : "border-border bg-surface text-text-secondary hover:text-text-primary",
+                                    ].join(" ")}
+                                >
+                                    <ChatIcon size={14} />
+                                    Comentários
+                                    {!commentsLocked &&
+                                    itemComments.length > 0 ? (
+                                        <span className="text-[0.7rem] font-semibold">
+                                            {itemComments.length}
+                                        </span>
+                                    ) : null}
+                                </button>
+                            ) : null}
                             {onDelete !== undefined ? (
                                 <IconButton
                                     icon={<TrashIcon size={16} />}
@@ -593,76 +630,87 @@ export function MediaCarousel({
                         </div>
                     ) : null}
 
-                    {/* Lista de comentários — quando há gate, exibe
-                        LockedContent com placeholders fake. O caller
-                        (anônimo / Cliente Grátis) não deve ver
-                        comentários reais. Pulado quando hideComments. */}
-                    {effectiveHideComments ? null : commentsLocked ? (
-                        <div className="min-h-0 flex-1 overflow-hidden p-4">
-                            <LockedContent
-                                blurAmount={8}
-                                title={commentsLocked.title}
-                                description={commentsLocked.description}
-                                action={commentsLocked.action}
-                                className="h-full min-h-[260px]"
-                            >
-                                <div className="flex flex-col gap-4 p-4">
-                                    {[1, 2, 3].map((i) => (
-                                        <div
-                                            key={i}
-                                            className="flex items-start gap-3"
-                                        >
-                                            <div className="h-8 w-8 flex-none rounded-full bg-neutral-200" />
-                                            <div className="flex flex-1 flex-col gap-1.5">
-                                                <div className="h-3 w-24 rounded bg-neutral-200" />
-                                                <div className="h-3 w-full rounded bg-neutral-200" />
-                                                <div className="h-3 w-3/4 rounded bg-neutral-200" />
-                                            </div>
+                    {/* Seção de comentários — recolhível. Só renderiza
+                        quando `comentariosAbertos`. A mídia + descrição
+                        ficam sempre visíveis; os comentários aparecem
+                        sob demanda (botão na toolbar). */}
+                    {!effectiveHideComments && comentariosAbertos ? (
+                        <div className="flex flex-col border-t border-neutral-200">
+                            {/* Lista de comentários — quando há gate,
+                                exibe LockedContent com placeholders
+                                fake. Altura limitada com scroll próprio
+                                (a mídia acima não some). */}
+                            {commentsLocked ? (
+                                <div className="max-h-[45vh] overflow-y-auto p-4">
+                                    <LockedContent
+                                        blurAmount={8}
+                                        title={commentsLocked.title}
+                                        description={commentsLocked.description}
+                                        action={commentsLocked.action}
+                                        className="min-h-[220px]"
+                                    >
+                                        <div className="flex flex-col gap-4 p-4">
+                                            {[1, 2, 3].map((i) => (
+                                                <div
+                                                    key={i}
+                                                    className="flex items-start gap-3"
+                                                >
+                                                    <div className="h-8 w-8 flex-none rounded-full bg-neutral-200" />
+                                                    <div className="flex flex-1 flex-col gap-1.5">
+                                                        <div className="h-3 w-24 rounded bg-neutral-200" />
+                                                        <div className="h-3 w-full rounded bg-neutral-200" />
+                                                        <div className="h-3 w-3/4 rounded bg-neutral-200" />
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    </LockedContent>
                                 </div>
-                            </LockedContent>
-                        </div>
-                    ) : (
-                        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-                            {itemComments.length === 0 ? (
-                                <EmptyState
-                                    size="sm"
-                                    title="Nenhum comentário ainda"
-                                    description={
-                                        canComment
-                                            ? "Seja o primeiro a comentar."
-                                            : undefined
-                                    }
-                                />
                             ) : (
-                                <ul className="flex flex-col gap-4">
-                                    {itemComments.map((c) => (
-                                        <li key={c.id}>
-                                            <Comment
-                                                comment={c}
-                                                onReport={onReportComment}
-                                            />
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="max-h-[45vh] overflow-y-auto px-4 py-3">
+                                    {itemComments.length === 0 ? (
+                                        <EmptyState
+                                            size="sm"
+                                            title="Nenhum comentário ainda"
+                                            description={
+                                                canComment
+                                                    ? "Seja o primeiro a comentar."
+                                                    : undefined
+                                            }
+                                        />
+                                    ) : (
+                                        <ul className="flex flex-col gap-4">
+                                            {itemComments.map((c) => (
+                                                <li key={c.id}>
+                                                    <Comment
+                                                        comment={c}
+                                                        onReport={
+                                                            onReportComment
+                                                        }
+                                                    />
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
                             )}
-                        </div>
-                    )}
 
-                    {/* Input de comentário (quando habilitado e sem gate) */}
-                    {!effectiveHideComments && canComment && !commentsLocked ? (
-                        <div className="border-t border-neutral-200 px-4 py-3">
-                            <CommentInput
-                                value={draft}
-                                onChange={setDraft}
-                                onSubmit={(text) => {
-                                    onAddComment?.(active.id, text);
-                                    setDraft("");
-                                }}
-                                authorPhotoUrl={currentUserPhotoUrl}
-                                authorName={currentUserName}
-                            />
+                            {/* Input de comentário (quando habilitado e
+                                sem gate). */}
+                            {canComment && !commentsLocked ? (
+                                <div className="border-t border-neutral-200 px-4 py-3">
+                                    <CommentInput
+                                        value={draft}
+                                        onChange={setDraft}
+                                        onSubmit={(text) => {
+                                            onAddComment?.(active.id, text);
+                                            setDraft("");
+                                        }}
+                                        authorPhotoUrl={currentUserPhotoUrl}
+                                        authorName={currentUserName}
+                                    />
+                                </div>
+                            ) : null}
                         </div>
                     ) : null}
                 </aside>
