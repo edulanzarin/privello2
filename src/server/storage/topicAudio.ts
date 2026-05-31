@@ -22,6 +22,7 @@ import {
     audioApresentacaoExt,
     validarAudioApresentacao,
 } from "@/domain/validation";
+import { getPlanoDefinition } from "@/domain/plano/definitions";
 import { db } from "@/lib/db";
 
 import {
@@ -265,10 +266,33 @@ export async function excluirTopicAudio(input: {
 /**
  * Lista os TopicAudios ativos de um dono. Ordenado por `topicKind`
  * (ordem alfabética da enum) — UI tem layout fixo.
+ *
+ * # Gate de plano (Premium-only)
+ *
+ * TopicAudio é um recurso exclusivo do `Plano_Premium` (mesmo gate
+ * do Áudio_de_Apresentação). A escrita já barra não-Premium, mas a
+ * leitura também aplica o gate aqui de forma centralizada: se o
+ * dono não tem mais plano que permite áudio (ex.: fez downgrade
+ * Premium → Básico, ou perdeu o plano), devolve lista vazia. Isso
+ * garante que o perfil público nunca exiba a FAQ sonora de quem não
+ * é Premium, sem cada caller precisar repetir a checagem.
  */
 export async function listarTopicAudios(
     userId: string,
 ): Promise<ReadonlyArray<TopicAudioItem>> {
+    // Gate Premium na leitura: confere o plano vigente do dono.
+    const profile = await db.acompanhanteProfile.findUnique({
+        where: { userId },
+        select: { planoVigente: true },
+    });
+    if (
+        !profile ||
+        profile.planoVigente === null ||
+        !getPlanoDefinition(profile.planoVigente).permiteAudio
+    ) {
+        return [];
+    }
+
     const rows = await db.media.findMany({
         where: {
             ownerId: userId,

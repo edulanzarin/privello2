@@ -43,11 +43,32 @@ const stores = vi.hoisted(() => ({
     }>(),
     nextId: 1,
     r2Calls: [] as string[],
+    // Plano vigente por userId. Default (sem entrada) = PREMIUM,
+    // pra os testes pré-existentes (que assumem leitura liberada)
+    // continuarem passando. O gate Premium em listarTopicAudios lê
+    // daqui.
+    planos: new Map<string, "BASICO" | "PREMIUM" | null>(),
 }));
+
+function planoDoUsuario(userId: string): "BASICO" | "PREMIUM" | null {
+    return stores.planos.has(userId)
+        ? (stores.planos.get(userId) ?? null)
+        : "PREMIUM";
+}
 
 vi.mock("@/lib/db", () => {
     return {
         db: {
+            acompanhanteProfile: {
+                async findUnique({
+                    where,
+                }: {
+                    where: { userId: string };
+                    select?: { planoVigente?: boolean };
+                }) {
+                    return { planoVigente: planoDoUsuario(where.userId) };
+                },
+            },
             media: {
                 async findFirst({
                     where,
@@ -231,6 +252,7 @@ beforeEach(() => {
     stores.medias.clear();
     stores.nextId = 1;
     stores.r2Calls = [];
+    stores.planos.clear();
 });
 
 describe("isTopicAudioKind", () => {
@@ -425,5 +447,33 @@ describe("listarTopicAudios", () => {
         const lista = await listarTopicAudios("u1");
         expect(lista).toHaveLength(1);
         expect(lista[0]?.topicKind).toBe("PRECO");
+    });
+});
+
+describe("listarTopicAudios — gate Premium", () => {
+    it("não lista TopicAudios de quem está no plano Básico", async () => {
+        // Publica enquanto Premium (default no mock).
+        await publicarTopicAudio({
+            userId: "u1",
+            topicKind: "PRECO",
+            mimeType: VALID_MIME,
+            bytes: VALID_AUDIO_BYTES,
+        });
+        expect(await listarTopicAudios("u1")).toHaveLength(1);
+
+        // Downgrade pra Básico → leitura passa a esconder a FAQ sonora.
+        stores.planos.set("u1", "BASICO");
+        expect(await listarTopicAudios("u1")).toHaveLength(0);
+    });
+
+    it("não lista quando o dono não tem plano vigente", async () => {
+        await publicarTopicAudio({
+            userId: "u1",
+            topicKind: "CASAL",
+            mimeType: VALID_MIME,
+            bytes: VALID_AUDIO_BYTES,
+        });
+        stores.planos.set("u1", null);
+        expect(await listarTopicAudios("u1")).toHaveLength(0);
     });
 });
