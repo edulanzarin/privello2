@@ -47,14 +47,14 @@ novo que casa, recebe notificação **no site** (reusa V2).
 - [x] Quando a Acompanhante publica o perfil, casa contra buscas
       salvas e notifica os Clientes (in-site).
 
-### ✅ V4 — Sidebar desktop nos painéis
-**Esforço**: ~3h.
-Navegação lateral em desktop (≥lg) nos painéis Cliente/
-Acompanhante; BottomNav continua no mobile.
+### ❌ V4 — Sidebar desktop nos painéis
+**Esforço**: ~3h. **Descartada** — implementada e revertida a
+pedido do produto (não curtiu o resultado visual). Painéis seguem
+com BottomNav em todas as larguras.
 
-- [x] Primitivo `SideNav` (espelha BottomNav, sem domain leak).
-- [x] AppShell renderiza SideNav em lg+ e BottomNav em mobile
-      (prop opt-in `desktopSidebar`); sino vai no rodapé da sidebar.
+- [x] ~~Primitivo `SideNav` (espelha BottomNav, sem domain leak).~~
+- [x] ~~AppShell renderiza SideNav em lg+ e BottomNav em mobile.~~
+- Revertido no commit `revert(nav): remove V4 sidebar desktop`.
 
 ### ⬜ V5 — Onboarding do Cliente Fan (tour)
 **Esforço**: ~2h.
@@ -83,6 +83,7 @@ depois, mas sem adicionar dependência não-configurada.
 
 ## Status global
 
-- 4 / 7 concluídas.
+- 3 / 7 concluídas.
 - Descartado: bloqueio de Cliente (não faz sentido — visitante
-  pode estar deslogado).
+  pode estar deslogado). V4 (sidebar desktop) — implementada e
+  revertida a pedido do produto.
