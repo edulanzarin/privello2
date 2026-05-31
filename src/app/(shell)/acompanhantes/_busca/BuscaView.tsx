@@ -765,6 +765,22 @@ export function BuscaView({
                     {cidadeSelecionada ? (
                         <button
                             type="button"
+                            onClick={() => setMapaAberto((v) => !v)}
+                            aria-pressed={mapaAberto}
+                            className={[
+                                "inline-flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                                mapaAberto
+                                    ? "border-[#ec7b5b]/40 bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                    : "border-border bg-surface text-text-secondary hover:text-text-primary",
+                            ].join(" ")}
+                        >
+                            <MapPinIcon size={14} />
+                            {mapaAberto ? "Ocultar mapa" : "Ver no mapa"}
+                        </button>
+                    ) : null}
+                    {cidadeSelecionada ? (
+                        <button
+                            type="button"
                             onClick={buscarPertoDeMim}
                             disabled={localizando}
                             aria-pressed={ordenar === "proximidade"}
@@ -777,22 +793,6 @@ export function BuscaView({
                         >
                             <MapPinIcon size={14} />
                             {localizando ? "Localizando…" : "Perto de mim"}
-                        </button>
-                    ) : null}
-                    {cidadeSelecionada ? (
-                        <button
-                            type="button"
-                            onClick={() => setMapaAberto((v) => !v)}
-                            aria-pressed={mapaAberto}
-                            className={[
-                                "inline-flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
-                                mapaAberto
-                                    ? "border-[#ec7b5b]/40 bg-[#fff0eb] text-[color:var(--accent-deep)]"
-                                    : "border-border bg-surface text-text-secondary hover:text-text-primary",
-                            ].join(" ")}
-                        >
-                            <MapPinIcon size={14} />
-                            {mapaAberto ? "Ocultar mapa" : "Ver no mapa"}
                         </button>
                     ) : null}
                     <span className="hidden text-xs text-text-secondary sm:inline">
@@ -1457,7 +1457,7 @@ function SelecionarCidadeView({
                 <div className="flex items-center gap-2 text-sm text-text-secondary">
                     <MapPinIcon size={14} />
                     <span>
-                        Ou toque numa cidade no mapa pra ver os perfis de lá.
+                        Ou toque numa cidade no mapa pra ver os perfis.
                     </span>
                 </div>
                 <BuscaMapaCidades

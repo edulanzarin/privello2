@@ -159,17 +159,17 @@ export function ShareButton({
                 title="Compartilhar perfil"
                 size="sm"
             >
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 p-5">
                     <p className="text-sm text-text-secondary">
                         Salve a imagem abaixo (toque e segure) pra postar
                         no Stories ou Status, ou copie o link.
                     </p>
-                    <div className="overflow-hidden rounded-2xl ring-1 ring-border">
+                    <div className="mx-auto overflow-hidden rounded-2xl ring-1 ring-border">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={cardUrl}
                             alt={`Card de ${nome}`}
-                            className="w-full"
+                            className="mx-auto max-h-[46vh] w-auto"
                         />
                     </div>
                     <Button
