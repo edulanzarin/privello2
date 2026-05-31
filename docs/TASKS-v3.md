@@ -21,11 +21,11 @@ Badge de atividade nos cards/perfil baseado em `Session.lastSeenAt`.
 - [x] Campo `ativaRecentemente` no FeedItem (busca + feed home).
 - [x] Selo "Ativa hoje" no card (prop genérica `active` no primitivo).
 
-### ⬜ W3 — Resumo semanal in-site (Acompanhante)
+### ✅ W3 — Resumo semanal in-site (Acompanhante)
 Notificação "essa semana: X visitas, Y curtidas". Reusa V2.
-- [ ] Enum `RESUMO_SEMANAL` + payload.
-- [ ] `enviarResumosSemanais` no cron, com guarda de cadência 7d.
-- [ ] Render no sininho.
+- [x] Enum `RESUMO_SEMANAL` + payload (migration).
+- [x] `enviarResumosSemanais` no cron, guarda de cadência 7d.
+- [x] Render no sininho (só envia se houve atividade).
 
 ### ⬜ W4 — Comparativo de plano contextual
 Diff Básico vs Premium em vez de só bloquear.
@@ -54,4 +54,4 @@ Visão geral com contadores no admin.
 - [ ] Aba/seção "Visão geral" no admin.
 
 ## Status global
-- 2 / 8 concluídas.
+- 3 / 8 concluídas.
