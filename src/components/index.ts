@@ -321,6 +321,13 @@ export type {
 export { InlineAlert } from "./primitives/InlineAlert";
 export type { InlineAlertProps, InlineAlertTone } from "./primitives/InlineAlert";
 
+export { ToastProvider, useToast } from "./primitives/Toast";
+export type {
+    ToastApi,
+    ToastOptions,
+    ToastTone,
+} from "./primitives/Toast";
+
 export { PasswordChangeModal } from "./primitives/PasswordChangeModal";
 export type { PasswordChangeModalProps } from "./primitives/PasswordChangeModal";
 

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
+import { ToastProvider } from "@/components";
+
 import { PwaBootstrap } from "./_pwa/PwaBootstrap";
 
 /**
@@ -142,7 +144,7 @@ export default function RootLayout({
         <html lang="pt-BR" className={geist.variable}>
             <body className="min-h-screen font-sans">
                 <OrganizationJsonLd />
-                {children}
+                <ToastProvider>{children}</ToastProvider>
                 <PwaBootstrap />
             </body>
         </html>
