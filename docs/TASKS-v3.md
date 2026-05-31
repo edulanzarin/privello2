@@ -33,11 +33,12 @@ Diff Básico vs Premium em vez de só bloquear.
 - [x] Usar na seleção de plano da Acompanhante (linhas derivadas
       do catálogo `PLANO_DEFINITIONS`).
 
-### ⬜ W5 — Landing pages por cidade (SEO)
+### ✅ W5 — Landing pages por cidade (SEO)
 `/acompanhantes/cidade/[uf]/[cidade]` ISR.
-- [ ] Helper de slug de cidade (normalizar/resolver).
-- [ ] Página ISR com lista + texto SEO + metadata.
-- [ ] Incluir no sitemap.
+- [x] Helper de slug de cidade (`domain/busca/citySlug.ts`).
+- [x] Página ISR (revalidate 1h) com lista + texto SEO + metadata
+      canônica; `generateStaticParams` pré-gera as top 200.
+- [x] Incluído no sitemap (landing + busca querystring).
 
 ### ⬜ W6 — Filtro "perto de você"
 Ordenação por proximidade usando lat/lng + geolocalização.
@@ -55,4 +56,4 @@ Visão geral com contadores no admin.
 - [ ] Aba/seção "Visão geral" no admin.
 
 ## Status global
-- 4 / 8 concluídas.
+- 5 / 8 concluídas.
