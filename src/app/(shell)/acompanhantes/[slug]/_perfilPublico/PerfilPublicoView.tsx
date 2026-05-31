@@ -75,6 +75,7 @@ import type { ReviewPublico } from "@/server/reviews";
 import { AvaliacoesSection } from "./AvaliacoesSection";
 import { PerguntasSection } from "./PerguntasSection";
 import { ShareButton } from "./ShareButton";
+import { TrackVisto } from "./TrackVisto";
 
 /**
  * "Tipo de viewer" — quem está abrindo o perfil. Determina UX:
@@ -677,6 +678,15 @@ export function PerfilPublicoView({
 
     return (
         <div className="flex flex-col gap-6">
+            {/* Registra em "vistos recentemente" (W1) — invisível. */}
+            <TrackVisto
+                identificador={perfil.identificador}
+                nome={perfil.nome}
+                fotoUrl={perfil.fotoUrl}
+                cidadeNome={perfil.cidadeNome}
+                estadoSigla={perfil.estadoSigla}
+                verificada={perfil.verificada}
+            />
             {/* Identidade + plano */}
             <ProfileHeader
                 photoUrl={perfil.fotoUrl}
