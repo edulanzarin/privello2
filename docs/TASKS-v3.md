@@ -47,10 +47,11 @@ Ordenação por proximidade usando lat/lng + geolocalização.
 - [x] Botão "Perto de mim" na busca (geolocation + navega com
       lat/lng; paginação preserva coords).
 
-### ⬜ W7 — Rate limit visível
-Feedback (toast) quando o Cliente bate limite (429).
-- [ ] Helper client pra tratar 429 com toast.
-- [ ] Aplicar nos fluxos de criação (review, pergunta, favorito).
+### ✅ W7 — Rate limit visível
+Feedback (toast/inline) quando o Cliente bate limite (429).
+- [x] Helper client `useRateLimitToast` (toast com tempo de espera).
+- [x] Aplicado: favoritar (toast), avaliar e perguntar (inline
+      com mensagem de espera).
 
 ### ⬜ W8 — Painel admin: métricas rápidas
 Visão geral com contadores no admin.
@@ -58,4 +59,4 @@ Visão geral com contadores no admin.
 - [ ] Aba/seção "Visão geral" no admin.
 
 ## Status global
-- 6 / 8 concluídas.
+- 7 / 8 concluídas.
