@@ -35,17 +35,17 @@ Central de notificações no painel: "X te avaliou", "X te salvou",
 - [x] Aba/dropdown "Notificações" no painel com badge (sininho no
       TopBar via slot `topTrailing`).
 
-### ⬜ V3 — Busca salva + alerta in-site (Cliente)
+### ✅ V3 — Busca salva + alerta in-site (Cliente)
 **Esforço**: ~5h.
 Cliente salva uma busca (cidade + filtros). Quando surge perfil
 novo que casa, recebe notificação **no site** (reusa V2).
 
-- [ ] Model `SavedSearch(clientUserId, filtrosJson, criadoEm)`.
-- [ ] Service: salvar/listar/excluir busca; matcher novo-perfil.
-- [ ] Botão "Salvar busca" na `/acompanhantes`.
-- [ ] Aba "Buscas salvas" no painel do Cliente.
-- [ ] No onboarding finalizar, casa contra buscas salvas e
-      notifica os Clientes (in-site).
+- [x] Model `SavedSearch(clientUserId, filtrosJson, criadoEm)`.
+- [x] Service: salvar/listar/excluir busca; matcher novo-perfil.
+- [x] Botão "Salvar busca" na `/acompanhantes`.
+- [x] Aba "Buscas salvas" no painel do Cliente.
+- [x] Quando a Acompanhante publica o perfil, casa contra buscas
+      salvas e notifica os Clientes (in-site).
 
 ### ⬜ V4 — Sidebar desktop nos painéis
 **Esforço**: ~3h.
@@ -82,6 +82,6 @@ depois, mas sem adicionar dependência não-configurada.
 
 ## Status global
 
-- 2 / 7 concluídas.
+- 3 / 7 concluídas.
 - Descartado: bloqueio de Cliente (não faz sentido — visitante
   pode estar deslogado).
