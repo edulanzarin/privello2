@@ -21,18 +21,19 @@ tudo é inline.
 - [x] Montar provider no root layout (client).
 - [x] Sem domain leak (passa lint).
 
-### ⬜ V2 — Notificações in-site (Acompanhante)
+### ✅ V2 — Notificações in-site (Acompanhante)
 **Esforço**: ~6h.
 Central de notificações no painel: "X te avaliou", "X te salvou",
 "verificação aprovada", "boost ativou". Sininho com contador.
 **Sem email** — tudo no site.
 
-- [ ] Model `Notification(userId, tipo, payload, lidaEm, criadoEm)`.
-- [ ] Service: criar/listar/marcar-lida/contar-não-lidas.
-- [ ] Disparar em: nova avaliação, novo favorito, verificação
+- [x] Model `Notification(userId, tipo, payload, lidaEm, criadoEm)`.
+- [x] Service: criar/listar/marcar-lida/contar-não-lidas.
+- [x] Disparar em: nova avaliação, novo favorito, verificação
       aprovada/rejeitada, boost ativado.
-- [ ] Endpoint listar + marcar lida.
-- [ ] Aba/dropdown "Notificações" no painel com badge.
+- [x] Endpoint listar + marcar lida.
+- [x] Aba/dropdown "Notificações" no painel com badge (sininho no
+      TopBar via slot `topTrailing`).
 
 ### ⬜ V3 — Busca salva + alerta in-site (Cliente)
 **Esforço**: ~5h.
@@ -81,6 +82,6 @@ depois, mas sem adicionar dependência não-configurada.
 
 ## Status global
 
-- 1 / 7 concluídas.
+- 2 / 7 concluídas.
 - Descartado: bloqueio de Cliente (não faz sentido — visitante
   pode estar deslogado).
