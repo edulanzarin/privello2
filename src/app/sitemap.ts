@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { db } from "@/lib/db";
+import { cidadeLandingPath } from "@/domain/busca/citySlug";
 
 const SITE_URL =
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -93,17 +94,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
         cidadeEntries = Array.from(pares)
             .slice(0, 5_000)
-            .map((par) => {
+            .flatMap((par) => {
                 const [cidade, uf] = par.split("|");
                 const params = new URLSearchParams();
                 params.set("cidade", cidade!);
                 params.set("uf", uf!);
-                return {
-                    url: `${SITE_URL}/acompanhantes?${params.toString()}`,
-                    lastModified: now,
-                    changeFrequency: "daily" as const,
-                    priority: 0.6,
-                };
+                return [
+                    // Landing estática (ISR) — alvo principal de SEO.
+                    {
+                        url: `${SITE_URL}${cidadeLandingPath(cidade!, uf!)}`,
+                        lastModified: now,
+                        changeFrequency: "daily" as const,
+                        priority: 0.7,
+                    },
+                    // Busca filtrável (querystring) — secundária.
+                    {
+                        url: `${SITE_URL}/acompanhantes?${params.toString()}`,
+                        lastModified: now,
+                        changeFrequency: "daily" as const,
+                        priority: 0.6,
+                    },
+                ];
             });
     } catch {
         // DB indisponível em build (ex.: CI sem container) —

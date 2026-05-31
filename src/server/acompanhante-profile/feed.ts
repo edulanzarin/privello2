@@ -375,6 +375,43 @@ export async function listarCidadesEmDestaque(
     return enriched;
 }
 
+/**
+ * Par cidade/UF com contagem de perfis visíveis. Usado pelas
+ * landing pages de cidade (W5) — pra gerar `generateStaticParams`,
+ * resolver slugs e listar índice de cidades. Sem foto/enrichment
+ * (mais barato que {@link listarCidadesEmDestaque}).
+ */
+export interface CidadeComPerfis {
+    cidadeNome: string;
+    estadoSigla: string;
+    count: number;
+}
+
+/**
+ * Lista TODOS os pares `(cidade, UF)` com ao menos um perfil
+ * visível, ordenados por contagem desc. Teto generoso pra cobrir o
+ * país sem explodir o build de ISR.
+ */
+export async function listarTodasCidadesComPerfis(
+    options: { limit?: number } = {},
+): Promise<ReadonlyArray<CidadeComPerfis>> {
+    const limit = Math.max(1, Math.min(5000, options.limit ?? 2000));
+
+    const grupos = await db.acompanhanteProfile.groupBy({
+        by: ["estadoSigla", "cidadeNome"],
+        where: baseWhereVisivel,
+        _count: { _all: true },
+        orderBy: { _count: { userId: "desc" } },
+        take: limit,
+    });
+
+    return grupos.map((g) => ({
+        cidadeNome: g.cidadeNome,
+        estadoSigla: g.estadoSigla,
+        count: g._count._all,
+    }));
+}
+
 
 /**
  * Item de mídia aleatória usado pra preencher a collage do hero
