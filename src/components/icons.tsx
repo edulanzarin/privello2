@@ -806,3 +806,16 @@ export function LinkIcon(props: IconProps): React.ReactElement {
         </Svg>
     );
 }
+
+/**
+ * Sino — notificações. Badezinho de "novidade" é desenhado pela UI
+ * que consome (não faz parte do ícone).
+ */
+export function BellIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M6 9a6 6 0 0 1 12 0c0 4 1.2 5.4 2 6.2.4.4.1 1.1-.5 1.1H4.5c-.6 0-.9-.7-.5-1.1.8-.8 2-2.2 2-6.2Z" />
+            <path d="M10 19a2 2 0 0 0 4 0" />
+        </Svg>
+    );
+}

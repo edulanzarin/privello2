@@ -21,6 +21,7 @@
  */
 
 import { db } from "@/lib/db";
+import { criarNotificacao } from "@/server/notifications";
 
 /**
  * Forma de uma avaliação retornada para a UI pública.
@@ -98,6 +99,18 @@ export async function upsertReview(
         return { ok: false, reason: "TARGET_NAO_E_ACOMPANHANTE" };
     }
 
+    // Detecta se é avaliação nova (vs. edição) pra só notificar a
+    // Acompanhante na primeira vez — editar não gera aviso novo.
+    const jaExistia = await db.acompanhanteReview.findUnique({
+        where: {
+            targetUserId_authorUserId: {
+                targetUserId: input.targetUserId,
+                authorUserId: input.authorUserId,
+            },
+        },
+        select: { authorUserId: true },
+    });
+
     const review = await db.acompanhanteReview.upsert({
         where: {
             targetUserId_authorUserId: {
@@ -117,6 +130,25 @@ export async function upsertReview(
         },
         select: { id: true },
     });
+
+    // Notifica a Acompanhante só quando a avaliação é nova (V2).
+    // Best-effort — falha aqui não invalida a avaliação.
+    if (!jaExistia) {
+        const autor = await db.user.findUnique({
+            where: { id: input.authorUserId },
+            select: { nome: true, identificador: true },
+        });
+        if (autor) {
+            await criarNotificacao({
+                userId: input.targetUserId,
+                type: "NOVA_AVALIACAO",
+                payload: {
+                    autorNome: autor.nome,
+                    autorIdentificador: autor.identificador,
+                },
+            });
+        }
+    }
 
     return { ok: true, reviewId: review.id };
 }

@@ -404,6 +404,7 @@ export {
     AtIcon,
     ArrowRightIcon,
     BanknoteIcon,
+    BellIcon,
     BookmarkIcon,
     CalendarIcon,
     CameraIcon,

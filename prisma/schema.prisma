@@ -199,6 +199,23 @@ enum FormaPagamento {
   TRANSFERENCIA
 }
 
+/// Tipo de uma notificação in-site (V2). Conjunto fechado pra a UI
+/// renderizar ícone/título por categoria sem parsear texto livre.
+/// O detalhe específico (quem avaliou, qual o motivo da rejeição,
+/// etc.) vive no campo `payload` (JSON).
+enum NotificationType {
+  /// Uma nova avaliação foi recebida.
+  NOVA_AVALIACAO
+  /// Um Cliente marcou o perfil como favorito.
+  NOVO_FAVORITO
+  /// Pedido de verificação aprovado pelo admin.
+  VERIFICACAO_APROVADA
+  /// Pedido de verificação rejeitado pelo admin.
+  VERIFICACAO_REJEITADA
+  /// Boost foi ativado (imediato ou agendado).
+  BOOST_ATIVADO
+}
+
 enum DiaSemana {
   SEG
   TER
@@ -256,6 +273,8 @@ model User {
   favoritesAuthored ClientFavorite[] @relation("ClientFavoritesAuthor")
   /// Favoritos onde este User é a Acompanhante marcada.
   favoritedBy       ClientFavorite[] @relation("ClientFavoritesTarget")
+  /// Notificações in-site endereçadas a este User (V2).
+  notifications     Notification[]
 
   @@index([isAdmin])
   @@map("users")
@@ -885,4 +904,33 @@ model ClientFavorite {
   @@index([clientUserId, criadoEm(sort: Desc)])
   @@index([acompanhanteUserId])
   @@map("client_favorites")
+}
+
+// ---------------------------------------------------------------------------
+// Notificações in-site
+// ---------------------------------------------------------------------------
+
+/// Notificação in-site endereçada a um User (V2). Tudo no site —
+/// nunca por email. Gerada por eventos: nova avaliação, novo
+/// favorito, verificação aprovada/rejeitada, boost ativado.
+///
+/// O `type` define a categoria (ícone/título na UI); `payload`
+/// guarda o detalhe específico em JSON (ex.: `{ "autorNome": "..." }`
+/// ou `{ "motivo": "..." }`). `lidaEm` nulo = não lida; o sininho
+/// conta as não lidas.
+///
+/// Cascade: deletar o User destinatário limpa as notificações.
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  payload   Json
+  lidaEm    DateTime?        @map("lida_em")
+  criadoEm  DateTime         @default(now()) @map("criado_em")
+
+  // Lookup "minhas notificações" (ordem desc) + contagem de não
+  // lidas (filtra lidaEm IS NULL). O índice composto cobre ambos.
+  @@index([userId, criadoEm(sort: Desc)])
+  @@map("notifications")
 }

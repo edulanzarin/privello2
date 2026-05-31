@@ -19,6 +19,7 @@
  */
 
 import { db } from "@/lib/db";
+import { criarNotificacao } from "@/server/notifications";
 
 // ---------------------------------------------------------------------------
 // Tipos públicos
@@ -117,6 +118,19 @@ export async function toggleFavorito(input: {
                 acompanhanteUserId: input.acompanhanteUserId,
             },
         });
+
+        // Notifica a Acompanhante do novo favorito (V2). Mostra só o
+        // total acumulado — nunca QUEM foi (privacidade do Cliente).
+        // Best-effort: falha aqui não desfaz o favorito.
+        const total = await db.clientFavorite.count({
+            where: { acompanhanteUserId: input.acompanhanteUserId },
+        });
+        await criarNotificacao({
+            userId: input.acompanhanteUserId,
+            type: "NOVO_FAVORITO",
+            payload: { total },
+        });
+
         return { ok: true, favorito: true };
     } catch {
         return { ok: false, reason: "PERSISTENCIA" };

@@ -43,6 +43,7 @@ import {
 } from "@/domain/validation";
 import { db } from "@/lib/db";
 import { createR2Client, type R2Client } from "@/lib/storage/r2";
+import { criarNotificacao } from "@/server/notifications";
 
 // ---------------------------------------------------------------------------
 // R2 client helper
@@ -365,6 +366,14 @@ export async function aprovarVerificacao(input: {
                 where: { userId: verification.userId },
                 data: { verificada: true },
             });
+            // Notifica a Acompanhante na mesma transação (V2) — se
+            // o commit falhar, a notificação some junto.
+            await criarNotificacao({
+                userId: verification.userId,
+                type: "VERIFICACAO_APROVADA",
+                payload: { expiraEm: expiraEm.toISOString() },
+                client: tx,
+            });
         });
     } catch {
         return { ok: false, reason: "PERSISTENCIA" };
@@ -418,6 +427,14 @@ export async function rejeitarVerificacao(input: {
             await tx.acompanhanteProfile.update({
                 where: { userId: verification.userId },
                 data: { verificada: false },
+            });
+            // Notifica a Acompanhante com o motivo (V2), na mesma
+            // transação.
+            await criarNotificacao({
+                userId: verification.userId,
+                type: "VERIFICACAO_REJEITADA",
+                payload: { motivo },
+                client: tx,
             });
         });
     } catch {

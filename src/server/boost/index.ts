@@ -42,6 +42,7 @@ import {
     createMercadoPagoClient,
     type MercadoPagoClient,
 } from "@/lib/payments/mercadopago";
+import { criarNotificacao } from "@/server/notifications";
 
 // ---------------------------------------------------------------------------
 // Singleton + test seam
@@ -389,6 +390,15 @@ export async function processarWebhookBoost(
                     where: { userId: local.userId },
                     data: { boostUntil: newBoostUntil },
                 });
+
+                // Notifica boost ativado (imediato) na mesma
+                // transação (V2).
+                await criarNotificacao({
+                    userId: local.userId,
+                    type: "BOOST_ATIVADO",
+                    payload: { expiraEm: newBoostUntil.toISOString() },
+                    client: tx,
+                });
             });
             return { ok: true, applied: true };
         } catch {
@@ -550,6 +560,14 @@ export async function ativarBoostsAgendados(
                 await tx.acompanhanteProfile.update({
                     where: { userId: boost.userId },
                     data: { boostUntil: newBoostUntil },
+                });
+                // Notifica boost ativado (agendado) na mesma
+                // transação (V2).
+                await criarNotificacao({
+                    userId: boost.userId,
+                    type: "BOOST_ATIVADO",
+                    payload: { expiraEm: newBoostUntil.toISOString() },
+                    client: tx,
                 });
                 ativados += 1;
             });
