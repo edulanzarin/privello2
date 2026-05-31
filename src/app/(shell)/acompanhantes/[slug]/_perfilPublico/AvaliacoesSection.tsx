@@ -384,6 +384,12 @@ function ReviewForm({
                     body: JSON.stringify({ comment: trimmed, rating }),
                 },
             );
+            if (res.status === 429) {
+                setError(
+                    "Você avaliou rápido demais. Espere um pouco e tente de novo.",
+                );
+                return;
+            }
             if (!res.ok) {
                 setError("Não foi possível enviar. Tente novamente.");
                 return;

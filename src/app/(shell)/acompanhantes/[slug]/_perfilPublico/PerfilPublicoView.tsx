@@ -64,6 +64,7 @@ import {
     type FormaPagamento,
 } from "@/domain/atendimentoComercial";
 import { buildAuthUrl } from "@/domain/redirect";
+import { useRateLimitToast } from "@/lib/rateLimitToast";
 
 import type {
     PerfilAcompanhantePublico,
@@ -283,6 +284,7 @@ export function PerfilPublicoView({
         favoritoInicial ?? false,
     );
     const [favoritoLoading, setFavoritoLoading] = React.useState(false);
+    const rateLimit = useRateLimitToast();
 
     /**
      * Toggle otimista do favorito. Botão só renderiza pra Cliente
@@ -300,6 +302,10 @@ export function PerfilPublicoView({
                 `/api/acompanhantes/${encodeURIComponent(slug)}/favorite`,
                 { method: "POST" },
             );
+            if (await rateLimit.handle(res)) {
+                setFavorito(!next);
+                return;
+            }
             if (!res.ok) {
                 // Reverte otimismo. Botão silencioso — sem alert.
                 setFavorito(!next);

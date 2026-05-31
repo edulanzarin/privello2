@@ -235,6 +235,12 @@ function PerguntaForm({ slug }: { slug: string }): React.ReactElement {
                     body: JSON.stringify({ question: trimmed }),
                 },
             );
+            if (res.status === 429) {
+                setError(
+                    "Você perguntou rápido demais. Espere um pouco e tente de novo.",
+                );
+                return;
+            }
             if (!res.ok) {
                 setError(
                     "Não foi possível enviar a pergunta. Tente novamente.",
