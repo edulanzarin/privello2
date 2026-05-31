@@ -53,10 +53,10 @@ Feedback (toast/inline) quando o Cliente bate limite (429).
 - [x] Aplicado: favoritar (toast), avaliar e perguntar (inline
       com mensagem de espera).
 
-### ⬜ W8 — Painel admin: métricas rápidas
+### ✅ W8 — Painel admin: métricas rápidas
 Visão geral com contadores no admin.
-- [ ] `obterMetricasAdmin()` (pendências + totais).
-- [ ] Aba/seção "Visão geral" no admin.
+- [x] `obterMetricasAdmin()` (pendências + totais de plataforma).
+- [x] Aba "Visão geral" (default) no admin com cartões de métrica.
 
 ## Status global
-- 7 / 8 concluídas.
+- 8 / 8 concluídas.
