@@ -32,6 +32,9 @@ import ffmpegStatic from "ffmpeg-static";
 import sharp from "sharp";
 
 import type { GaleriaTipo } from "@/domain/validation";
+import { logger } from "@/lib/observability/logger";
+
+const log = logger("watermark");
 
 /**
  * Resolve o caminho do binário FFmpeg. Em ESM o `ffmpeg-static` às
@@ -68,9 +71,9 @@ function ensureAssets(): boolean {
     if (assetsAvailable !== null) return assetsAvailable;
     assetsAvailable = fs.existsSync(PRIVELLO_TEXT_PATH);
     if (!assetsAvailable) {
-        console.warn(
-            "[watermark] privello.png ausente em /public — marca d'água será pulada.",
-            { PRIVELLO_TEXT_PATH },
+        log.warn(
+            "privello.png ausente em /public — marca d'água será pulada",
+            { path: PRIVELLO_TEXT_PATH },
         );
     }
     return assetsAvailable;
@@ -101,13 +104,17 @@ export async function applyGalleryWatermark(args: {
             return buffer;
         }
         if (!ffmpegPath) {
-            console.warn("[watermark] ffmpeg-static não resolveu binário — vídeo será passado direto.");
+            log.warn(
+                "ffmpeg-static não resolveu binário — vídeo será passado direto",
+            );
             return buffer;
         }
         try {
             return await watermarkVideo(buffer, args.mimeType);
         } catch (err) {
-            console.error("[watermark] falha em vídeo", err);
+            log.error("falha ao aplicar marca d'água em vídeo", err, {
+                mimeType: args.mimeType,
+            });
             return buffer;
         }
     }
@@ -119,7 +126,9 @@ export async function applyGalleryWatermark(args: {
     try {
         return await watermarkPhoto(buffer, args.mimeType);
     } catch (err) {
-        console.error("[watermark] falha ao aplicar marca d'água", err);
+        log.error("falha ao aplicar marca d'água em foto", err, {
+            mimeType: args.mimeType,
+        });
         return buffer;
     }
 }

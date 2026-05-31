@@ -24,6 +24,9 @@ import { db } from "@/lib/db";
 import { ativarBoostsAgendados } from "@/server/boost";
 import { arquivarStoriesExpiradosGlobal } from "@/server/storage/storyMedia";
 import { rebaixarVerificacoesExpiradas } from "@/server/verification";
+import { logger } from "@/lib/observability/logger";
+
+const log = logger("cleanup");
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -88,8 +91,8 @@ export async function runCleanup(
             },
         });
         report.sessionsDeleted = result.count;
-    } catch {
-        // best-effort
+    } catch (err) {
+        log.error("falha ao limpar sessões", err);
     }
 
     // 2) OnboardingDrafts expirados há > 1 dia.
@@ -99,8 +102,8 @@ export async function runCleanup(
             where: { expiresAt: { lt: draftCutoff } },
         });
         report.onboardingDraftsDeleted = result.count;
-    } catch {
-        // best-effort
+    } catch (err) {
+        log.error("falha ao limpar onboarding drafts", err);
     }
 
     // 3) LoginAttempts > 30 dias (sucesso ou falha — depois de 30d
@@ -111,8 +114,8 @@ export async function runCleanup(
             where: { createdAt: { lt: attemptCutoff } },
         });
         report.loginAttemptsDeleted = result.count;
-    } catch {
-        // best-effort
+    } catch (err) {
+        log.error("falha ao limpar login attempts", err);
     }
 
     // 4) PasswordResetToken usados/expirados há > 7 dias.
@@ -127,16 +130,16 @@ export async function runCleanup(
             },
         });
         report.passwordResetTokensDeleted = result.count;
-    } catch {
-        // best-effort
+    } catch (err) {
+        log.error("falha ao limpar password reset tokens", err);
     }
 
     // 5) Stories expirados → ARCHIVED.
     try {
         const result = await arquivarStoriesExpiradosGlobal({ now });
         report.storiesArchived = result.archived;
-    } catch {
-        // best-effort
+    } catch (err) {
+        log.error("falha ao arquivar stories expirados", err);
     }
 
     // 6) Cliente Fan expirado → GRATIS.
@@ -157,8 +160,8 @@ export async function runCleanup(
             },
         });
         report.fansClienteExpirados = result.count;
-    } catch {
-        // best-effort
+    } catch (err) {
+        log.error("falha ao normalizar fans expirados", err);
     }
 
     // 7) Verificações expiradas → rebaixa `verificada` no
@@ -167,8 +170,8 @@ export async function runCleanup(
     try {
         const result = await rebaixarVerificacoesExpiradas({ now });
         report.verificacoesExpiradas = result.rebaixadas;
-    } catch {
-        // best-effort
+    } catch (err) {
+        log.error("falha ao rebaixar verificações expiradas", err);
     }
 
     // 8) Boosts agendados que chegaram a hora → ativa (estende
@@ -176,9 +179,11 @@ export async function runCleanup(
     try {
         const result = await ativarBoostsAgendados({ now });
         report.boostsAgendadosAtivados = result.ativados;
-    } catch {
-        // best-effort
+    } catch (err) {
+        log.error("falha ao ativar boosts agendados", err);
     }
+
+    log.info("cleanup concluído", { ...report });
 
     return report;
 }

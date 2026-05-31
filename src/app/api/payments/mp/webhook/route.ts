@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { processarWebhookBoost } from "@/server/boost";
+import { logger } from "@/lib/observability/logger";
+
+const log = logger("mp/webhook");
 
 /**
  * Webhook do Mercado Pago.
@@ -82,7 +85,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     try {
         await processarWebhookBoost(paymentId);
     } catch (err) {
-        console.error("[mp/webhook] falha ao processar", err);
+        log.error("falha ao processar webhook de pagamento", err, {
+            paymentId,
+        });
     }
 
     return NextResponse.json({ ok: true }, { status: 200 });

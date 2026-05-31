@@ -31,6 +31,9 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { logger } from "@/lib/observability/logger";
+
+const log = logger("notifications");
 
 /**
  * Cliente Prisma ou client de transação — permite criar a
@@ -137,10 +140,9 @@ export async function criarNotificacao<K extends NotificationKind>(input: {
         return row.id;
     } catch (error) {
         // Efeito secundário: não derruba a operação principal.
-        console.error("[notifications] falha ao criar notificação", {
+        log.error("falha ao criar notificação", error, {
             userId: input.userId,
             type: input.type,
-            error,
         });
         return null;
     }
