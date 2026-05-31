@@ -27,10 +27,11 @@ Notificação "essa semana: X visitas, Y curtidas". Reusa V2.
 - [x] `enviarResumosSemanais` no cron, guarda de cadência 7d.
 - [x] Render no sininho (só envia se houve atividade).
 
-### ⬜ W4 — Comparativo de plano contextual
+### ✅ W4 — Comparativo de plano contextual
 Diff Básico vs Premium em vez de só bloquear.
-- [ ] Primitivo `PlanComparison` (genérico, sem domain leak).
-- [ ] Usar na seleção de plano da Acompanhante.
+- [x] Primitivo `PlanComparison` (tabela N×M genérica, sem domain leak).
+- [x] Usar na seleção de plano da Acompanhante (linhas derivadas
+      do catálogo `PLANO_DEFINITIONS`).
 
 ### ⬜ W5 — Landing pages por cidade (SEO)
 `/acompanhantes/cidade/[uf]/[cidade]` ISR.
@@ -54,4 +55,4 @@ Visão geral com contadores no admin.
 - [ ] Aba/seção "Visão geral" no admin.
 
 ## Status global
-- 3 / 8 concluídas.
+- 4 / 8 concluídas.
