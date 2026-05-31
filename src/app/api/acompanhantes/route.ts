@@ -61,6 +61,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         q: sp.get("q") ?? undefined,
         cidadeNome: sp.get("cidade") ?? undefined,
         estadoSigla: sp.get("uf") ?? undefined,
+        bairroNome: sp.get("bairro") ?? undefined,
         genero: sp.get("genero") ?? undefined,
         etnia: sp.get("etnia") ?? undefined,
         corOlhos: sp.get("cor_olhos") ?? undefined,

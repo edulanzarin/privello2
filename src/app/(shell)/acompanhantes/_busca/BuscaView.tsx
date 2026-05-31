@@ -26,6 +26,7 @@ import {
     StoriesRail,
     Switch,
     UsersIcon,
+    XIcon,
     useMediaCarousel,
     type CityComboboxValue,
     type StoriesRailItem,
@@ -214,10 +215,11 @@ export function BuscaView({
     const router = useRouter();
     const searchParams = useSearchParams();
     const [panelOpen, setPanelOpen] = React.useState(false);
-    // Visão dos resultados: lista (grid de cards) ou mapa interativo.
-    // Só faz sentido com cidade selecionada — em listagem aberta
-    // mantemos lista. O mapa carrega o Maplibre dinamicamente.
-    const [viewMode, setViewMode] = React.useState<"lista" | "mapa">("lista");
+    // Mapa de bairros: painel recolhível acima da lista. Funciona
+    // como um filtro visual — clicar num bairro filtra a lista.
+    // Começa aberto quando há cidade (mais descoberta), some sem
+    // cidade. Carrega o Maplibre dinamicamente só quando aberto.
+    const [mapaAberto, setMapaAberto] = React.useState(true);
 
     // Modal do viewer de Stories — controla qual story está
     // visível agora. Os stories vêm achatados (todos os ativos
@@ -361,6 +363,7 @@ export function BuscaView({
         if (next.q) params.set("q", next.q);
         if (next.cidadeNome) params.set("cidade", next.cidadeNome);
         if (next.estadoSigla) params.set("uf", next.estadoSigla);
+        if (next.bairroNome) params.set("bairro", next.bairroNome);
         if (next.genero) params.set("genero", next.genero);
         if (next.etnia) params.set("etnia", next.etnia);
         if (next.corOlhos) params.set("cor_olhos", next.corOlhos);
@@ -399,6 +402,28 @@ export function BuscaView({
     function aplicarFiltros(): void {
         navegar(draft, ordenar, 1);
         setPanelOpen(false);
+    }
+
+    /**
+     * Filtra (ou desfiltra) a lista por bairro a partir de um clique
+     * no mapa. Clicar no bairro já selecionado remove o filtro
+     * (toggle). Preserva os demais filtros vigentes.
+     */
+    function filtrarPorBairro(bairro: string | null): void {
+        const jaSelecionado =
+            bairro !== null &&
+            filtros.bairroNome != null &&
+            filtros.bairroNome.toLowerCase() === bairro.toLowerCase();
+        const next: BuscaFiltros = {
+            ...filtros,
+            bairroNome: jaSelecionado || bairro === null ? undefined : bairro,
+        };
+        navegar(next, ordenar, 1);
+    }
+
+    function limparBairro(): void {
+        const next: BuscaFiltros = { ...filtros, bairroNome: undefined };
+        navegar(next, ordenar, 1);
     }
 
     function limparFiltros(): void {
@@ -643,38 +668,20 @@ export function BuscaView({
 
                 <div className="ml-auto flex min-w-0 items-center gap-2">
                     {cidadeSelecionada ? (
-                        <div
-                            role="group"
-                            aria-label="Visualização dos resultados"
-                            className="flex flex-none items-center rounded-full border border-border bg-surface p-0.5"
+                        <button
+                            type="button"
+                            onClick={() => setMapaAberto((v) => !v)}
+                            aria-pressed={mapaAberto}
+                            className={[
+                                "inline-flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                                mapaAberto
+                                    ? "border-[#ec7b5b]/40 bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                    : "border-border bg-surface text-text-secondary hover:text-text-primary",
+                            ].join(" ")}
                         >
-                            <button
-                                type="button"
-                                onClick={() => setViewMode("lista")}
-                                aria-pressed={viewMode === "lista"}
-                                className={[
-                                    "rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
-                                    viewMode === "lista"
-                                        ? "bg-[#fff0eb] text-[color:var(--accent-deep)]"
-                                        : "text-text-secondary hover:text-text-primary",
-                                ].join(" ")}
-                            >
-                                Lista
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setViewMode("mapa")}
-                                aria-pressed={viewMode === "mapa"}
-                                className={[
-                                    "rounded-full px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
-                                    viewMode === "mapa"
-                                        ? "bg-[#fff0eb] text-[color:var(--accent-deep)]"
-                                        : "text-text-secondary hover:text-text-primary",
-                                ].join(" ")}
-                            >
-                                Mapa
-                            </button>
-                        </div>
+                            <MapPinIcon size={14} />
+                            {mapaAberto ? "Ocultar mapa" : "Ver no mapa"}
+                        </button>
                     ) : null}
                     <span className="hidden text-xs text-text-secondary sm:inline">
                         Ordenar por:
@@ -979,6 +986,53 @@ export function BuscaView({
 
                 {/* Resultados */}
                 <section className="flex min-w-0 flex-col gap-5">
+                    {/* ── Mapa de bairros (filtro visual) ─────────
+                        Painel recolhível acima da lista. Clicar num
+                        bairro filtra a lista por ele. Só aparece com
+                        cidade selecionada. Carrega o Maplibre só
+                        quando aberto. */}
+                    {cidadeSelecionada && mapaAberto ? (
+                        <div className="flex flex-col gap-2">
+                            <BuscaMapa
+                                queryString={buildSearchParams(
+                                    // Mapa mostra todos os bairros da
+                                    // cidade — ignora o filtro de
+                                    // bairro pra não sumir os outros
+                                    // marcadores ao selecionar um.
+                                    { ...filtros, bairroNome: undefined },
+                                    ordenar,
+                                    1,
+                                ).toString()}
+                                bairroSelecionado={filtros.bairroNome ?? null}
+                                onBairroClick={(bairro) =>
+                                    filtrarPorBairro(bairro)
+                                }
+                            />
+                            <p className="text-center text-xs text-text-secondary">
+                                Toque num bairro pra filtrar. As
+                                localizações são aproximadas por região.
+                            </p>
+                        </div>
+                    ) : null}
+
+                    {/* Chip do bairro filtrado (removível). */}
+                    {filtros.bairroNome ? (
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-text-secondary">
+                                Bairro:
+                            </span>
+                            <button
+                                type="button"
+                                onClick={limparBairro}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-[#ec7b5b]/30 bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-deep)] transition-colors hover:bg-[color:var(--accent-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                            >
+                                <MapPinIcon size={12} />
+                                {filtros.bairroNome}
+                                <XIcon size={12} />
+                            </button>
+                        </div>
+                    ) : null}
+
                     {/* ── Tira de Stories da cidade ───────────────
                         Aparece entre o painel de filtros e o grid
                         de cards. Depois dos filtros e antes dos
@@ -995,15 +1049,7 @@ export function BuscaView({
                         />
                     ) : null}
 
-                    {viewMode === "mapa" ? (
-                        <BuscaMapa
-                            queryString={buildSearchParams(
-                                filtros,
-                                ordenar,
-                                1,
-                            ).toString()}
-                        />
-                    ) : items.length > 0 ? (
+                    {items.length > 0 ? (
                         <>
                             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                                 {items.map((item) => (

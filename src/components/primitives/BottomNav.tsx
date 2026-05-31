@@ -56,8 +56,18 @@ export function BottomNav({ items }: BottomNavProps): React.ReactElement {
     return (
         <nav
             aria-label="Navegação principal"
-            className="sticky bottom-0 z-30 glass-bar"
-            style={{ borderTop: "1px solid var(--hairline)", borderBottom: "none" }}
+            className="sticky bottom-0 z-30"
+            style={{
+                // Glass mais suave que o `glass-bar` (que era forte
+                // demais no rodapé): fundo quase sólido + blur leve,
+                // pra o conteúdo atrás não vazar competindo com os
+                // ícones.
+                background: "rgba(251, 249, 246, 0.94)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                borderTop: "1px solid var(--hairline)",
+                borderBottom: "none",
+            }}
         >
             <ul className="mx-auto flex max-w-3xl items-stretch">
                 {items.map((item) => {

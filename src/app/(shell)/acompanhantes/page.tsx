@@ -20,6 +20,7 @@ interface SearchParamsRaw {
     q?: string;
     cidade?: string;
     uf?: string;
+    bairro?: string;
     genero?: string;
     etnia?: string;
     cor_olhos?: string;
@@ -199,6 +200,7 @@ export default async function AcompanhantesPage({
         q: params.q,
         cidadeNome: params.cidade,
         estadoSigla: params.uf,
+        bairroNome: params.bairro,
         genero: generoFiltro,
         etnia: params.etnia,
         corOlhos: params.cor_olhos,

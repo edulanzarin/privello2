@@ -46,6 +46,15 @@ export interface MapaBairro {
 export interface BuscaMapaProps {
     /** Querystring atual (sem o `?`) pra repassar os filtros à API. */
     queryString: string;
+    /**
+     * Chamado quando o usuário clica num bairro do mapa. Recebe o
+     * label do bairro (ou `null` quando é o fallback de centro da
+     * cidade — não filtra por bairro nesse caso). O caller filtra
+     * a lista por esse bairro.
+     */
+    onBairroClick?: (bairro: string | null, cidadeFallback: boolean) => void;
+    /** Bairro atualmente selecionado (pra destacar no mapa). */
+    bairroSelecionado?: string | null;
 }
 
 // Centro aproximado do Brasil (fallback quando não há nada) + zoom
@@ -56,13 +65,27 @@ const BRASIL_ZOOM = 3.4;
 // Zoom máximo: nível de bairro/região. Nunca rua.
 const MAX_ZOOM = 14;
 
-export function BuscaMapa({ queryString }: BuscaMapaProps): React.ReactElement {
+export function BuscaMapa({
+    queryString,
+    onBairroClick,
+    bairroSelecionado,
+}: BuscaMapaProps): React.ReactElement {
     const containerRef = React.useRef<HTMLDivElement | null>(null);
     const mapRef = React.useRef<MaplibreMap | null>(null);
     const markersRef = React.useRef<MaplibreMarker[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [erro, setErro] = React.useState<string | null>(null);
     const [vazio, setVazio] = React.useState(false);
+
+    // Ref pro callback + bairro selecionado, pra que o handler de
+    // clique (registrado uma vez no boot) sempre veja o valor atual
+    // sem precisar re-montar o mapa.
+    const onBairroClickRef = React.useRef(onBairroClick);
+    const bairroSelecionadoRef = React.useRef(bairroSelecionado);
+    React.useEffect(() => {
+        onBairroClickRef.current = onBairroClick;
+        bairroSelecionadoRef.current = bairroSelecionado;
+    });
 
     React.useEffect(() => {
         let cancelado = false;
@@ -121,10 +144,24 @@ export function BuscaMapa({ queryString }: BuscaMapaProps): React.ReactElement {
                 }
 
                 // Marcador HTML custom por bairro: pílula com a
-                // contagem + label. Não clicável (apenas leitura).
+                // contagem + label. Clicável → filtra a lista por
+                // aquele bairro.
                 const bounds = new maplibre.LngLatBounds();
                 for (const b of bairros) {
-                    const el = construirMarcador(b);
+                    const selecionado =
+                        !b.cidadeFallback &&
+                        bairroSelecionadoRef.current != null &&
+                        b.label.toLowerCase() ===
+                            bairroSelecionadoRef.current.toLowerCase();
+                    const el = construirMarcador(b, selecionado);
+                    // Clique filtra (exceto fallback de cidade, que
+                    // não representa um bairro específico).
+                    if (!b.cidadeFallback) {
+                        el.style.cursor = "pointer";
+                        el.addEventListener("click", () => {
+                            onBairroClickRef.current?.(b.label, false);
+                        });
+                    }
                     const marker = new maplibre.Marker({
                         element: el,
                         anchor: "bottom",
@@ -242,22 +279,30 @@ export function BuscaMapa({ queryString }: BuscaMapaProps): React.ReactElement {
 /**
  * Constrói o elemento DOM do marcador de um bairro. Estilo inline
  * (sem Tailwind aqui porque o elemento vive fora da árvore React,
- * dentro do canvas do maplibre). Não é clicável — `pointer-events`
- * só pra cursor, sem handler de navegação.
+ * dentro do canvas do maplibre). Bairros (não-fallback) são
+ * clicáveis pra filtrar a lista; o `selecionado` destaca o bairro
+ * filtrado no momento.
  */
-function construirMarcador(b: MapaBairro): HTMLElement {
+function construirMarcador(b: MapaBairro, selecionado: boolean): HTMLElement {
     const wrap = document.createElement("div");
     wrap.style.display = "flex";
     wrap.style.alignItems = "center";
     wrap.style.gap = "6px";
     wrap.style.padding = "4px 10px 4px 4px";
     wrap.style.borderRadius = "9999px";
-    wrap.style.background = "rgba(255,255,255,0.96)";
-    wrap.style.boxShadow = "0 4px 14px -4px rgba(0,0,0,0.3)";
-    wrap.style.border = "1px solid rgba(197,82,58,0.25)";
+    wrap.style.background = selecionado
+        ? "linear-gradient(135deg, #ec7b5b 0%, #c5523a 100%)"
+        : "rgba(255,255,255,0.96)";
+    wrap.style.boxShadow = selecionado
+        ? "0 6px 18px -4px rgba(197,82,58,0.55)"
+        : "0 4px 14px -4px rgba(0,0,0,0.3)";
+    wrap.style.border = selecionado
+        ? "1px solid rgba(255,255,255,0.7)"
+        : "1px solid rgba(197,82,58,0.25)";
     wrap.style.fontFamily = "var(--font-inter, sans-serif)";
     wrap.style.cursor = "default";
     wrap.style.userSelect = "none";
+    wrap.style.transition = "transform 0.12s ease";
 
     const badge = document.createElement("span");
     badge.textContent = String(b.count);
@@ -268,9 +313,10 @@ function construirMarcador(b: MapaBairro): HTMLElement {
     badge.style.height = "26px";
     badge.style.padding = "0 6px";
     badge.style.borderRadius = "9999px";
-    badge.style.background =
-        "linear-gradient(135deg, #ec7b5b 0%, #c5523a 100%)";
-    badge.style.color = "#fff";
+    badge.style.background = selecionado
+        ? "rgba(255,255,255,0.95)"
+        : "linear-gradient(135deg, #ec7b5b 0%, #c5523a 100%)";
+    badge.style.color = selecionado ? "#c5523a" : "#fff";
     badge.style.fontSize = "13px";
     badge.style.fontWeight = "700";
     badge.style.lineHeight = "1";
@@ -280,7 +326,7 @@ function construirMarcador(b: MapaBairro): HTMLElement {
     label.textContent = `${b.label}${sufixo}`;
     label.style.fontSize = "12px";
     label.style.fontWeight = "600";
-    label.style.color = "#3a2a25";
+    label.style.color = selecionado ? "#fff" : "#3a2a25";
     label.style.maxWidth = "150px";
     label.style.whiteSpace = "nowrap";
     label.style.overflow = "hidden";

@@ -63,6 +63,11 @@ export interface BuscaFiltros {
     q?: string;
     estadoSigla?: string;
     cidadeNome?: string;
+    /**
+     * Filtra por bairro exato (case-insensitive). Alimentado pelo
+     * mapa de bairros — clicar num bairro filtra a lista por ele.
+     */
+    bairroNome?: string;
     genero?: string;
     etnia?: string;
     corOlhos?: string;
@@ -150,6 +155,12 @@ function buildWhere(
     }
     if (filtros.cidadeNome && filtros.cidadeNome.trim().length > 0) {
         where.cidadeNome = filtros.cidadeNome.trim();
+    }
+    if (filtros.bairroNome && filtros.bairroNome.trim().length > 0) {
+        where.bairroNome = {
+            equals: filtros.bairroNome.trim(),
+            mode: "insensitive",
+        };
     }
 
     if (filtros.genero && isGenero(filtros.genero)) {
