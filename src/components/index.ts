@@ -181,6 +181,14 @@ export type {
     OnboardingTourProps,
 } from "./primitives/OnboardingTour";
 
+export { PlanComparison } from "./primitives/PlanComparison";
+export type {
+    ComparisonColumn,
+    ComparisonRow,
+    ComparisonValue,
+    PlanComparisonProps,
+} from "./primitives/PlanComparison";
+
 export { InfoRow } from "./primitives/InfoRow";
 export type { InfoRowProps } from "./primitives/InfoRow";
 

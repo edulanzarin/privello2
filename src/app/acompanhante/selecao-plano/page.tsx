@@ -1,5 +1,6 @@
-import { MicIcon, OfferCard, OfferLayout } from "@/components";
+import { MicIcon, OfferCard, OfferLayout, PlanComparison } from "@/components";
 import {
+    PLANO_DEFINITIONS,
     podeAlterarPlano,
     type PlanoDefinition,
 } from "@/domain/plano/definitions";
@@ -81,6 +82,41 @@ function beneficios(plano: PlanoDefinition) {
     return items;
 }
 
+/**
+ * Linhas do comparativo Básico × Premium, derivadas do catálogo
+ * canônico {@link PLANO_DEFINITIONS}. Mantém os números (limites)
+ * em sincronia com o domínio — sem hardcode na UI.
+ */
+function linhasComparativo() {
+    const b = PLANO_DEFINITIONS.BASICO;
+    const p = PLANO_DEFINITIONS.PREMIUM;
+    const limiteReelsLabel = (n: number): string =>
+        Number.isFinite(n) ? String(n) : "Ilimitado";
+    return [
+        {
+            label: "Mídias na galeria",
+            values: [String(b.limiteMidias), String(p.limiteMidias)],
+        },
+        {
+            label: "Reels",
+            values: [limiteReelsLabel(b.limiteReels), limiteReelsLabel(p.limiteReels)],
+        },
+        { label: "Stories", values: [b.permiteStories, p.permiteStories] },
+        {
+            label: "Áudio de apresentação",
+            values: [b.permiteAudio, p.permiteAudio],
+        },
+        {
+            label: "Vídeo de apresentação",
+            values: [b.permiteAudio, p.permiteAudio],
+        },
+        {
+            label: "Prioridade em buscas",
+            values: [b.prioridadeBusca, p.prioridadeBusca],
+        },
+    ];
+}
+
 export default async function SelecaoPlanoPage() {
     const session = await getCurrentSession();
     if (!session) {
@@ -95,7 +131,8 @@ export default async function SelecaoPlanoPage() {
     const isPrimeiraEscolha = planoAtual === null;
 
     return (
-        <OfferLayout
+        <>
+            <OfferLayout
             eyebrow={isPrimeiraEscolha ? "Sua jornada começa aqui" : "Trocar plano"}
             title={isPrimeiraEscolha ? "Escolha seu plano" : "Faça upgrade"}
             subtitle={
@@ -137,6 +174,24 @@ export default async function SelecaoPlanoPage() {
                     </OfferCard>
                 );
             })}
-        </OfferLayout>
+            </OfferLayout>
+
+            {/* Comparativo contextual Básico × Premium (W4). Em vez de
+                só bloquear recursos, mostra lado a lado o que cada
+                plano entrega. */}
+            <section className="mx-auto w-full max-w-3xl px-4 pb-12 sm:px-6">
+                <h2 className="mb-3 text-center text-lg font-semibold tracking-tight text-text-primary">
+                    Compare os planos
+                </h2>
+                <PlanComparison
+                    caption="Recurso"
+                    columns={[
+                        { title: "Básico" },
+                        { title: "Premium", highlight: true },
+                    ]}
+                    rows={linhasComparativo()}
+                />
+            </section>
+        </>
     );
 }
