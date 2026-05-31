@@ -10,42 +10,47 @@ import {
 
 import { listarFilaReports } from "@/server/reports";
 import { listarFilaVerificacoes } from "@/server/verification";
+import { obterMetricasAdmin } from "@/server/admin/metricas";
 
 import { ReportsAdmin } from "./_admin/ReportsAdmin";
 import { VerificacoesAdmin } from "./_admin/VerificacoesAdmin";
+import { VisaoGeralAdmin } from "./_admin/VisaoGeralAdmin";
 
 export const metadata = { title: "Admin · Privello" };
 
 /**
  * Painel admin.
  *
- * Carrega as 2 filas (verificações pendentes + denúncias pendentes)
- * em paralelo e renderiza num `Tabs` com URL hash. Versão mínima
- * pra moderação — sem RBAC complexo, sem dashboard, sem métricas.
+ * Carrega as métricas rápidas (W8) + as 2 filas (verificações
+ * pendentes + denúncias pendentes) em paralelo e renderiza num
+ * `Tabs` com URL hash. A aba "Visão geral" dá o panorama; as outras
+ * duas são a fila de moderação.
  *
  * Acesso é bloqueado pelo {@link import("./layout").default} via
  * flag `User.isAdmin`.
  */
 export default async function AdminPage() {
-    const [verificacoes, reports] = await Promise.all([
+    const [verificacoes, reports, metricas] = await Promise.all([
         listarFilaVerificacoes({ status: "PENDENTE", limit: 100 }),
         listarFilaReports({ status: "PENDENTE", limit: 100 }),
+        obterMetricasAdmin(),
     ]);
 
     return (
         <PageSurface>
             <SectionHeader
                 title="Painel admin"
-                subtitle="Triagem de verificações de identidade e denúncias."
+                subtitle="Visão geral, verificações de identidade e denúncias."
                 icon={<ShieldIcon size={20} />}
             />
 
             <Tabs
-                defaultValue="verificacoes"
+                defaultValue="visao-geral"
                 urlHash
                 className="flex flex-col gap-5"
             >
                 <TabList aria-label="Áreas do admin">
+                    <TabTrigger value="visao-geral">Visão geral</TabTrigger>
                     <TabTrigger value="verificacoes">
                         Verificações
                         {verificacoes.length > 0 ? (
@@ -64,6 +69,9 @@ export default async function AdminPage() {
                     </TabTrigger>
                 </TabList>
 
+                <TabPanel value="visao-geral">
+                    <VisaoGeralAdmin metricas={metricas} />
+                </TabPanel>
                 <TabPanel value="verificacoes">
                     <VerificacoesAdmin
                         items={verificacoes.map((v) => ({
