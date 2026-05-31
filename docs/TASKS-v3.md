@@ -9,11 +9,11 @@ Status: ⬜ Pendente · 🟡 Em progresso · ✅ Concluída · ❌ Descartada
 
 ---
 
-### ⬜ W1 — Vistos recentemente (Cliente)
+### ✅ W1 — Vistos recentemente (Cliente)
 Histórico dos últimos perfis abertos. Rail no painel do Cliente.
-- [ ] Hook `useVistosRecentemente` (localStorage, cap, dedupe).
-- [ ] Registrar ao abrir um perfil público.
-- [ ] Rail "Vistos recentemente" no painel do Cliente.
+- [x] `lib/recentlyViewed.ts` (localStorage, cap 12, dedupe, hook).
+- [x] `TrackVisto` registra ao abrir um perfil público.
+- [x] Rail "Vistos recentemente" no painel do Cliente.
 
 ### ⬜ W2 — Ativa recentemente (presença)
 Badge de atividade nos cards/perfil baseado em `Session.lastSeenAt`.
@@ -54,4 +54,4 @@ Visão geral com contadores no admin.
 - [ ] Aba/seção "Visão geral" no admin.
 
 ## Status global
-- 0 / 8 concluídas.
+- 1 / 8 concluídas.
