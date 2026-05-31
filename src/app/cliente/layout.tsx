@@ -61,7 +61,11 @@ export default async function ClienteLayout({
 
     const navItems = buildNavItems("CLIENTE");
     return (
-        <AppShell navItems={navItems} topTrailing={<NotificationBell />}>
+        <AppShell
+            navItems={navItems}
+            topTrailing={<NotificationBell />}
+            desktopSidebar
+        >
             {children}
         </AppShell>
     );
