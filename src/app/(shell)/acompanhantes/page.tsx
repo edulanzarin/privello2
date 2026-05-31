@@ -38,6 +38,8 @@ interface SearchParamsRaw {
     verificada?: string;
     ordenar?: string;
     pagina?: string;
+    lat?: string;
+    lng?: string;
 }
 
 /**
@@ -140,7 +142,8 @@ function parseOrdenar(value: string | undefined): BuscaOrdenacao {
         value === "recentes" ||
         value === "preco_asc" ||
         value === "preco_desc" ||
-        value === "popular"
+        value === "popular" ||
+        value === "proximidade"
     ) {
         return value;
     }
@@ -227,7 +230,15 @@ export default async function AcompanhantesPage({
 
     if (cidadeSelecionada || modoBuscaPorTexto || modoListagemAberta) {
         try {
-            resultado = await buscar({ filtros, ordenar, page });
+            const viewerLat = params.lat ? Number.parseFloat(params.lat) : undefined;
+            const viewerLng = params.lng ? Number.parseFloat(params.lng) : undefined;
+            resultado = await buscar({
+                filtros,
+                ordenar,
+                page,
+                viewerLat: Number.isFinite(viewerLat) ? viewerLat : undefined,
+                viewerLng: Number.isFinite(viewerLng) ? viewerLng : undefined,
+            });
         } catch {
             resultado = {
                 items: [],

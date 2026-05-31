@@ -46,11 +46,18 @@ function parseOrdenar(value: string | null): BuscaOrdenacao {
         value === "recentes" ||
         value === "preco_asc" ||
         value === "preco_desc" ||
-        value === "popular"
+        value === "popular" ||
+        value === "proximidade"
     ) {
         return value;
     }
     return "relevancia";
+}
+
+function parseFloatParam(value: string | null): number | undefined {
+    if (!value) return undefined;
+    const n = Number.parseFloat(value);
+    return Number.isFinite(n) ? n : undefined;
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -85,9 +92,18 @@ export async function GET(request: Request): Promise<NextResponse> {
         1,
         Math.min(60, parseNumber(sp.get("per_page")) ?? 24),
     );
+    const viewerLat = parseFloatParam(sp.get("lat"));
+    const viewerLng = parseFloatParam(sp.get("lng"));
 
     try {
-        const resultado = await buscar({ filtros, ordenar, page, perPage });
+        const resultado = await buscar({
+            filtros,
+            ordenar,
+            page,
+            perPage,
+            viewerLat,
+            viewerLng,
+        });
         return NextResponse.json({ ok: true, ...resultado }, { status: 200 });
     } catch {
         return NextResponse.json(

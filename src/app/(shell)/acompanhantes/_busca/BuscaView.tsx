@@ -378,6 +378,15 @@ export function BuscaView({
         setLoading(true);
         try {
             const params = buildSearchParams(filtros, ordenar, nextPage);
+            // No modo proximidade, preserva as coordenadas do
+            // visitante (vêm na URL atual) pra paginação manter a
+            // ordenação por distância (W6).
+            if (ordenar === "proximidade") {
+                const lat = searchParams.get("lat");
+                const lng = searchParams.get("lng");
+                if (lat) params.set("lat", lat);
+                if (lng) params.set("lng", lng);
+            }
             const res = await fetch(`/api/acompanhantes?${params.toString()}`);
             if (!res.ok) return;
             const payload = (await res.json().catch(() => null)) as
@@ -459,6 +468,38 @@ export function BuscaView({
 
     function trocarOrdenacao(value: BuscaOrdenacao): void {
         navegar(filtros, value, 1);
+    }
+
+    // "Perto de mim" (W6): pede geolocalização e navega com
+    // ordenar=proximidade + lat/lng. Sem permissão/suporte, avisa
+    // via toast e não muda nada.
+    const [localizando, setLocalizando] = React.useState(false);
+    function buscarPertoDeMim(): void {
+        if (localizando) return;
+        if (
+            typeof navigator === "undefined" ||
+            !navigator.geolocation
+        ) {
+            toast.info("Seu navegador não suporta localização.");
+            return;
+        }
+        setLocalizando(true);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setLocalizando(false);
+                const params = buildSearchParams(filtros, "proximidade", 1);
+                params.set("lat", pos.coords.latitude.toFixed(5));
+                params.set("lng", pos.coords.longitude.toFixed(5));
+                router.push(`/acompanhantes?${params.toString()}`);
+            },
+            () => {
+                setLocalizando(false);
+                toast.info(
+                    "Não consegui acessar sua localização. Verifique a permissão.",
+                );
+            },
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+        );
     }
 
     function buscarPorCidade(value: CityComboboxValue): void {
@@ -703,6 +744,23 @@ export function BuscaView({
                         >
                             <BookmarkIcon size={14} />
                             Salvar busca
+                        </button>
+                    ) : null}
+                    {cidadeSelecionada ? (
+                        <button
+                            type="button"
+                            onClick={buscarPertoDeMim}
+                            disabled={localizando}
+                            aria-pressed={ordenar === "proximidade"}
+                            className={[
+                                "inline-flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:opacity-60",
+                                ordenar === "proximidade"
+                                    ? "border-[#ec7b5b]/40 bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                    : "border-border bg-surface text-text-secondary hover:text-text-primary",
+                            ].join(" ")}
+                        >
+                            <MapPinIcon size={14} />
+                            {localizando ? "Localizando…" : "Perto de mim"}
                         </button>
                     ) : null}
                     {cidadeSelecionada ? (

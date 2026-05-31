@@ -59,7 +59,8 @@ export type BuscaOrdenacao =
     | "recentes"
     | "preco_asc"
     | "preco_desc"
-    | "popular";
+    | "popular"
+    | "proximidade";
 
 export interface BuscaFiltros {
     q?: string;
@@ -98,6 +99,14 @@ export interface BuscaInput {
     page?: number;
     perPage?: number;
     now?: Date;
+    /**
+     * Localização aproximada do visitante (W6). Quando presente e
+     * `ordenar === "proximidade"`, a busca ordena os perfis
+     * geocodificados pela distância até este ponto (Haversine, em
+     * memória). Sem isto, `proximidade` cai em `relevancia`.
+     */
+    viewerLat?: number;
+    viewerLng?: number;
 }
 
 export interface BuscaResultado {
@@ -285,6 +294,33 @@ function buildOrderBy(
 }
 
 /**
+ * Distância aproximada entre dois pontos (Haversine), em km. Usada
+ * só pra ORDENAR por proximidade (W6) — não exibimos o número, e a
+ * geocodificação já é grossa (centroide de bairro), então a precisão
+ * é proposital e suficiente.
+ */
+function distanciaKm(
+    aLat: number,
+    aLng: number,
+    bLat: number,
+    bLng: number,
+): number {
+    const R = 6371;
+    const toRad = (d: number): number => (d * Math.PI) / 180;
+    const dLat = toRad(bLat - aLat);
+    const dLng = toRad(bLng - aLng);
+    const lat1 = toRad(aLat);
+    const lat2 = toRad(bLat);
+    const h =
+        Math.sin(dLat / 2) ** 2 +
+        Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/** Máx. de candidatos carregados no modo proximidade (ordenação em memória). */
+const PROXIMIDADE_MAX_CANDIDATOS = 300;
+
+/**
  * Executa a busca paginada. Retorna itens no mesmo shape do feed
  * da home (`FeedItem`) pra que a UI possa reusar `ProfileFeedCard`
  * sem mudança.
@@ -299,6 +335,27 @@ export async function buscar(input: BuscaInput): Promise<BuscaResultado> {
     const skip = (page - 1) * perPage;
 
     const where = buildWhere(input.filtros, now);
+
+    // Modo proximidade (W6): só vale com coordenadas do visitante.
+    // Cai em relevância se faltarem.
+    const proximidadeAtiva =
+        input.ordenar === "proximidade" &&
+        typeof input.viewerLat === "number" &&
+        Number.isFinite(input.viewerLat) &&
+        typeof input.viewerLng === "number" &&
+        Number.isFinite(input.viewerLng);
+
+    if (proximidadeAtiva) {
+        return buscarPorProximidade({
+            where,
+            viewerLat: input.viewerLat as number,
+            viewerLng: input.viewerLng as number,
+            page,
+            perPage,
+            now,
+        });
+    }
+
     const orderBy = buildOrderBy(input.ordenar ?? "relevancia");
 
     const [rows, total] = await Promise.all([
@@ -327,6 +384,77 @@ export async function buscar(input: BuscaInput): Promise<BuscaResultado> {
         page,
         perPage,
         pages: Math.max(1, Math.ceil(total / perPage)),
+    };
+}
+
+/**
+ * Branch de ordenação por proximidade (W6). Carrega até
+ * {@link PROXIMIDADE_MAX_CANDIDATOS} perfis geocodificados que
+ * batem o `where`, ordena por distância Haversine até o visitante e
+ * pagina em memória. Perfis sem `lat`/`lng` são excluídos (não dá
+ * pra ranquear sem coordenada).
+ *
+ * O teto de candidatos mantém a operação barata; pra cidade isso
+ * cobre o caso real com folga (a busca por proximidade só faz
+ * sentido com cidade/filtros já estreitando).
+ */
+async function buscarPorProximidade(args: {
+    where: Prisma.AcompanhanteProfileWhereInput;
+    viewerLat: number;
+    viewerLng: number;
+    page: number;
+    perPage: number;
+    now: Date;
+}): Promise<BuscaResultado> {
+    const whereGeo: Prisma.AcompanhanteProfileWhereInput = {
+        ...args.where,
+        lat: { not: null },
+        lng: { not: null },
+    };
+
+    const candidatos = await db.acompanhanteProfile.findMany({
+        where: whereGeo,
+        include,
+        take: PROXIMIDADE_MAX_CANDIDATOS,
+        // Ordem estável pra o slice ser determinístico antes do sort.
+        orderBy: { updatedAt: "desc" },
+    });
+
+    const ordenados = candidatos
+        .map((row) => ({
+            row,
+            dist:
+                row.lat !== null && row.lng !== null
+                    ? distanciaKm(
+                          args.viewerLat,
+                          args.viewerLng,
+                          row.lat,
+                          row.lng,
+                      )
+                    : Number.POSITIVE_INFINITY,
+        }))
+        .sort((a, b) => a.dist - b.dist);
+
+    const total = ordenados.length;
+    const start = (args.page - 1) * args.perPage;
+    const pageRows = ordenados
+        .slice(start, start + args.perPage)
+        .map((x) => x.row);
+
+    const ownerIds = pageRows.map((r) => r.userId);
+    const mediasCountMap = await contarMidiasGaleria(ownerIds);
+    const ativas = await obterAtividadeRecente(ownerIds, { now: args.now });
+
+    const items = pageRows.map((row) =>
+        toFeedItem(row, args.now, mediasCountMap, ativas),
+    );
+
+    return {
+        items,
+        total,
+        page: args.page,
+        perPage: args.perPage,
+        pages: Math.max(1, Math.ceil(total / args.perPage)),
     };
 }
 
