@@ -32,6 +32,7 @@ import { AtividadeTab } from "./_painel/AtividadeTab";
 import { ConfiguracoesTab } from "./_painel/ConfiguracoesTab";
 import { FavoritosTab } from "./_painel/FavoritosTab";
 import { BuscasSalvasTab } from "./_painel/BuscasSalvasTab";
+import { FanTour } from "./_painel/FanTour";
 import { PerfilTab } from "./_painel/PerfilTab";
 
 /**
@@ -108,6 +109,11 @@ export default async function ClientePainelPage() {
                 }
                 actions={<LogoutButton variant="button" />}
             />
+
+            {/* Tour de boas-vindas pro Cliente Grátis — explica o que
+                o Fan desbloqueia (V5). Dismissível, persiste "visto"
+                em localStorage. Some assim que vira Fan. */}
+            {!isFan ? <FanTour /> : null}
 
             {/* Linha de métricas compacta — sempre 3 pills na mesma
                 linha (grid 3 colunas). Em telas muito estreitas o

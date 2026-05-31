@@ -175,6 +175,12 @@ export type {
 export { UpgradeBanner } from "./primitives/UpgradeBanner";
 export type { UpgradeBannerProps } from "./primitives/UpgradeBanner";
 
+export { OnboardingTour } from "./primitives/OnboardingTour";
+export type {
+    OnboardingTourItem,
+    OnboardingTourProps,
+} from "./primitives/OnboardingTour";
+
 export { InfoRow } from "./primitives/InfoRow";
 export type { InfoRowProps } from "./primitives/InfoRow";
 
