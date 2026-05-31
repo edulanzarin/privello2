@@ -41,18 +41,7 @@ export function NotificationBell(): React.ReactElement {
     const [naoLidas, setNaoLidas] = React.useState(0);
     const [open, setOpen] = React.useState(false);
     const [carregando, setCarregando] = React.useState(false);
-    /**
-     * Posição do dropdown calculada na abertura, a partir do espaço
-     * disponível ao redor do botão. No rodapé da sidebar (desktop)
-     * abre pra cima/direita; na TopBar (mobile) abre pra baixo/
-     * esquerda. Evita o painel ser clipado fora da viewport.
-     */
-    const [placement, setPlacement] = React.useState<{
-        vertical: "up" | "down";
-        horizontal: "left" | "right";
-    }>({ vertical: "down", horizontal: "left" });
     const rootRef = React.useRef<HTMLDivElement>(null);
-    const buttonRef = React.useRef<HTMLButtonElement>(null);
 
     const carregar = React.useCallback(async (): Promise<void> => {
         setCarregando(true);
@@ -107,19 +96,6 @@ export function NotificationBell(): React.ReactElement {
 
     async function abrir(): Promise<void> {
         const next = !open;
-        if (next) {
-            // Calcula a direção do dropdown pelo espaço ao redor do
-            // botão (TopBar mobile abre pra baixo; rodapé da sidebar
-            // desktop abre pra cima).
-            const rect = buttonRef.current?.getBoundingClientRect();
-            if (rect) {
-                const espacoAbaixo = window.innerHeight - rect.bottom;
-                setPlacement({
-                    vertical: espacoAbaixo < 360 ? "up" : "down",
-                    horizontal: rect.left < 320 ? "right" : "left",
-                });
-            }
-        }
         setOpen(next);
         if (next) {
             await carregar();
@@ -143,7 +119,6 @@ export function NotificationBell(): React.ReactElement {
         <div ref={rootRef} className="relative">
             <button
                 type="button"
-                ref={buttonRef}
                 onClick={() => void abrir()}
                 aria-label={
                     naoLidas > 0
@@ -165,13 +140,7 @@ export function NotificationBell(): React.ReactElement {
             {open ? (
                 <div
                     role="menu"
-                    className={[
-                        "absolute z-40 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-[#ec7b5b]/15 bg-white shadow-[0_16px_48px_-12px_rgba(0,0,0,0.28)]",
-                        placement.vertical === "up"
-                            ? "bottom-11"
-                            : "top-11",
-                        placement.horizontal === "right" ? "left-0" : "right-0",
-                    ].join(" ")}
+                    className="absolute right-0 top-11 z-40 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-[#ec7b5b]/15 bg-white shadow-[0_16px_48px_-12px_rgba(0,0,0,0.28)]"
                 >
                     <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
                         <span className="text-sm font-semibold text-text-primary">

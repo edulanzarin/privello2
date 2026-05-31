@@ -49,10 +49,6 @@ export type { TopBarProps } from "./primitives/TopBar";
 
 export { BottomNav } from "./primitives/BottomNav";
 export type { BottomNavItem, BottomNavProps } from "./primitives/BottomNav";
-export { isNavItemActive } from "./primitives/BottomNav";
-
-export { SideNav } from "./primitives/SideNav";
-export type { SideNavProps } from "./primitives/SideNav";
 
 export { AppShell } from "./primitives/AppShell";
 export type { AppShellProps } from "./primitives/AppShell";

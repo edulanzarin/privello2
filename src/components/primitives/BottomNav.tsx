@@ -35,8 +35,6 @@ export interface BottomNavItem {
 export interface BottomNavProps {
     /** Lista de itens, na ordem em que serão exibidos. */
     items: ReadonlyArray<BottomNavItem>;
-    /** Classes extras aplicadas ao `<nav>` (ex.: `lg:hidden`). */
-    className?: string;
 }
 
 /**
@@ -52,15 +50,13 @@ export interface BottomNavProps {
  * - Ícones decorativos (`aria-hidden="true"`); o texto do `label` é o
  *   nome acessível do link.
  */
-export function BottomNav({ items, className }: BottomNavProps): React.ReactElement {
+export function BottomNav({ items }: BottomNavProps): React.ReactElement {
     const pathname = usePathname() ?? "";
 
     return (
         <nav
             aria-label="Navegação principal"
-            className={["sticky bottom-0 z-30", className ?? ""]
-                .filter(Boolean)
-                .join(" ")}
+            className="sticky bottom-0 z-30"
             style={{
                 // Glass mais suave que o `glass-bar` (que era forte
                 // demais no rodapé): fundo quase sólido + blur leve,
@@ -75,7 +71,7 @@ export function BottomNav({ items, className }: BottomNavProps): React.ReactElem
         >
             <ul className="mx-auto flex max-w-3xl items-stretch">
                 {items.map((item) => {
-                    const isActive = isNavItemActive(pathname, item);
+                    const isActive = matchesItem(pathname, item);
                     return (
                         <li key={item.href} className="flex-1">
                             <Link
@@ -121,14 +117,8 @@ export function BottomNav({ items, className }: BottomNavProps): React.ReactElem
  * O caso especial de `"/"` é tratado para que apenas o pathname
  * exatamente igual a `"/"` ative o item raiz, evitando que ele "engula"
  * todas as rotas.
- *
- * Exportado para o {@link import("./SideNav").SideNav} reusar a mesma
- * heurística — navegação mobile e desktop ficam consistentes.
  */
-export function isNavItemActive(
-    pathname: string,
-    item: BottomNavItem,
-): boolean {
+function matchesItem(pathname: string, item: BottomNavItem): boolean {
     if (item.match?.includes(pathname)) {
         return true;
     }

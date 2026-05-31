@@ -104,11 +104,7 @@ export default async function AcompanhanteLayout({
         identificador: user?.identificador,
     });
     return (
-        <AppShell
-            navItems={navItems}
-            topTrailing={<NotificationBell />}
-            desktopSidebar
-        >
+        <AppShell navItems={navItems} topTrailing={<NotificationBell />}>
             {children}
         </AppShell>
     );
