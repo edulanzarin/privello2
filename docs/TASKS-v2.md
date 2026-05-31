@@ -11,15 +11,15 @@ Backlog de funcionalidades novas decidido com o produto. Tudo
 
 ---
 
-### ⬜ V1 — Toast / Notification global (UI)
+### ✅ V1 — Toast / Notification global (UI)
 **Esforço**: ~2h.
 Feedback transitório (sucesso/erro/info) em qualquer tela, hoje
 tudo é inline.
 
-- [ ] Primitivo `ToastProvider` + `useToast()` + `Toaster` (stack
+- [x] Primitivo `ToastProvider` + `useToast()` + `Toaster` (stack
       animado, auto-dismiss, tons success/danger/info).
-- [ ] Montar provider no root layout (client).
-- [ ] Sem domain leak (passa lint).
+- [x] Montar provider no root layout (client).
+- [x] Sem domain leak (passa lint).
 
 ### ⬜ V2 — Notificações in-site (Acompanhante)
 **Esforço**: ~6h.
@@ -81,6 +81,6 @@ depois, mas sem adicionar dependência não-configurada.
 
 ## Status global
 
-- 0 / 7 concluídas.
+- 1 / 7 concluídas.
 - Descartado: bloqueio de Cliente (não faz sentido — visitante
   pode estar deslogado).
