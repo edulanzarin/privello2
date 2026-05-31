@@ -1128,6 +1128,7 @@ export function BuscaView({
                                             item.planoExibicao,
                                         )}
                                         verified={item.verificada}
+                                        active={item.ativaRecentemente}
                                     />
                                 ))}
                             </div>

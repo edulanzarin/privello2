@@ -487,6 +487,7 @@ function FeedGridLayout({
                     }
                     badge={renderRankBadge(item.planoExibicao)}
                     verified={item.verificada}
+                    active={item.ativaRecentemente}
                 />
             ))}
         </div>

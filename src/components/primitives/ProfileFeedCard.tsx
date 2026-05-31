@@ -101,6 +101,14 @@ export interface ProfileFeedCardProps {
      */
     verified?: boolean;
     /**
+     * Quando `true`, exibe um indicador de "atividade recente"
+     * (pontinho verde + label). O significado é definido pelo
+     * consumidor via {@link activeLabel}; o primitivo só desenha.
+     */
+    active?: boolean;
+    /** Texto do indicador de atividade. Padrão: `"Ativa hoje"`. */
+    activeLabel?: string;
+    /**
      * Forma do tile de foto. Padrão: `"portrait"` (3:4) — usado em
      * ambos os variants.
      */
@@ -154,6 +162,8 @@ export function ProfileFeedCard({
     hasAudio = false,
     variant = "split",
     verified = false,
+    active = false,
+    activeLabel = "Ativa hoje",
     aspect = "portrait",
     className,
 }: ProfileFeedCardProps): React.ReactElement {
@@ -297,6 +307,15 @@ export function ProfileFeedCard({
                     {hasAudio ? (
                         <span className="glass-pill inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.7rem] font-medium text-white">
                             <MicIcon size={11} />
+                        </span>
+                    ) : null}
+                    {active ? (
+                        <span className="glass-pill inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.7rem] font-medium text-white">
+                            <span
+                                aria-hidden="true"
+                                className="inline-block h-1.5 w-1.5 rounded-full bg-success-400"
+                            />
+                            {activeLabel}
                         </span>
                     ) : null}
                 </div>

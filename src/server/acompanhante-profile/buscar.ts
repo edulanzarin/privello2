@@ -49,6 +49,8 @@ import { isBoostAtivo } from "@/domain/boost/definitions";
 import { isGenero } from "@/domain/genero";
 import { db } from "@/lib/db";
 
+import { obterAtividadeRecente } from "./atividade";
+
 import type { PlanoExibicao } from "./index";
 import type { FeedItem } from "./feed";
 
@@ -313,8 +315,11 @@ export async function buscar(input: BuscaInput): Promise<BuscaResultado> {
     // Conta mídias da galeria em uma query agregada (evita N+1).
     const ownerIds = rows.map((r) => r.userId);
     const mediasCountMap = await contarMidiasGaleria(ownerIds);
+    const ativas = await obterAtividadeRecente(ownerIds, { now });
 
-    const items = rows.map((row) => toFeedItem(row, now, mediasCountMap));
+    const items = rows.map((row) =>
+        toFeedItem(row, now, mediasCountMap, ativas),
+    );
 
     return {
         items,
@@ -349,6 +354,7 @@ function toFeedItem(
     row: Row,
     now: Date,
     mediasMap: Map<string, number>,
+    ativas: ReadonlySet<string> = new Set(),
 ): FeedItem {
     const planoExibicao: PlanoExibicao = isBoostAtivo(row.boostUntil, now)
         ? "BOOST"
@@ -380,6 +386,7 @@ function toFeedItem(
         audioUrl: audioOk ? `/api/storage/${audioOk.storageKey}` : null,
         audioMimeType: audioOk ? audioOk.mimeType : null,
         mediasCount: mediasMap.get(row.userId) ?? 0,
+        ativaRecentemente: ativas.has(row.userId),
     };
 }
 

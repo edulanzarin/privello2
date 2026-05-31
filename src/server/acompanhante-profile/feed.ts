@@ -3,6 +3,8 @@ import type { Prisma } from "@prisma/client";
 import { isBoostAtivo } from "@/domain/boost/definitions";
 import { db } from "@/lib/db";
 
+import { obterAtividadeRecente } from "./atividade";
+
 import type { PlanoExibicao } from "./index";
 
 /**
@@ -55,6 +57,14 @@ export interface FeedItem {
      * "pílula de mídias" no card.
      */
     mediasCount: number;
+    /**
+     * `true` quando a Acompanhante teve atividade (sessão viva) nas
+     * últimas ~24h (W2). Selo grosso "Ativa hoje" — nunca timestamp.
+     * Preenchido por quem lista (feed/busca) via
+     * {@link import("./atividade").obterAtividadeRecente}; default
+     * `false`.
+     */
+    ativaRecentemente: boolean;
 }
 
 /**
@@ -175,13 +185,24 @@ export async function listarFeedHome(
         ]),
     );
     const mediasCountMap = await contarMidiasGaleria(allUserIds);
+    const ativas = await obterAtividadeRecente(allUserIds, { now });
 
     return {
         boost: boostRows.map((r) =>
-            toItem(r, now, mediasCountMap.get(r.userId) ?? 0),
+            toItem(
+                r,
+                now,
+                mediasCountMap.get(r.userId) ?? 0,
+                ativas.has(r.userId),
+            ),
         ),
         alta: altaRows.map((r) =>
-            toItem(r, now, mediasCountMap.get(r.userId) ?? 0),
+            toItem(
+                r,
+                now,
+                mediasCountMap.get(r.userId) ?? 0,
+                ativas.has(r.userId),
+            ),
         ),
     };
 }
@@ -211,7 +232,12 @@ async function contarMidiasGaleria(
     return map;
 }
 
-function toItem(row: Row, now: Date, mediasCount: number): FeedItem {
+function toItem(
+    row: Row,
+    now: Date,
+    mediasCount: number,
+    ativaRecentemente = false,
+): FeedItem {
     const planoExibicao: PlanoExibicao = isBoostAtivo(row.boostUntil, now)
         ? "BOOST"
         : row.planoVigente === "PREMIUM"
@@ -242,6 +268,7 @@ function toItem(row: Row, now: Date, mediasCount: number): FeedItem {
         audioUrl: audioOk ? `/api/storage/${audioOk.storageKey}` : null,
         audioMimeType: audioOk ? audioOk.mimeType : null,
         mediasCount,
+        ativaRecentemente,
     };
 }
 
