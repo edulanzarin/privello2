@@ -66,13 +66,16 @@ Explicar o que o Fan desbloqueia no primeiro acesso do Cliente.
 - [x] Mostrar no painel do Cliente Grátis (`FanTour` em `_painel`);
       some ao virar Fan.
 
-### ⬜ V6 — Compartilhar cidade/bairro (card-imagem)
+### ✅ V6 — Compartilhar cidade/bairro (card-imagem)
 **Esforço**: ~3h.
 Estende o T11: card "X acompanhantes em Blumenau" pra
 compartilhar a busca.
 
-- [ ] Endpoint `GET /api/acompanhantes/share-city.png` (sharp).
-- [ ] Botão compartilhar na `/acompanhantes`.
+- [x] Endpoint `GET /api/acompanhantes/share-city.png` (sharp).
+      Conta perfis visíveis, colagem de até 4 fotos + overlay,
+      ETag/304 cacheável.
+- [x] Botão "Compartilhar" na `/acompanhantes` (share nativo +
+      fallback Modal com preview e copiar link).
 
 ### ⬜ V7 — Observabilidade (sem dep paga)
 **Esforço**: ~2h.
@@ -85,7 +88,7 @@ depois, mas sem adicionar dependência não-configurada.
 
 ## Status global
 
-- 4 / 7 concluídas.
+- 5 / 7 concluídas.
 - Descartado: bloqueio de Cliente (não faz sentido — visitante
   pode estar deslogado). V4 (sidebar desktop) — implementada e
   revertida a pedido do produto.
