@@ -663,3 +663,103 @@ export async function listarBairrosParaMapa(input: {
     return out;
 }
 
+/**
+ * Agregado de uma cidade pro mapa nacional (sem cidade selecionada).
+ * Um marcador por cidade, com a contagem total de perfis ativos e
+ * geocodificados. Clicar filtra a busca por essa cidade.
+ */
+export interface MapaCidade {
+    cidadeNome: string;
+    estadoSigla: string;
+    /** Centroide aproximado da cidade (média dos perfis geocodificados). */
+    lat: number;
+    lng: number;
+    /** Quantos perfis ativos+geocodificados nesta cidade. */
+    count: number;
+}
+
+/**
+ * Agrega perfis ativos por CIDADE pro mapa nacional exibido quando
+ * o usuário ainda não escolheu cidade. Aplica os mesmos filtros
+ * não-geográficos do {@link buscar} (gênero, etnia, etc.) — mas
+ * ignora `cidadeNome`/`bairroNome` (o ponto é justamente escolher a
+ * cidade). Exige `lat`/`lng` pra posicionar no mapa.
+ *
+ * O ponto de cada cidade é a média das coordenadas dos seus perfis
+ * (todos caem perto do centro da cidade, então a média é estável e
+ * nunca revela endereço). Não devolve info de perfil individual.
+ */
+export async function listarCidadesParaMapa(input: {
+    filtros: BuscaFiltros;
+    limit?: number;
+    now?: Date;
+}): Promise<ReadonlyArray<MapaCidade>> {
+    const now = input.now ?? new Date();
+    const limit = Math.max(1, Math.min(5000, input.limit ?? 3000));
+
+    // Reaproveita o where dos filtros, mas remove o recorte
+    // geográfico — o mapa nacional mostra TODAS as cidades.
+    const filtrosSemGeo: BuscaFiltros = {
+        ...input.filtros,
+        cidadeNome: undefined,
+        bairroNome: undefined,
+        estadoSigla: undefined,
+    };
+    const where = buildWhere(filtrosSemGeo, now);
+    where.lat = { not: null };
+    where.lng = { not: null };
+
+    const rows = await db.acompanhanteProfile.findMany({
+        where,
+        take: limit,
+        select: {
+            lat: true,
+            lng: true,
+            cidadeNome: true,
+            estadoSigla: true,
+        },
+    });
+
+    interface Acc {
+        cidadeNome: string;
+        estadoSigla: string;
+        somaLat: number;
+        somaLng: number;
+        count: number;
+    }
+    const grupos = new Map<string, Acc>();
+
+    for (const row of rows) {
+        if (row.lat === null || row.lng === null) continue;
+        // Chave por (cidade, UF) case-insensitive.
+        const key = `${row.cidadeNome.toLowerCase()}|${row.estadoSigla.toLowerCase()}`;
+        let acc = grupos.get(key);
+        if (!acc) {
+            acc = {
+                cidadeNome: row.cidadeNome,
+                estadoSigla: row.estadoSigla,
+                somaLat: 0,
+                somaLng: 0,
+                count: 0,
+            };
+            grupos.set(key, acc);
+        }
+        acc.somaLat += row.lat;
+        acc.somaLng += row.lng;
+        acc.count += 1;
+    }
+
+    const out: MapaCidade[] = [];
+    for (const acc of grupos.values()) {
+        out.push({
+            cidadeNome: acc.cidadeNome,
+            estadoSigla: acc.estadoSigla,
+            lat: acc.somaLat / acc.count,
+            lng: acc.somaLng / acc.count,
+            count: acc.count,
+        });
+    }
+    out.sort((a, b) => b.count - a.count);
+    return out;
+}
+

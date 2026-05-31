@@ -59,6 +59,7 @@ import type { StoryOwnerResumo } from "@/server/storage/storyMedia";
 import { buscaFiltrosParaParams } from "@/domain/busca/queryParams";
 
 import { BuscaMapa } from "./BuscaMapa";
+import { BuscaMapaCidades } from "./BuscaMapaCidades";
 import { ShareCityButton } from "./ShareCityButton";
 
 /**
@@ -568,11 +569,26 @@ export function BuscaView({
     // limpa.
     // ─────────────────────────────────────────────────────────────
     if (!cidadeSelecionada && !modoListagemAberta) {
+        // Querystring só com filtros não-geográficos pro mapa
+        // nacional (cidade/uf/bairro não fazem sentido aqui).
+        const paramsMapa = buildSearchParams(
+            { ...filtros, cidadeNome: undefined, estadoSigla: undefined, bairroNome: undefined },
+            ordenar,
+            1,
+        );
         return (
             <SelecionarCidadeView
                 cityValue={cityValue}
                 onCityChange={setCityValue}
                 onCitySubmit={buscarPorCidade}
+                mapaQueryString={paramsMapa.toString()}
+                onCidadeMapaClick={(cidadeNome, estadoSigla) =>
+                    buscarPorCidade({
+                        query: `${cidadeNome}, ${estadoSigla}`,
+                        name: cidadeNome,
+                        uf: estadoSigla,
+                    })
+                }
             />
         );
     }
@@ -1408,10 +1424,14 @@ function SelecionarCidadeView({
     cityValue,
     onCityChange,
     onCitySubmit,
+    mapaQueryString,
+    onCidadeMapaClick,
 }: {
     cityValue: CityComboboxValue;
     onCityChange: (next: CityComboboxValue) => void;
     onCitySubmit: (value: CityComboboxValue) => void;
+    mapaQueryString: string;
+    onCidadeMapaClick: (cidadeNome: string, estadoSigla: string) => void;
 }): React.ReactElement {
     return (
         <div className="flex flex-col gap-6">
@@ -1429,6 +1449,22 @@ function SelecionarCidadeView({
                 onSubmit={onCitySubmit}
                 placeholder="Em qual cidade você está?"
             />
+
+            {/* Mapa nacional: um marcador por cidade com a contagem
+                de perfis. Clicar numa cidade filtra a busca por ela.
+                Atalho visual pra quem não quer digitar. */}
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm text-text-secondary">
+                    <MapPinIcon size={14} />
+                    <span>
+                        Ou toque numa cidade no mapa pra ver os perfis de lá.
+                    </span>
+                </div>
+                <BuscaMapaCidades
+                    queryString={mapaQueryString}
+                    onCidadeClick={onCidadeMapaClick}
+                />
+            </div>
         </div>
     );
 }

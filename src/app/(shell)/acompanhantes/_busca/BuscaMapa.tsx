@@ -2,17 +2,25 @@
 
 import * as React from "react";
 import type {
-    LngLatBounds as MaplibreLngLatBounds,
     Map as MaplibreMap,
-    MapOptions,
     Marker as MaplibreMarker,
-    NavigationControl as MaplibreNavigationControl,
-    StyleSpecification,
 } from "maplibre-gl";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { Button, EmptyState, MapPinIcon, UsersIcon } from "@/components";
+
+import {
+    BRASIL_CENTER,
+    BRASIL_ZOOM,
+    loadMaplibre,
+    rasterStyle,
+    resolveMaplibreModule,
+    type MaplibreModule,
+} from "./mapaCore";
+
+// Re-export pra compat com o teste unit (tests/unit/maplibre-interop).
+export { resolveMaplibreModule };
 
 /**
  * Agregado por bairro vindo de `/api/acompanhantes/mapa`.
@@ -57,10 +65,7 @@ export interface BuscaMapaProps {
     bairroSelecionado?: string | null;
 }
 
-// Centro aproximado do Brasil (fallback quando não há nada) + zoom
-// nacional.
-const BRASIL_CENTER: [number, number] = [-51.9253, -14.235];
-const BRASIL_ZOOM = 3.4;
+// Centro/zoom nacional + interop do maplibre vêm de `./mapaCore`.
 
 // Zoom máximo: nível de bairro/região. Nunca rua.
 const MAX_ZOOM = 14;
@@ -346,68 +351,5 @@ function construirMarcador(b: MapaBairro, selecionado: boolean): HTMLElement {
 }
 
 // ---------------------------------------------------------------------------
-// Interop ESM/CJS do maplibre-gl (UMD sem campo `module`/`exports`).
-// ---------------------------------------------------------------------------
-
-interface MaplibreModule {
-    Map: new (opts: MapOptions) => MaplibreMap;
-    NavigationControl: new (opts?: {
-        showCompass?: boolean;
-    }) => MaplibreNavigationControl;
-    LngLatBounds: new () => MaplibreLngLatBounds;
-    Marker: new (opts?: {
-        element?: HTMLElement;
-        anchor?: string;
-    }) => MaplibreMarker;
-}
-
-/**
- * Resolve o módulo do maplibre lidando com os dois shapes de
- * interop (named na raiz OU aninhado em `.default`). Pura e
- * testável.
- */
-export function resolveMaplibreModule(mod: unknown): MaplibreModule {
-    const root = mod as { Map?: unknown; default?: unknown } | null;
-    if (root && typeof root.Map === "function") {
-        return root as unknown as MaplibreModule;
-    }
-    const inner = root?.default as { Map?: unknown } | undefined;
-    if (inner && typeof inner.Map === "function") {
-        return inner as unknown as MaplibreModule;
-    }
-    throw new Error("maplibre-gl: export 'Map' não encontrado.");
-}
-
-async function loadMaplibre(): Promise<MaplibreModule> {
-    const mod = await import("maplibre-gl");
-    return resolveMaplibreModule(mod);
-}
-
-// ---------------------------------------------------------------------------
 // Estilo raster OSM (sem token).
 // ---------------------------------------------------------------------------
-
-function rasterStyle(): StyleSpecification {
-    return {
-        version: 8,
-        sources: {
-            osm: {
-                type: "raster",
-                tiles: [
-                    "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                ],
-                tileSize: 256,
-                attribution: "© OpenStreetMap",
-            },
-        },
-        layers: [
-            {
-                id: "osm",
-                type: "raster",
-                source: "osm",
-            },
-        ],
-    };
-}
