@@ -56,13 +56,15 @@ com BottomNav em todas as larguras.
 - [x] ~~AppShell renderiza SideNav em lg+ e BottomNav em mobile.~~
 - Revertido no commit `revert(nav): remove V4 sidebar desktop`.
 
-### ⬜ V5 — Onboarding do Cliente Fan (tour)
+### ✅ V5 — Onboarding do Cliente Fan (tour)
 **Esforço**: ~2h.
 Explicar o que o Fan desbloqueia no primeiro acesso do Cliente.
 
-- [ ] Primitivo `OnboardingTour` / banner dismissível.
-- [ ] Persistir "visto" (localStorage ou flag no perfil).
-- [ ] Mostrar no painel do Cliente Grátis.
+- [x] Primitivo `OnboardingTour` (banner dismissível, genérico,
+      sem domain leak).
+- [x] Persistir "visto" em localStorage (`privello:fan-tour-visto`).
+- [x] Mostrar no painel do Cliente Grátis (`FanTour` em `_painel`);
+      some ao virar Fan.
 
 ### ⬜ V6 — Compartilhar cidade/bairro (card-imagem)
 **Esforço**: ~3h.
@@ -83,7 +85,7 @@ depois, mas sem adicionar dependência não-configurada.
 
 ## Status global
 
-- 3 / 7 concluídas.
+- 4 / 7 concluídas.
 - Descartado: bloqueio de Cliente (não faz sentido — visitante
   pode estar deslogado). V4 (sidebar desktop) — implementada e
   revertida a pedido do produto.
