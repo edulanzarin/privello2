@@ -40,10 +40,12 @@ Diff Básico vs Premium em vez de só bloquear.
       canônica; `generateStaticParams` pré-gera as top 200.
 - [x] Incluído no sitemap (landing + busca querystring).
 
-### ⬜ W6 — Filtro "perto de você"
+### ✅ W6 — Filtro "perto de você"
 Ordenação por proximidade usando lat/lng + geolocalização.
-- [ ] Busca aceita `viewerLat/viewerLng` + ordenar=proximidade.
-- [ ] Botão "Perto de mim" na busca (geolocation).
+- [x] Busca aceita `viewerLat/viewerLng` + `ordenar=proximidade`
+      (Haversine em memória, exclui sem geo, cap 300 candidatos).
+- [x] Botão "Perto de mim" na busca (geolocation + navega com
+      lat/lng; paginação preserva coords).
 
 ### ⬜ W7 — Rate limit visível
 Feedback (toast) quando o Cliente bate limite (429).
@@ -56,4 +58,4 @@ Visão geral com contadores no admin.
 - [ ] Aba/seção "Visão geral" no admin.
 
 ## Status global
-- 5 / 8 concluídas.
+- 6 / 8 concluídas.
