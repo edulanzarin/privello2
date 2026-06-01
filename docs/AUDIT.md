@@ -94,6 +94,28 @@ componentes, rotas, segurança. Identificou 6 itens críticos e
 Veja [`STATUS.md`](./STATUS.md) — documento atualizado com
 todos os sistemas, rotas, endpoints e o que ainda falta.
 
+### 31/05/2026 — Auditoria de design + polish
+
+Sub-agente fez varredura de design. Itens fechados nesta rodada:
+
+- ✓ **Cor `accent` registrada no Tailwind**
+  (`DEFAULT`/`deep`/`soft`), espelhando as CSS vars `--accent*`.
+  Habilita utilitários `accent/40`, `bg-accent-soft` etc. no
+  lugar de hex arbitrário `[#ec7b5b]/40`. A migração dos ~68
+  arquivos legados fica opcional/incremental (não em massa).
+- ✓ **BottomNav** com `focus-visible:ring` nos links (a11y de
+  teclado).
+- ✓ **AvaliacoesSection** usa o primitivo `EmptyState` no estado
+  vazio (antes era bloco cru dentro de `Card`).
+- ✓ **layout.tsx**: const da fonte renomeada `geist` → `poppins`
+  (carrega Poppins). Var CSS `--font-inter` mantida intacta pra
+  não quebrar o tailwind config.
+
+Itens mapeados e **adiados** (maiores, exigem confirmação): migrar
+fluxos pós-ação de `InlineAlert` → toast; remover primitivos
+órfãos (`PricingTag`, `StatTile`, `LoadingSpinner`); consolidar
+variantes de stat/badge.
+
 ## Lições
 
 1. **Reusar primitivos é mais robusto que criar novos.** O
