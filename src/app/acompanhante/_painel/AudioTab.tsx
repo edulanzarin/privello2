@@ -10,13 +10,13 @@ import {
     Card,
     ConfirmDialog,
     EmptyState,
-    InlineAlert,
     LinkButton,
     MicIcon,
     PencilIcon,
     SectionHeader,
     TrashIcon,
     useModal,
+    useToast,
     type AudioRecordResult,
 } from "@/components";
 
@@ -68,10 +68,10 @@ export function AudioTab({
     topicAudios = [],
 }: AudioTabProps): React.ReactElement {
     const router = useRouter();
+    const toast = useToast();
     const recordModal = useModal();
     const deleteDialog = useModal();
     const [submitting, setSubmitting] = React.useState(false);
-    const [error, setError] = React.useState<string | null>(null);
     const [deleting, setDeleting] = React.useState(false);
     const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
@@ -80,7 +80,6 @@ export function AudioTab({
     // -----------------------------------------------------------------
     const [topicAtivo, setTopicAtivo] = React.useState<string | null>(null);
     const [topicSubmitting, setTopicSubmitting] = React.useState(false);
-    const [topicError, setTopicError] = React.useState<string | null>(null);
 
     const topicMap = React.useMemo(() => {
         const m = new Map<string, { url: string; mimeType: string }>();
@@ -92,7 +91,6 @@ export function AudioTab({
 
     async function handleSubmit(result: AudioRecordResult): Promise<void> {
         setSubmitting(true);
-        setError(null);
         try {
             const formData = new FormData();
             const ext = extFromMime(result.mimeType);
@@ -109,13 +107,13 @@ export function AudioTab({
                 const payload = (await res.json().catch(() => null)) as
                     | { reason?: string }
                     | null;
-                setError(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
+                toast.danger(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
                 return;
             }
             recordModal.close();
             router.refresh();
         } catch {
-            setError("Falha ao enviar. Tente novamente.");
+            toast.danger("Falha ao enviar. Tente novamente.");
         } finally {
             setSubmitting(false);
         }
@@ -148,7 +146,6 @@ export function AudioTab({
         result: AudioRecordResult,
     ): Promise<void> {
         setTopicSubmitting(true);
-        setTopicError(null);
         try {
             const formData = new FormData();
             const ext = extFromMime(result.mimeType);
@@ -165,13 +162,13 @@ export function AudioTab({
                 const payload = (await res.json().catch(() => null)) as
                     | { reason?: string }
                     | null;
-                setTopicError(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
+                toast.danger(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
                 return;
             }
             setTopicAtivo(null);
             router.refresh();
         } catch {
-            setTopicError("Falha ao enviar. Tente novamente.");
+            toast.danger("Falha ao enviar. Tente novamente.");
         } finally {
             setTopicSubmitting(false);
         }
@@ -252,15 +249,10 @@ export function AudioTab({
                 </Card>
             )}
 
-            {error !== null ? (
-                <InlineAlert tone="danger">{error}</InlineAlert>
-            ) : null}
-
             <AudioRecordModal
                 open={recordModal.isOpen}
                 onClose={() => {
                     recordModal.close();
-                    setError(null);
                 }}
                 onSubmit={handleSubmit}
                 submitting={submitting}
@@ -329,7 +321,6 @@ export function AudioTab({
                                     size="sm"
                                     onClick={() => {
                                         setTopicAtivo(opt.kind);
-                                        setTopicError(null);
                                     }}
                                 >
                                     <MicIcon size={12} />
@@ -341,15 +332,10 @@ export function AudioTab({
                 })}
             </div>
 
-            {topicError !== null ? (
-                <InlineAlert tone="danger">{topicError}</InlineAlert>
-            ) : null}
-
             <AudioRecordModal
                 open={topicAtivo !== null}
                 onClose={() => {
                     setTopicAtivo(null);
-                    setTopicError(null);
                 }}
                 onSubmit={async (result) => {
                     if (topicAtivo === null) return;

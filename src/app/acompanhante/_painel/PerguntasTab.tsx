@@ -11,11 +11,11 @@ import {
     ConfirmDialog,
     EmptyState,
     FilterChips,
-    InlineAlert,
     LinkButton,
     Paginator,
     SectionHeader,
     useModal,
+    useToast,
     type FilterChipsOption,
 } from "@/components";
 
@@ -150,10 +150,10 @@ function PerguntaPainelCard({
     pergunta: QuestionPublica;
 }): React.ReactElement {
     const router = useRouter();
+    const toast = useToast();
     const [editing, setEditing] = React.useState(false);
     const [answer, setAnswer] = React.useState(pergunta.answer ?? "");
     const [submitting, setSubmitting] = React.useState(false);
-    const [error, setError] = React.useState<string | null>(null);
     const deleteDialog = useModal();
 
     const trimmed = answer.trim();
@@ -162,7 +162,6 @@ function PerguntaPainelCard({
     async function submit(): Promise<void> {
         if (!canSubmit) return;
         setSubmitting(true);
-        setError(null);
         try {
             const res = await fetch(`/api/questions/${pergunta.id}`, {
                 method: "POST",
@@ -170,13 +169,13 @@ function PerguntaPainelCard({
                 body: JSON.stringify({ answer: trimmed }),
             });
             if (!res.ok) {
-                setError("Não foi possível salvar. Tente novamente.");
+                toast.danger("Não foi possível salvar. Tente novamente.");
                 return;
             }
             setEditing(false);
             router.refresh();
         } catch {
-            setError("Falha de rede. Tente novamente.");
+            toast.danger("Falha de rede. Tente novamente.");
         } finally {
             setSubmitting(false);
         }
@@ -184,13 +183,12 @@ function PerguntaPainelCard({
 
     async function deleteAnswer(): Promise<void> {
         setSubmitting(true);
-        setError(null);
         try {
             const res = await fetch(`/api/questions/${pergunta.id}`, {
                 method: "DELETE",
             });
             if (!res.ok) {
-                setError("Não foi possível remover. Tente novamente.");
+                toast.danger("Não foi possível remover. Tente novamente.");
                 return;
             }
             setAnswer("");
@@ -198,7 +196,7 @@ function PerguntaPainelCard({
             deleteDialog.close();
             router.refresh();
         } catch {
-            setError("Falha de rede. Tente novamente.");
+            toast.danger("Falha de rede. Tente novamente.");
         } finally {
             setSubmitting(false);
         }
@@ -287,9 +285,6 @@ function PerguntaPainelCard({
                         <div className="flex items-center justify-between text-[0.7rem] text-text-secondary">
                             <span>{trimmed.length}/2000</span>
                         </div>
-                        {error !== null ? (
-                            <InlineAlert tone="danger">{error}</InlineAlert>
-                        ) : null}
                         <div className="flex items-center justify-end gap-2">
                             {editing ? (
                                 <Button

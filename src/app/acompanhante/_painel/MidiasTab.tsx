@@ -30,6 +30,7 @@ import {
     SparklesIcon,
     useMediaCarousel,
     useModal,
+    useToast,
     type IconSegmentedOption,
     type MediaComment,
     type MediaItem,
@@ -118,6 +119,7 @@ export function MidiasTab({
     const [uploading, setUploading] = React.useState(false);
     const [uploadError, setUploadError] = React.useState<string | null>(null);
     const router = useRouter();
+    const toast = useToast();
 
     // Estado de exclusão. `pendingDeleteId` controla o ConfirmDialog.
     const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(
@@ -287,7 +289,6 @@ export function MidiasTab({
         items,
     );
     const [savingOrder, setSavingOrder] = React.useState(false);
-    const [orderError, setOrderError] = React.useState<string | null>(null);
     const [draggingId, setDraggingId] = React.useState<string | null>(null);
     const [overId, setOverId] = React.useState<string | null>(null);
 
@@ -299,13 +300,11 @@ export function MidiasTab({
 
     function entrarReorder(): void {
         setOrderDraft(items);
-        setOrderError(null);
         setReorderMode(true);
     }
 
     function cancelarReorder(): void {
         setOrderDraft(items);
-        setOrderError(null);
         setReorderMode(false);
         setDraggingId(null);
         setOverId(null);
@@ -327,7 +326,6 @@ export function MidiasTab({
 
     async function salvarReorder(): Promise<void> {
         setSavingOrder(true);
-        setOrderError(null);
         try {
             const ids = orderDraft.map((m) => m.id);
             const res = await fetch("/api/acompanhante/midias/order", {
@@ -336,7 +334,7 @@ export function MidiasTab({
                 body: JSON.stringify({ ids }),
             });
             if (!res.ok) {
-                setOrderError(
+                toast.danger(
                     "Não foi possível salvar a nova ordem. Tente novamente.",
                 );
                 return;
@@ -346,7 +344,7 @@ export function MidiasTab({
             setOverId(null);
             router.refresh();
         } catch {
-            setOrderError("Falha de rede. Tente novamente.");
+            toast.danger("Falha de rede. Tente novamente.");
         } finally {
             setSavingOrder(false);
         }
@@ -456,11 +454,6 @@ export function MidiasTab({
                         label="comentários"
                     />
                 </div>
-
-                {/* Erro inline da reordenação (visível enquanto persiste). */}
-                {orderError !== null ? (
-                    <InlineAlert tone="danger">{orderError}</InlineAlert>
-                ) : null}
 
                 {/* Conteúdo: grid quando há itens, EmptyState quando vazio.
                     Em modo reorder, exibe lista drag-and-drop com todos

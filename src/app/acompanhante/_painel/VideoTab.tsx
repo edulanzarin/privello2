@@ -8,7 +8,6 @@ import {
     Card,
     ConfirmDialog,
     EmptyState,
-    InlineAlert,
     LinkButton,
     PencilIcon,
     PlayCircleIcon,
@@ -16,6 +15,7 @@ import {
     TrashIcon,
     VideoPlayer,
     useModal,
+    useToast,
 } from "@/components";
 
 /**
@@ -48,31 +48,30 @@ export function VideoTab({
     videoPosterUrl,
 }: VideoTabProps): React.ReactElement {
     const router = useRouter();
+    const toast = useToast();
     const deleteDialog = useModal();
     const [submitting, setSubmitting] = React.useState(false);
-    const [error, setError] = React.useState<string | null>(null);
     const [deleting, setDeleting] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     function abrirSeletor(): void {
-        setError(null);
         fileInputRef.current?.click();
     }
 
     async function handleFile(file: File): Promise<void> {
         if (!VIDEO_MIME_ACEITO.includes(file.type)) {
-            setError("Formato não aceito. Use MP4, WebM ou MOV.");
+            toast.danger("Formato não aceito. Use MP4, WebM ou MOV.");
             return;
         }
 
         // Mede duração no client antes de subir.
         const duration = await medirDuracao(file).catch(() => null);
         if (duration === null) {
-            setError("Não foi possível ler o vídeo. Tente outro arquivo.");
+            toast.danger("Não foi possível ler o vídeo. Tente outro arquivo.");
             return;
         }
         if (duration < DURACAO_MIN_S || duration > DURACAO_MAX_S) {
-            setError(
+            toast.danger(
                 `Duração inválida. Use entre ${DURACAO_MIN_S}s e ${DURACAO_MAX_S}s.`,
             );
             return;
@@ -92,12 +91,13 @@ export function VideoTab({
                 const payload = (await res.json().catch(() => null)) as
                     | { reason?: string }
                     | null;
-                setError(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
+                toast.danger(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
                 return;
             }
+            toast.success("Vídeo enviado.");
             router.refresh();
         } catch {
-            setError("Falha ao enviar. Tente novamente.");
+            toast.danger("Falha ao enviar. Tente novamente.");
         } finally {
             setSubmitting(false);
         }
@@ -110,13 +110,13 @@ export function VideoTab({
                 method: "DELETE",
             });
             if (!res.ok) {
-                setError("Não foi possível excluir agora.");
+                toast.danger("Não foi possível excluir agora.");
                 return;
             }
             deleteDialog.close();
             router.refresh();
         } catch {
-            setError("Falha de rede. Tente novamente.");
+            toast.danger("Falha de rede. Tente novamente.");
         } finally {
             setDeleting(false);
         }
@@ -185,10 +185,6 @@ export function VideoTab({
                     />
                 </Card>
             )}
-
-            {error !== null ? (
-                <InlineAlert tone="danger">{error}</InlineAlert>
-            ) : null}
 
             <input
                 ref={fileInputRef}

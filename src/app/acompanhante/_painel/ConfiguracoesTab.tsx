@@ -11,7 +11,6 @@ import {
     HeartIcon,
     InfoList,
     InfoRow,
-    InlineAlert,
     LockIcon,
     MailIcon,
     PasswordChangeModal,
@@ -20,6 +19,7 @@ import {
     Switch,
     TrashIcon,
     useModal,
+    useToast,
 } from "@/components";
 
 import type { PlanoDefinition } from "@/domain/plano/definitions";
@@ -64,6 +64,7 @@ export function ConfiguracoesTab({
     boostUntil,
 }: ConfiguracoesTabProps): React.ReactElement {
     const router = useRouter();
+    const toast = useToast();
     const isPremium = planoTipo === "PREMIUM";
     const senhaModal = useModal();
     const excluirModal = useModal();
@@ -73,7 +74,6 @@ export function ConfiguracoesTab({
     // ação binária que precisa parecer instantânea.
     const [visivel, setVisivel] = React.useState(perfilVisivel);
     const [pending, setPending] = React.useState(false);
-    const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         setVisivel(perfilVisivel);
@@ -84,7 +84,6 @@ export function ConfiguracoesTab({
         const previous = visivel;
         setVisivel(next);
         setPending(true);
-        setError(null);
         try {
             const res = await fetch("/api/acompanhante/visibilidade", {
                 method: "POST",
@@ -93,7 +92,7 @@ export function ConfiguracoesTab({
             });
             if (!res.ok) {
                 setVisivel(previous);
-                setError(
+                toast.danger(
                     "Não foi possível atualizar agora. Tente novamente.",
                 );
                 return;
@@ -103,7 +102,7 @@ export function ConfiguracoesTab({
             router.refresh();
         } catch {
             setVisivel(previous);
-            setError("Falha de rede. Tente novamente.");
+            toast.danger("Falha de rede. Tente novamente.");
         } finally {
             setPending(false);
         }
@@ -152,9 +151,6 @@ export function ConfiguracoesTab({
                     onChange={(next) => void toggleVisibilidade(next)}
                     disabled={pending}
                 />
-                {error !== null ? (
-                    <InlineAlert tone="danger">{error}</InlineAlert>
-                ) : null}
             </section>
 
             <section className="flex flex-col gap-3">

@@ -6,6 +6,7 @@ import {
     Button,
     FlameIcon,
     InlineAlert,
+    useToast,
 } from "@/components";
 import { formatarPrecoBoost } from "@/domain/boost/definitions";
 
@@ -43,9 +44,9 @@ export function BoostCheckoutButton({
     pendingPaymentId,
 }: BoostCheckoutButtonProps): React.ReactElement {
     const [submitting, setSubmitting] = React.useState(false);
-    const [error, setError] = React.useState<string | null>(null);
     const [modo, setModo] = React.useState<Modo>("agora");
     const [startAtLocal, setStartAtLocal] = React.useState("");
+    const toast = useToast();
 
     // Mínimo do datetime-local: agora + 10min, formato
     // "YYYY-MM-DDTHH:mm" (sem segundos/timezone — o input usa local).
@@ -59,19 +60,18 @@ export function BoostCheckoutButton({
 
     async function handleClick(): Promise<void> {
         setSubmitting(true);
-        setError(null);
 
         // Valida o agendamento no client antes de bater no server.
         let startAtIso: string | null = null;
         if (modo === "programar") {
             if (startAtLocal.length === 0) {
-                setError("Escolha a data e hora de início.");
+                toast.danger("Escolha a data e hora de início.");
                 setSubmitting(false);
                 return;
             }
             const parsed = new Date(startAtLocal);
             if (Number.isNaN(parsed.getTime())) {
-                setError("Data inválida.");
+                toast.danger("Data inválida.");
                 setSubmitting(false);
                 return;
             }
@@ -90,13 +90,13 @@ export function BoostCheckoutButton({
                 | { ok?: boolean; reason?: string; checkoutUrl?: string }
                 | null;
             if (!res.ok || !payload?.ok || !payload.checkoutUrl) {
-                setError(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
+                toast.danger(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
                 return;
             }
             // Redireciona pro checkout do Mercado Pago.
             window.location.href = payload.checkoutUrl;
         } catch {
-            setError("Falha de rede. Tente novamente.");
+            toast.danger("Falha de rede. Tente novamente.");
         } finally {
             setSubmitting(false);
         }
@@ -170,10 +170,6 @@ export function BoostCheckoutButton({
                         aguardando.
                     </span>
                 </label>
-            ) : null}
-
-            {error !== null ? (
-                <InlineAlert tone="danger">{error}</InlineAlert>
             ) : null}
 
             <Button
