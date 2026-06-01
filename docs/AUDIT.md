@@ -100,21 +100,35 @@ Sub-agente fez varredura de design. Itens fechados nesta rodada:
 
 - ✓ **Cor `accent` registrada no Tailwind**
   (`DEFAULT`/`deep`/`soft`), espelhando as CSS vars `--accent*`.
-  Habilita utilitários `accent/40`, `bg-accent-soft` etc. no
-  lugar de hex arbitrário `[#ec7b5b]/40`. A migração dos ~68
-  arquivos legados fica opcional/incremental (não em massa).
+  Habilita utilitários `accent/40`, `bg-accent-soft` etc. e, em
+  seguida, **a migração completa dos ~95 arquivos** que usavam
+  `[#ec7b5b]/NN` / `[color:var(--accent*)]` foi feita de uma vez.
+  Agora `--accent` (globals.css) + token Tailwind são a única
+  fonte: trocar o accent reflete em todo lugar.
 - ✓ **BottomNav** com `focus-visible:ring` nos links (a11y de
   teclado).
 - ✓ **AvaliacoesSection** usa o primitivo `EmptyState` no estado
   vazio (antes era bloco cru dentro de `Card`).
-- ✓ **layout.tsx**: const da fonte renomeada `geist` → `poppins`
-  (carrega Poppins). Var CSS `--font-inter` mantida intacta pra
-  não quebrar o tailwind config.
+- ✓ **Fonte**: var CSS renomeada `--font-inter` → `--font-sans`,
+  const `geist` → `poppins`, e tokens (`fontFamily.sans` /
+  comentários do `Logo`) alinhados a Poppins. Antes o código dizia
+  "Inter" mas carregava Poppins.
+- ✓ **InlineAlert → toast** nos fluxos pós-ação efêmeros
+  (ConfiguracoesTab, BoostCheckoutButton, VideoTab, AudioTab,
+  PerguntasTab, MidiasTab reorder). Regra adotada: **toast =
+  resultado de ação; InlineAlert = estado/aviso contextual**.
+- ✓ **Primitivos órfãos removidos**: `PricingTag`, `StatTile`,
+  `LoadingSpinner`/`PageLoader` (zero usos em JSX). Barrel, CSS
+  (`pulse-soft`) e docs limpos. 95 → 92 primitivos.
+- ✓ **CSS/keyframes mortos removidos**: animação `spring-press`
+  (sem consumidores) e classes legadas `.surface`/`.surface-flat`
+  (substituídas pelo primitivo `Card`).
 
-Itens mapeados e **adiados** (maiores, exigem confirmação): migrar
-fluxos pós-ação de `InlineAlert` → toast; remover primitivos
-órfãos (`PricingTag`, `StatTile`, `LoadingSpinner`); consolidar
-variantes de stat/badge.
+Itens avaliados e **mantidos** por terem justificativa:
+`RankBadge` (centraliza mapeamento plano→tom em 3 telas), tom
+`info` warm de `InlineAlert`/`Toast` (escolha de tema), e a
+escala de raio (sem regra clara; mexer traria risco visual sem
+ganho funcional).
 
 ## Lições
 
