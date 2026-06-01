@@ -445,6 +445,7 @@ export {
     SecurityCheckIcon,
     ShareIcon,
     LinkIcon,
+    DownloadIcon,
     SlidersIcon,
     SparklesIcon,
     StarIcon,

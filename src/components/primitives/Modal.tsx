@@ -226,7 +226,7 @@ export function Modal({
                 ) : null}
 
                 {/* Conteúdo: rolável quando ultrapassa o max-height. */}
-                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+                <div className="scrollbar-warm flex min-h-0 flex-1 flex-col overflow-y-auto">
                     {children}
                 </div>
             </div>

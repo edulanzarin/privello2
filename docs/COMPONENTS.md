@@ -96,6 +96,10 @@ Em `tailwind.config.ts` keyframes/animation:
 - `.scrollbar-none` — esconde a scrollbar mantendo o scroll. Aplicado
   no `Tabs.TabList` e em qualquer overflow rolável que o Windows
   enfeie com scrollbar fantasma.
+- `.scrollbar-warm` — scrollbar fina e discreta na identidade da
+  marca (trilho transparente, thumb tinta translúcida que escurece
+  no hover). Aplicada no container rolável do `Modal`; use em
+  qualquer overflow onde a scrollbar padrão do SO destoe.
 
 ## Hierarquia visual de páginas
 

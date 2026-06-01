@@ -808,6 +808,20 @@ export function LinkIcon(props: IconProps): React.ReactElement {
 }
 
 /**
+ * Download — seta pra baixo entrando numa bandeja. Usado pra
+ * "Salvar imagem" no compartilhamento.
+ */
+export function DownloadIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M12 4v10" />
+            <path d="m8 10.5 4 4 4-4" />
+            <path d="M5 17.5v1A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5v-1" />
+        </Svg>
+    );
+}
+
+/**
  * Sino — notificações. Badezinho de "novidade" é desenhado pela UI
  * que consome (não faz parte do ícone).
  */

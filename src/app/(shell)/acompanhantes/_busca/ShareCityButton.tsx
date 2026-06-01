@@ -5,7 +5,7 @@ import * as React from "react";
 import {
     Button,
     CheckIcon,
-    InlineAlert,
+    DownloadIcon,
     LinkIcon,
     Modal,
     ShareIcon,
@@ -37,6 +37,7 @@ export function ShareCityButton({
 }: ShareCityButtonProps): React.ReactElement {
     const modal = useModal();
     const [sharing, setSharing] = React.useState(false);
+    const [downloading, setDownloading] = React.useState(false);
     const [copied, setCopied] = React.useState(false);
 
     const cardUrl = `/api/acompanhantes/share-city.png?cidade=${encodeURIComponent(
@@ -55,6 +56,32 @@ export function ShareCityButton({
             uf: estadoSigla,
         });
         return `${window.location.origin}/acompanhantes?${params.toString()}`;
+    }
+
+    /**
+     * Baixa o card-imagem PNG via blob + link temporário. Funciona
+     * em qualquer browser, ideal pro fluxo de desktop.
+     */
+    async function baixarImagem(): Promise<void> {
+        if (downloading) return;
+        setDownloading(true);
+        try {
+            const res = await fetch(cardUrl);
+            if (!res.ok) return;
+            const blob = await res.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = objectUrl;
+            a.download = `${cidadeNome}-${estadoSigla}-privello.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(objectUrl);
+        } catch {
+            // Falha de rede — usuário pode long-press na imagem.
+        } finally {
+            setDownloading(false);
+        }
     }
 
     async function tentarShareNativo(): Promise<boolean> {
@@ -119,6 +146,21 @@ export function ShareCityButton({
         }
     }
 
+    /**
+     * Share disparado de dentro do modal. Cai em copiar o link
+     * quando o browser não tem share nativo (desktop).
+     */
+    async function handleShareNoModal(): Promise<void> {
+        if (sharing) return;
+        setSharing(true);
+        try {
+            const ok = await tentarShareNativo();
+            if (!ok) await copiarLink();
+        } finally {
+            setSharing(false);
+        }
+    }
+
     async function copiarLink(): Promise<void> {
         try {
             await navigator.clipboard.writeText(buscaUrl());
@@ -146,44 +188,65 @@ export function ShareCityButton({
                 open={modal.isOpen}
                 onClose={modal.close}
                 title="Compartilhar cidade"
-                size="sm"
+                size="md"
             >
                 <div className="flex flex-col gap-4 p-5">
                     <p className="text-sm text-text-secondary">
-                        Salve a imagem abaixo (toque e segure) pra postar
-                        no Stories ou Status, ou copie o link da busca.
+                        Baixe a imagem pra postar no Stories ou Status,
+                        compartilhe direto ou copie o link da busca.
                     </p>
                     <div className="mx-auto overflow-hidden rounded-2xl ring-1 ring-border">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={cardUrl}
                             alt={`Card de ${cidadeNome}, ${estadoSigla}`}
-                            className="mx-auto max-h-[46vh] w-auto"
+                            className="mx-auto max-h-[68vh] w-auto"
                         />
                     </div>
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="md"
-                        onClick={() => void copiarLink()}
-                    >
-                        {copied ? (
-                            <>
-                                <CheckIcon size={16} />
-                                Link copiado
-                            </>
-                        ) : (
-                            <>
-                                <LinkIcon size={16} />
-                                Copiar link
-                            </>
-                        )}
-                    </Button>
-                    {copied ? (
-                        <InlineAlert tone="success">
-                            Link copiado pra área de transferência.
-                        </InlineAlert>
-                    ) : null}
+                    <div className="flex flex-col gap-2">
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button
+                                type="button"
+                                variant="primary"
+                                size="md"
+                                onClick={() => void baixarImagem()}
+                                loading={downloading}
+                                disabled={downloading}
+                            >
+                                <DownloadIcon size={16} />
+                                Baixar
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="md"
+                                onClick={() => void handleShareNoModal()}
+                                loading={sharing}
+                                disabled={sharing}
+                            >
+                                <ShareIcon size={16} />
+                                Compartilhar
+                            </Button>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="md"
+                            onClick={() => void copiarLink()}
+                        >
+                            {copied ? (
+                                <>
+                                    <CheckIcon size={16} />
+                                    Link copiado
+                                </>
+                            ) : (
+                                <>
+                                    <LinkIcon size={16} />
+                                    Copiar link
+                                </>
+                            )}
+                        </Button>
+                    </div>
                 </div>
             </Modal>
         </>

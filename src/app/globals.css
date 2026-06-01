@@ -111,6 +111,38 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+ * Scrollbar warm — barra de rolagem fina e discreta, na identidade
+ * da marca. Substitui a scrollbar padrão do SO (que destoa em
+ * superfícies arredondadas tipo Modal). Trilho transparente, thumb
+ * em tom de tinta translúcido que escurece no hover.
+ * ------------------------------------------------------------------------- */
+
+.scrollbar-warm {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(26, 20, 16, 0.22) transparent;
+}
+
+.scrollbar-warm::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scrollbar-warm::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-warm::-webkit-scrollbar-thumb {
+    background-color: rgba(26, 20, 16, 0.18);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.scrollbar-warm::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(26, 20, 16, 0.32);
+}
+
+/* ---------------------------------------------------------------------------
  * Tipografia editorial — classes utilitárias usadas em destaques.
  *
  * .display: grande, tracking apertado, pra nome/headline.
