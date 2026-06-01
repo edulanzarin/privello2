@@ -418,3 +418,37 @@ body {
         transform: scaleX(1);
     }
 }
+
+/* ---------------------------------------------------------------------------
+ * Scrubber do VideoPlayer (primitivo). Estiliza o "thumb" do
+ * <input type="range"> cross-browser — o trilho (track) é desenhado
+ * via `background` inline no componente (gradiente warm + cinza).
+ * ------------------------------------------------------------------------- */
+
+.privello-video-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 13px;
+    height: 13px;
+    border-radius: 9999px;
+    background: #ffffff;
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.privello-video-range::-moz-range-thumb {
+    width: 13px;
+    height: 13px;
+    border-radius: 9999px;
+    background: #ffffff;
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* Firefox desenha o próprio track; deixamos transparente pra o
+   gradiente inline (definido no `style`) aparecer. */
+.privello-video-range::-moz-range-track {
+    background: transparent;
+}

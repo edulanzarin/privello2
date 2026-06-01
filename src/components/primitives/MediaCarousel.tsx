@@ -19,6 +19,7 @@ import { LikeButton } from "./LikeButton";
 import { LockedContent } from "./LockedContent";
 import { Modal } from "./Modal";
 import type { MediaComment, MediaItem } from "./MediaTypes";
+import { VideoPlayer } from "./VideoPlayer";
 
 /**
  * Props do {@link MediaCarousel}.
@@ -739,30 +740,45 @@ function CarouselMedia({
     autoPlayVideo?: boolean;
 }): React.ReactElement {
     if (item.type === "video") {
+        // Story mode (autoplay + barra de progresso própria) usa o
+        // <video> nativo controlado externamente. Galeria usa o
+        // VideoPlayer da marca (controles próprios).
+        if (autoPlayVideo || videoRef || onVideoTimeUpdate) {
+            return (
+                <video
+                    ref={videoRef}
+                    key={item.id}
+                    src={item.url}
+                    poster={item.posterUrl ?? undefined}
+                    controls={!autoPlayVideo}
+                    autoPlay={autoPlayVideo}
+                    playsInline
+                    onTimeUpdate={
+                        onVideoTimeUpdate
+                            ? (e) => {
+                                const v = e.currentTarget;
+                                if (v.duration > 0) {
+                                    onVideoTimeUpdate(
+                                        v.currentTime / v.duration,
+                                    );
+                                }
+                            }
+                            : undefined
+                    }
+                    onEnded={onVideoEnded}
+                    className="max-h-full max-w-full object-contain"
+                    aria-label={item.description ?? "Vídeo"}
+                />
+            );
+        }
         return (
-            <video
-                ref={videoRef}
+            <VideoPlayer
                 key={item.id}
                 src={item.url}
-                poster={item.posterUrl ?? undefined}
-                controls={!autoPlayVideo}
-                autoPlay={autoPlayVideo}
-                playsInline
-                onTimeUpdate={
-                    onVideoTimeUpdate
-                        ? (e) => {
-                            const v = e.currentTarget;
-                            if (v.duration > 0) {
-                                onVideoTimeUpdate(
-                                    v.currentTime / v.duration,
-                                );
-                            }
-                        }
-                        : undefined
-                }
-                onEnded={onVideoEnded}
-                className="max-h-full max-w-full object-contain"
-                aria-label={item.description ?? "Vídeo"}
+                posterUrl={item.posterUrl}
+                aspect="auto"
+                className="h-full max-h-full w-full bg-transparent"
+                label={item.description ?? "Vídeo"}
             />
         );
     }

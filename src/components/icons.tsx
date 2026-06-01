@@ -819,3 +819,51 @@ export function BellIcon(props: IconProps): React.ReactElement {
         </Svg>
     );
 }
+
+/**
+ * Volume (alto) — alto-falante com ondas. Usado no player de vídeo.
+ */
+export function VolumeIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path
+                d="M4 9v6h3.5L13 19V5L7.5 9H4Z"
+                fill="currentColor"
+                stroke="none"
+            />
+            <path d="M16.5 9a3.5 3.5 0 0 1 0 6" />
+            <path d="M19 6.5a7 7 0 0 1 0 11" />
+        </Svg>
+    );
+}
+
+/**
+ * Volume mudo — alto-falante com X. Usado no player de vídeo.
+ */
+export function VolumeMuteIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path
+                d="M4 9v6h3.5L13 19V5L7.5 9H4Z"
+                fill="currentColor"
+                stroke="none"
+            />
+            <path d="m16.5 10 4 4" />
+            <path d="m20.5 10-4 4" />
+        </Svg>
+    );
+}
+
+/**
+ * Tela cheia — quatro cantos. Usado no player de vídeo.
+ */
+export function FullscreenIcon(props: IconProps): React.ReactElement {
+    return (
+        <Svg {...props}>
+            <path d="M4 9V5h4" />
+            <path d="M20 9V5h-4" />
+            <path d="M4 15v4h4" />
+            <path d="M20 15v4h-4" />
+        </Svg>
+    );
+}

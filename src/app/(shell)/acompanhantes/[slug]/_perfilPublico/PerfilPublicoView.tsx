@@ -38,6 +38,7 @@ import {
     StatCard,
     TagChip,
     VerifiedBadge,
+    VideoPlayer,
     WeekCalendar,
     WeightIcon,
     WhatsappIcon,
@@ -844,22 +845,14 @@ export function PerfilPublicoView({
                 <section className="flex flex-col gap-2">
                     <SectionHeader title="Veja-me em movimento" />
                     <Card>
-                        <video
+                        <VideoPlayer
                             src={perfil.videoApresentacaoUrl}
-                            poster={
-                                perfil.videoApresentacaoPosterUrl ?? undefined
+                            mimeType={
+                                perfil.videoApresentacaoMimeType ?? undefined
                             }
-                            controls
-                            playsInline
-                            className="w-full rounded-xl"
-                        >
-                            {perfil.videoApresentacaoMimeType ? (
-                                <source
-                                    src={perfil.videoApresentacaoUrl}
-                                    type={perfil.videoApresentacaoMimeType}
-                                />
-                            ) : null}
-                        </video>
+                            posterUrl={perfil.videoApresentacaoPosterUrl}
+                            label="Vídeo de apresentação"
+                        />
                     </Card>
                 </section>
             ) : null}

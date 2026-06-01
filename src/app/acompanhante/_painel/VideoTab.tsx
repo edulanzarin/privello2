@@ -14,6 +14,7 @@ import {
     PlayCircleIcon,
     SectionHeader,
     TrashIcon,
+    VideoPlayer,
     useModal,
 } from "@/components";
 
@@ -142,17 +143,12 @@ export function VideoTab({
             {videoUrl !== null ? (
                 <Card>
                     <div className="flex flex-col gap-3">
-                        <video
+                        <VideoPlayer
                             src={videoUrl}
-                            poster={videoPosterUrl ?? undefined}
-                            controls
-                            playsInline
-                            className="w-full rounded-xl"
-                        >
-                            {videoMimeType ? (
-                                <source src={videoUrl} type={videoMimeType} />
-                            ) : null}
-                        </video>
+                            mimeType={videoMimeType ?? undefined}
+                            posterUrl={videoPosterUrl}
+                            label="Seu vídeo de apresentação"
+                        />
                         <div className="flex items-center justify-end gap-2">
                             <Button
                                 type="button"

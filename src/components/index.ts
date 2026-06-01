@@ -372,6 +372,9 @@ export type {
 export { AudioWavePlayer } from "./primitives/AudioWavePlayer";
 export type { AudioWavePlayerProps } from "./primitives/AudioWavePlayer";
 
+export { VideoPlayer } from "./primitives/VideoPlayer";
+export type { VideoPlayerProps } from "./primitives/VideoPlayer";
+
 export { PageSurface } from "./primitives/PageSurface";
 export type {
     PageSurfaceProps,
@@ -473,5 +476,8 @@ export {
     ShieldIcon,
     WeightIcon,
     WhatsappIcon,
+    VolumeIcon,
+    VolumeMuteIcon,
+    FullscreenIcon,
     XIcon,
 } from "./icons";
