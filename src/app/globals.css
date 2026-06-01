@@ -155,23 +155,6 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
- * Surface canônico — cartão simples, fundo branco, borda hairline.
- * Sem sombra. Cantos discretos.
- * ------------------------------------------------------------------------- */
-
-.surface {
-    background: var(--surface);
-    border: 1px solid var(--hairline);
-    border-radius: 1.25rem;
-    /* 20px */
-}
-
-.surface-flat {
-    background: var(--surface);
-    border-radius: 1.25rem;
-}
-
-/* ---------------------------------------------------------------------------
  * Accent helpers.
  * ------------------------------------------------------------------------- */
 

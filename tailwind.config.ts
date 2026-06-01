@@ -81,11 +81,6 @@ const config: Config = {
                     "0%": { opacity: "0" },
                     "100%": { opacity: "1" },
                 },
-                "spring-press": {
-                    "0%": { transform: "scale(1)" },
-                    "50%": { transform: "scale(0.97)" },
-                    "100%": { transform: "scale(1)" },
-                },
                 "pop": {
                     "0%": { transform: "scale(1)" },
                     "30%": { transform: "scale(1.25)" },
@@ -136,7 +131,6 @@ const config: Config = {
             animation: {
                 "fade-in": "fade-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both",
                 "fade-in-soft": "fade-in-soft 200ms ease-out both",
-                "spring-press": "spring-press 220ms ease-out",
                 "pop": "pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1)",
                 "shimmer": "shimmer 2.4s linear infinite",
                 "skeleton-shimmer": "skeleton-shimmer 1.4s linear infinite",

@@ -81,7 +81,6 @@ Fonte de verdade: `src/components/tokens.ts`. Consumido pelo
 Em `tailwind.config.ts` keyframes/animation:
 - `fade-in` (320ms cubic-bezier) — entrada suave com translateY.
 - `fade-in-soft` (200ms ease-out) — só opacidade.
-- `spring-press` (220ms) — feedback de botão.
 - `pop` (320ms cubic-bezier overshoot) — `LikeButton`.
 - `shimmer`, `blob-1`, `blob-2` — heros e skeletons.
 
