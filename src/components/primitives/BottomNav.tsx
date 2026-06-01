@@ -78,7 +78,7 @@ export function BottomNav({ items }: BottomNavProps): React.ReactElement {
                                 href={item.href}
                                 aria-current={isActive ? "page" : undefined}
                                 className={[
-                                    "relative flex h-16 flex-col items-center justify-center gap-1 text-[0.65rem] font-medium tracking-tight transition-colors duration-200",
+                                    "relative flex h-16 flex-col items-center justify-center gap-1 text-[0.65rem] font-medium tracking-tight transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40",
                                     isActive
                                         ? "text-[color:var(--accent-deep)]"
                                         : "text-text-disabled hover:text-text-primary",

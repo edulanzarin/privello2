@@ -16,7 +16,7 @@ import { PwaBootstrap } from "./_pwa/PwaBootstrap";
  * Mantemos o nome de variável `--font-inter` no CSS pra não
  * quebrar consumidores antigos do tailwind config.
  */
-const geist = Poppins({
+const poppins = Poppins({
     subsets: ["latin"],
     weight: ["300", "400", "500", "600", "700"],
     variable: "--font-inter",
@@ -141,7 +141,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="pt-BR" className={geist.variable}>
+        <html lang="pt-BR" className={poppins.variable}>
             <body className="min-h-screen font-sans">
                 <OrganizationJsonLd />
                 <ToastProvider>{children}</ToastProvider>

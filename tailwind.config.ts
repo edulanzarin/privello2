@@ -44,6 +44,16 @@ const config: Config = {
                 border: colors.border,
                 text: colors.text,
                 glass: colors.glass,
+                // Accent warm da marca, registrado como cor Tailwind
+                // pra habilitar utilitários com opacidade (`accent/40`,
+                // `bg-accent-soft`) em vez de hex arbitrário
+                // (`[#ec7b5b]/40`). Hex fixos espelham as CSS vars
+                // `--accent*` em globals.css — manter em sincronia.
+                accent: {
+                    DEFAULT: "#ec7b5b",
+                    deep: "#c5523a",
+                    soft: "#fff0eb",
+                },
             },
             fontFamily: {
                 sans: ["var(--font-inter)", ...typography.fontFamily.sans],

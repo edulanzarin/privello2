@@ -10,6 +10,7 @@ import {
     ChatIcon,
     ChevronRightIcon,
     ConfirmDialog,
+    EmptyState,
     InlineAlert,
     LinkButton,
     LockedContent,
@@ -531,20 +532,12 @@ function ListaReviews({
     if (reviews.length === 0) {
         return (
             <Card>
-                <div className="flex flex-col items-center gap-1.5 py-2 text-center">
-                    <span
-                        aria-hidden="true"
-                        className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-text-disabled"
-                    >
-                        <ChatIcon size={20} />
-                    </span>
-                    <span className="text-sm font-medium text-text-primary">
-                        Sem avaliações ainda
-                    </span>
-                    <span className="text-xs text-text-secondary">
-                        Seja a primeira pessoa a deixar uma.
-                    </span>
-                </div>
+                <EmptyState
+                    size="sm"
+                    icon={<ChatIcon size={20} />}
+                    title="Sem avaliações ainda"
+                    description="Seja a primeira pessoa a deixar uma."
+                />
             </Card>
         );
     }
