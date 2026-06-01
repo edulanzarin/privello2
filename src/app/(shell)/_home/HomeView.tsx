@@ -431,7 +431,7 @@ export function HomeView({
  */
 function FeedGrid({
     items,
-    pageSize = 5,
+    pageSize = 6,
 }: {
     items: ReadonlyArray<FeedItem>;
     pageSize?: number;
