@@ -164,7 +164,8 @@ aproximado pro mapa/proximidade), `boostUntil`, `viewsCount`,
 - Validação dupla (Zod + `validar*`), zero PII no perfil público.
 - Confinamento: AWS SDK só em `lib/storage/r2.ts`, MP só em
   `lib/payments/mercadopago.ts`.
-- EXIF/GPS strip + marca d'água nas mídias.
+- EXIF/GPS strip + marca d'água nas mídias (selo central da marca
+  + link vanity `privello.com.br/<handle>` no canto).
 - Verificação expira 180d; denúncia única por reporter+target.
 - Path traversal bloqueado em `/api/storage/`.
 - Cleanup token timing-safe; webhook MP valida `type`.

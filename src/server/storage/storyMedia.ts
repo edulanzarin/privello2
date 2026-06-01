@@ -171,6 +171,7 @@ export async function publicarStory(
         bytes: input.bytes,
         mimeType,
         tipo,
+        ownerId: input.userId,
     });
     const finalSize = watermarked.byteLength;
 

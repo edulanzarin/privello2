@@ -164,11 +164,12 @@ export async function publicarReel(
         return { ok: false, reason: "CAPTION_INVALIDA" };
     }
 
-    // Watermark (mesmo pipeline da galeria — coloca o logo no canto).
+    // Watermark (mesmo pipeline da galeria — selo central + link).
     const watermarked = await applyGalleryWatermark({
         bytes: input.bytes,
         mimeType,
         tipo,
+        ownerId: input.userId,
     });
     const finalSize = watermarked.byteLength;
 

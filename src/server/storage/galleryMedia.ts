@@ -170,13 +170,14 @@ export async function publicarMidia(
     const mimeType = input.mimeType as GaleriaMime;
 
     // 2. Marca d'água. Tanto fotos (sharp) quanto vídeos
-    // (FFmpeg) recebem o selo da marca (logo + "Privello") no
-    // canto inferior direito. Erro
+    // (FFmpeg) recebem o selo central da marca + o link vanity
+    // (`privello.com.br/<handle>`) no canto. Erro
     // silencioso devolve o buffer original.
     const watermarked = await applyGalleryWatermark({
         bytes: input.bytes,
         mimeType,
         tipo,
+        ownerId: input.userId,
     });
     const finalSize = watermarked.byteLength;
 

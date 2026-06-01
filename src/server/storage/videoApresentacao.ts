@@ -175,6 +175,7 @@ export async function publicarVideoApresentacao(
         bytes: input.bytes,
         mimeType,
         tipo: "VIDEO",
+        ownerId: input.userId,
     });
     const finalSize = watermarked.byteLength;
 

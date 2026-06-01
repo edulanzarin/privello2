@@ -1,22 +1,22 @@
 /**
  * Aplicação de marca d'água em mídias da galeria.
  *
- * Compõe sobre a foto **ou vídeo** um selo da marca (ícone flame de
- * `public/logo.png` + texto "Privello") no **canto inferior
- * direito**, igual à identidade da top bar. O selo é gerado
- * dinamicamente (SVG + sharp) proporcional à largura da mídia, com
- * sombra suave pra legibilidade em qualquer fundo.
+ * Compõe sobre a foto **ou vídeo** dois elementos:
+ *   1. Um selo central translúcido da marca (ícone flame de
+ *      `public/logo.png` + texto "Privello").
+ *   2. O link vanity da Acompanhante (`privello.com.br/<handle>`) no
+ *      canto inferior direito, em pílula escura translúcida — leva
+ *      direto pro perfil quando digitado/clicado.
  *
  * Foto_de_Perfil e Capa_de_Perfil **não** recebem marca d'água — só
  * mídias da galeria pública.
  *
  * Stack:
  *   - **Fotos**: `sharp` (pipeline raster).
- *   - **Vídeos**: `ffmpeg-static` (binário pré-built injeta o overlay
- *     via filtro `overlay`). Re-encoda no mesmo container/codec
- *     padrão (H.264/AAC) — esse passo é necessário porque overlay
- *     exige re-render do stream de vídeo. Áudio passa direto
- *     com `-c:a copy`.
+ *   - **Vídeos**: `ffmpeg-static` (binário pré-built injeta os
+ *     overlays via filtro `overlay`). Re-encoda no mesmo
+ *     container/codec padrão (H.264/AAC). Áudio passa direto com
+ *     `-c:a copy`.
  *
  * Em qualquer falha, devolvemos o buffer original e logamos o erro.
  * Marca d'água é "best-effort enhancement".
@@ -33,6 +33,7 @@ import ffmpegStatic from "ffmpeg-static";
 import sharp from "sharp";
 
 import type { GaleriaTipo } from "@/domain/validation";
+import { db } from "@/lib/db";
 import { logger } from "@/lib/observability/logger";
 
 const log = logger("watermark");
@@ -57,14 +58,35 @@ const PUBLIC_DIR = path.join(process.cwd(), "public");
 const LOGO_PATH = path.join(PUBLIC_DIR, "logo.png");
 
 /**
- * Largura do selo da marca como fração da largura da mídia. Selo de
- * canto — discreto, mas legível. Mantida consistente entre fotos e
- * vídeos para identidade visual única.
+ * Largura do selo central da marca como fração da largura da mídia.
+ * Selo "marca" no centro — presença forte mas translúcida.
  */
-const OVERLAY_RATIO = 0.3;
+const OVERLAY_RATIO = 0.42;
 
-/** Margem do selo em relação às bordas, como fração da largura. */
+/** Margem do link de canto em relação às bordas, fração da largura. */
 const MARGIN_RATIO = 0.025;
+
+/** Largura do link vanity (canto) como fração da largura da mídia. */
+const LINK_RATIO = 0.36;
+
+/**
+ * Domínio exibido no link vanity da marca d'água. Deriva da
+ * `NEXT_PUBLIC_SITE_URL` (sem protocolo/porta) e cai em
+ * `privello.com.br` quando ausente/local — o link estampado deve ser
+ * sempre o domínio público, não `localhost`.
+ */
+const VANITY_HOST: string = (() => {
+    const raw = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+    try {
+        const host = new URL(raw).host;
+        if (host.length > 0 && !host.includes("localhost")) {
+            return host;
+        }
+    } catch {
+        // ignora URL inválida/ausente
+    }
+    return "privello.com.br";
+})();
 
 /**
  * Verifica que o asset da marca existe no disco. É checado uma vez
@@ -86,14 +108,20 @@ function ensureAssets(): boolean {
 }
 
 /**
- * Constrói o selo da marca (ícone flame + "Privello") como PNG RGBA
- * com largura `badgeWidth`. O ícone vem de `public/logo.png`; o
- * texto e a sombra são desenhados via SVG. Layout horizontal: logo
+ * Constrói o selo central da marca (ícone flame + "Privello") como
+ * PNG RGBA com largura `badgeWidth`. O ícone vem de `public/logo.png`;
+ * o texto e a sombra são desenhados via SVG. Layout horizontal: logo
  * à esquerda, texto à direita, alinhados verticalmente.
+ *
+ * `opacity` (0..1) controla a translucidez geral — o selo central
+ * fica semi-transparente pra não cobrir a mídia.
  *
  * Retorna `{ png, width, height }` pra o caller posicionar.
  */
-async function construirSelo(badgeWidth: number): Promise<{
+async function construirSelo(
+    badgeWidth: number,
+    opacity: number = 1,
+): Promise<{
     png: Buffer;
     width: number;
     height: number;
@@ -124,20 +152,106 @@ async function construirSelo(badgeWidth: number): Promise<{
         <text x="${textX}" y="${textBaseline}" font-family="sans-serif" font-size="${fontSize}" font-weight="700" fill="#ffffff" filter="url(#ds)">Privello</text>
     </svg>`;
 
-    const png = await sharp(Buffer.from(svg))
-        .composite([{ input: logo, top: logoTop, left: 0 }])
-        .png()
-        .toBuffer();
+    let pipeline = sharp(Buffer.from(svg)).composite([
+        { input: logo, top: logoTop, left: 0 },
+    ]);
 
+    // Aplica translucidez multiplicando o canal alpha do selo todo.
+    if (opacity < 1) {
+        const flat = await pipeline.png().toBuffer();
+        pipeline = sharp(flat).ensureAlpha().composite([
+            {
+                input: Buffer.from([
+                    255,
+                    255,
+                    255,
+                    Math.round(opacity * 255),
+                ]),
+                raw: { width: 1, height: 1, channels: 4 },
+                tile: true,
+                blend: "dest-in",
+            },
+        ]);
+    }
+
+    const png = await pipeline.png().toBuffer();
     return { png, width: badgeWidth, height };
+}
+
+/**
+ * Constrói o selo de canto com o **link vanity** da Acompanhante
+ * (`privello.com.br/<identificador>`), em pílula translúcida escura
+ * pra legibilidade. Largura alvo `linkWidth` — a altura é derivada do
+ * tamanho de fonte. O texto é centralizado na pílula.
+ */
+async function construirLinkSelo(
+    identificador: string,
+    linkWidth: number,
+): Promise<{ png: Buffer; width: number; height: number }> {
+    const texto = `${VANITY_HOST}/${identificador}`;
+    const safe = escaparXml(texto);
+
+    // Fonte proporcional à largura alvo, limitada por nº de chars pra
+    // não estourar. ~0.55em por char em sans-serif bold.
+    const fontByWidth = linkWidth / (texto.length * 0.55);
+    const fontSize = Math.max(14, Math.round(fontByWidth));
+    const padX = Math.round(fontSize * 0.7);
+    const padY = Math.round(fontSize * 0.45);
+    const textWidth = Math.round(texto.length * fontSize * 0.55);
+    const width = textWidth + padX * 2;
+    const height = Math.round(fontSize + padY * 2);
+    const radius = Math.round(height / 2);
+    const baseline = Math.round(height / 2 + fontSize * 0.35);
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <rect x="0" y="0" width="${width}" height="${height}" rx="${radius}" ry="${radius}" fill="rgba(20,10,8,0.5)"/>
+        <text x="${width / 2}" y="${baseline}" font-family="sans-serif" font-size="${fontSize}" font-weight="600" fill="#ffffff" text-anchor="middle">${safe}</text>
+    </svg>`;
+
+    const png = await sharp(Buffer.from(svg)).png().toBuffer();
+    return { png, width, height };
+}
+
+/**
+ * Escapa caracteres especiais pra interpolar texto seguro num SVG.
+ */
+function escaparXml(value: string): string {
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+}
+
+/**
+ * Resolve o `identificador` (handle público) do dono da mídia. Usado
+ * pra estampar o link vanity. Retorna `null` em falha — nesse caso o
+ * link de canto é omitido (o selo central continua).
+ */
+async function resolverIdentificador(
+    ownerId: string,
+): Promise<string | null> {
+    try {
+        const user = await db.user.findUnique({
+            where: { id: ownerId },
+            select: { identificador: true },
+        });
+        return user?.identificador ?? null;
+    } catch {
+        return null;
+    }
 }
 
 /**
  * Aplica marca d'água em uma mídia da galeria. Retorna o buffer
  * resultante (mesmo MIME que a entrada).
  *
- * Para `tipo === "FOTO"`, compõe overlay via sharp.
- * Para `tipo === "VIDEO"`, retorna o buffer original.
+ * Compõe **dois** elementos sobre a mídia:
+ *   1. Selo central translúcido da marca (logo + "Privello").
+ *   2. Link vanity da Acompanhante (`privello.com.br/<handle>`) no
+ *      canto inferior direito — só quando `ownerId` resolve um
+ *      identificador.
  *
  * Em falha de processamento, devolve o `bytes` original e loga o
  * erro (sem `throw` — upload não pode falhar por causa de
@@ -147,15 +261,22 @@ export async function applyGalleryWatermark(args: {
     bytes: Buffer | Uint8Array;
     mimeType: string;
     tipo: GaleriaTipo;
+    /** Dono da mídia — usado pra estampar o link vanity. */
+    ownerId?: string;
 }): Promise<Buffer> {
     const buffer = Buffer.isBuffer(args.bytes)
         ? args.bytes
         : Buffer.from(args.bytes);
 
+    if (!ensureAssets()) {
+        return buffer;
+    }
+
+    const identificador = args.ownerId
+        ? await resolverIdentificador(args.ownerId)
+        : null;
+
     if (args.tipo === "VIDEO") {
-        if (!ensureAssets()) {
-            return buffer;
-        }
         if (!ffmpegPath) {
             log.warn(
                 "ffmpeg-static não resolveu binário — vídeo será passado direto",
@@ -163,7 +284,7 @@ export async function applyGalleryWatermark(args: {
             return buffer;
         }
         try {
-            return await watermarkVideo(buffer, args.mimeType);
+            return await watermarkVideo(buffer, args.mimeType, identificador);
         } catch (err) {
             log.error("falha ao aplicar marca d'água em vídeo", err, {
                 mimeType: args.mimeType,
@@ -172,12 +293,8 @@ export async function applyGalleryWatermark(args: {
         }
     }
 
-    if (!ensureAssets()) {
-        return buffer;
-    }
-
     try {
-        return await watermarkPhoto(buffer, args.mimeType);
+        return await watermarkPhoto(buffer, args.mimeType, identificador);
     } catch (err) {
         log.error("falha ao aplicar marca d'água em foto", err, {
             mimeType: args.mimeType,
@@ -190,14 +307,16 @@ export async function applyGalleryWatermark(args: {
  * Compõe a marca d'água em uma foto:
  *
  *  1. Mede a imagem.
- *  2. Gera o selo (logo + "Privello") com largura = `OVERLAY_RATIO`
- *     da largura da imagem.
- *  3. Posiciona no canto inferior direito, respeitando a margem.
+ *  2. Gera o selo central translúcido (logo + "Privello") e compõe
+ *     no centro.
+ *  3. Quando há `identificador`, gera o link vanity e compõe no canto
+ *     inferior direito, respeitando a margem.
  *  4. Reserializa no MIME original.
  */
 async function watermarkPhoto(
     buffer: Buffer,
     mimeType: string,
+    identificador: string | null,
 ): Promise<Buffer> {
     const meta = await sharp(buffer).metadata();
     const width = meta.width ?? 0;
@@ -210,16 +329,30 @@ async function watermarkPhoto(
         return buffer;
     }
 
+    const overlays: sharp.OverlayOptions[] = [];
+
+    // 1. Selo central translúcido.
     const badgeWidth = Math.round(width * OVERLAY_RATIO);
-    const selo = await construirSelo(badgeWidth);
+    const selo = await construirSelo(badgeWidth, 0.6);
+    overlays.push({
+        input: selo.png,
+        top: Math.round((height - selo.height) / 2),
+        left: Math.round((width - selo.width) / 2),
+    });
 
-    const margin = Math.round(width * MARGIN_RATIO);
-    const left = Math.max(0, width - selo.width - margin);
-    const top = Math.max(0, height - selo.height - margin);
+    // 2. Link vanity no canto inferior direito.
+    if (identificador) {
+        const linkWidth = Math.round(width * LINK_RATIO);
+        const link = await construirLinkSelo(identificador, linkWidth);
+        const margin = Math.round(width * MARGIN_RATIO);
+        overlays.push({
+            input: link.png,
+            top: Math.max(0, height - link.height - margin),
+            left: Math.max(0, width - link.width - margin),
+        });
+    }
 
-    const composited = sharp(buffer)
-        .rotate()
-        .composite([{ input: selo.png, top, left }]);
+    const composited = sharp(buffer).rotate().composite(overlays);
 
     if (mimeType === "image/png") {
         return composited.png({ compressionLevel: 9 }).toBuffer();
@@ -375,17 +508,16 @@ function runFfmpeg(args: ReadonlyArray<string>): Promise<void> {
  *  1. Grava o blob recebido em um arquivo temporário (FFmpeg lê de
  *     stdin com mais facilidade só em containers específicos; arquivo
  *     evita compatibilidade duvidosa com WebM/MOV em pipe).
- *  2. Chama o `ffmpeg` com:
- *     - `-i input` (vídeo) e `-i selo.png` (overlay gerado).
- *     - filter complex que escala o selo da marca pra `OVERLAY_RATIO`
- *       da largura do vídeo e posiciona no canto inferior direito,
- *       respeitando a margem.
- *     - re-encoda vídeo com H.264 / preset `veryfast` / CRF 23
- *       (qualidade boa, tamanho razoável). `-movflags +faststart`
- *       deixa o MP4 streamável.
- *     - Áudio passa direto (`-c:a copy`) pra não re-encodar.
- *     - `-y` sobrescreve o output sem perguntar.
- *  3. Lê o arquivo final, deleta os temporários, devolve o buffer.
+ *  2. Gera os PNGs de overlay (selo central translúcido + link vanity
+ *     de canto) e os passa como inputs extras.
+ *  3. Chama o `ffmpeg` com filter complex que compõe:
+ *     - o selo central no meio (`(W-w)/2:(H-h)/2`);
+ *     - o link vanity no canto inferior direito (com margem), quando
+ *       há `identificador`.
+ *     - re-encoda vídeo com H.264 / preset `veryfast` / CRF 23.
+ *       `-movflags +faststart` deixa o MP4 streamável. Áudio passa
+ *       direto (`-c:a copy`). `-y` sobrescreve o output.
+ *  4. Lê o arquivo final, deleta os temporários, devolve o buffer.
  *
  * Em qualquer erro, o caller (`applyGalleryWatermark`) cai no buffer
  * original.
@@ -393,6 +525,7 @@ function runFfmpeg(args: ReadonlyArray<string>): Promise<void> {
 async function watermarkVideo(
     buffer: Buffer,
     mimeType: string,
+    identificador: string | null,
 ): Promise<Buffer> {
     const tmpDir = await fsp.mkdtemp(
         path.join(os.tmpdir(), "privello-wm-"),
@@ -401,35 +534,48 @@ async function watermarkVideo(
     const inputPath = path.join(tmpDir, `in-${randomUUID()}.${ext}`);
     const outputPath = path.join(tmpDir, `out-${randomUUID()}.${ext}`);
     const seloPath = path.join(tmpDir, `wm-${randomUUID()}.png`);
+    const linkPath = path.join(tmpDir, `lk-${randomUUID()}.png`);
 
     try {
         await fsp.writeFile(inputPath, buffer);
 
-        // Lê dimensões do vídeo pra calcular largura exata do
-        // overlay em pixels — bem mais confiável que filtros tipo
+        // Lê dimensões do vídeo pra calcular largura exata dos
+        // overlays em pixels — bem mais confiável que filtros tipo
         // `scale2ref` (que mudam comportamento entre versões do
         // FFmpeg).
         const { width: videoWidth } = await probeVideoSize(inputPath);
-        const overlayWidth = Math.max(
+        const seloWidth = Math.max(
             64,
             Math.round(videoWidth * OVERLAY_RATIO),
         );
         const margin = Math.max(8, Math.round(videoWidth * MARGIN_RATIO));
 
-        // Gera o selo (logo + "Privello") como PNG e grava em tmp
-        // pra alimentar o FFmpeg como segundo input.
-        const selo = await construirSelo(overlayWidth);
+        // Selo central translúcido (input 1).
+        const selo = await construirSelo(seloWidth, 0.6);
         await fsp.writeFile(seloPath, selo.png);
 
-        // Filter complex: composit do selo já no tamanho certo no
-        // canto inferior direito, com margem `margin`.
-        const filter =
-            `[0:v][1:v]overlay=main_w-overlay_w-${margin}:main_h-overlay_h-${margin}[v]`;
+        // Inputs do ffmpeg + filtro. Começa com o selo central.
+        const inputs = ["-i", inputPath, "-i", seloPath];
+        // [0:v][1:v] selo no centro → [tmp]
+        let filter =
+            "[0:v][1:v]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2";
+
+        // Link vanity de canto (input 2), só quando há identificador.
+        if (identificador) {
+            const linkWidth = Math.round(videoWidth * LINK_RATIO);
+            const link = await construirLinkSelo(identificador, linkWidth);
+            await fsp.writeFile(linkPath, link.png);
+            inputs.push("-i", linkPath);
+            // encadeia: resultado anterior [t] + [2:v] no canto.
+            filter +=
+                `[t];[t][2:v]overlay=main_w-overlay_w-${margin}:main_h-overlay_h-${margin}[v]`;
+        } else {
+            filter += "[v]";
+        }
 
         await runFfmpeg([
             "-y",
-            "-i", inputPath,
-            "-i", seloPath,
+            ...inputs,
             "-filter_complex", filter,
             "-map", "[v]",
             "-map", "0:a?", // copia áudio se houver
