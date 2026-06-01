@@ -116,7 +116,7 @@ export function PlanComparison({
                             className={[
                                 "rounded-t-xl px-2 py-1 text-center text-sm font-semibold",
                                 col.highlight
-                                    ? "bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                    ? "bg-accent-soft text-accent-deep"
                                     : "text-text-primary",
                             ].join(" ")}
                         >
@@ -144,7 +144,7 @@ export function PlanComparison({
                                 className={[
                                     "flex items-center justify-center py-0.5",
                                     columns[ci]?.highlight
-                                        ? "bg-[#fff0eb]/50"
+                                        ? "bg-accent-soft/50"
                                         : "",
                                 ].join(" ")}
                             >

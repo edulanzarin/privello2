@@ -107,7 +107,7 @@ export function Card({
 }: CardProps): React.ReactElement {
     const tone = disabled ? "opacity-60 pointer-events-none" : "";
     const accent = featured
-        ? "ring-2 ring-[#ec7b5b]/35 ring-offset-2 ring-offset-[color:var(--canvas)]"
+        ? "ring-2 ring-accent/35 ring-offset-2 ring-offset-[color:var(--canvas)]"
         : "";
     const composed = [
         VARIANT_CLASSES[variant][padding],

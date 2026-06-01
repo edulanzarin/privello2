@@ -52,7 +52,7 @@ export default function RouteError({
                         </Button>
                         <Link
                             href="/"
-                            className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                            className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                         >
                             Ir pra início
                         </Link>

@@ -135,13 +135,13 @@ export function ChipGroup({
                             onClick={() => toggle(opt.value)}
                             className={[
                                 "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-150",
-                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
                                 disabled
                                     ? "cursor-not-allowed opacity-50"
                                     : "cursor-pointer",
                                 isSelected
-                                    ? "border-[#ec7b5b]/40 bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] shadow-[0_2px_8px_-3px_rgba(197,82,58,0.3)]"
-                                    : "border-border bg-surface text-text-primary hover:border-[#ec7b5b]/30 hover:bg-[#fff0eb]/40",
+                                    ? "border-accent/40 bg-accent-soft text-accent-deep shadow-[0_2px_8px_-3px_rgba(197,82,58,0.3)]"
+                                    : "border-border bg-surface text-text-primary hover:border-accent/30 hover:bg-accent-soft/40",
                             ].join(" ")}
                         >
                             {isSelected ? (

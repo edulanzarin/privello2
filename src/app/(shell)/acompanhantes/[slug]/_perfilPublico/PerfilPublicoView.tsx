@@ -936,11 +936,11 @@ export function PerfilPublicoView({
                                             }
                                         }}
                                         aria-label={`Abrir destaque ${d.title}`}
-                                        className="group flex w-[6rem] flex-col items-center gap-2 rounded-2xl px-1 py-1 transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                                        className="group flex w-[6rem] flex-col items-center gap-2 rounded-2xl px-1 py-1 transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                                     >
                                         <span className="relative block transition-transform group-hover:scale-105">
                                             <span
-                                                className="block rounded-full p-[3px] bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)]"
+                                                className="block rounded-full p-[3px] bg-gradient-to-br from-accent to-accent-deep"
                                             >
                                                 <span className="block overflow-hidden rounded-full bg-surface p-[2px]">
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1428,7 +1428,7 @@ function PaymentTile({
         <div className="flex items-center gap-2.5 rounded-xl border border-neutral-200 bg-surface px-3 py-2.5">
             <span
                 aria-hidden="true"
-                className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
+                className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent-soft text-accent-deep"
             >
                 {icon}
             </span>

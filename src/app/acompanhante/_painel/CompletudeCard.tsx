@@ -63,7 +63,7 @@ export function CompletudeCard({
                             <li key={item.key}>
                                 <Link
                                     href={item.href}
-                                    className="group flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-text-primary transition-colors hover:bg-[#fff0eb]/60 focus:outline-none focus-visible:bg-[#fff0eb] focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                                    className="group flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-text-primary transition-colors hover:bg-accent-soft/60 focus:outline-none focus-visible:bg-accent-soft focus-visible:ring-2 focus-visible:ring-accent/40"
                                 >
                                     <span
                                         aria-hidden="true"
@@ -74,7 +74,7 @@ export function CompletudeCard({
                                     <span className="flex-1">{item.label}</span>
                                     <span
                                         aria-hidden="true"
-                                        className="text-xs text-text-secondary group-hover:text-[color:var(--accent-deep)]"
+                                        className="text-xs text-text-secondary group-hover:text-accent-deep"
                                     >
                                         →
                                     </span>

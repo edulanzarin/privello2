@@ -80,7 +80,7 @@ export function BottomNav({ items }: BottomNavProps): React.ReactElement {
                                 className={[
                                     "relative flex h-16 flex-col items-center justify-center gap-1 text-[0.65rem] font-medium tracking-tight transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40",
                                     isActive
-                                        ? "text-[color:var(--accent-deep)]"
+                                        ? "text-accent-deep"
                                         : "text-text-disabled hover:text-text-primary",
                                 ].join(" ")}
                             >
@@ -89,7 +89,7 @@ export function BottomNav({ items }: BottomNavProps): React.ReactElement {
                                 {isActive ? (
                                     <span
                                         aria-hidden="true"
-                                        className="absolute top-2 h-1 w-1 rounded-full bg-[color:var(--accent)]"
+                                        className="absolute top-2 h-1 w-1 rounded-full bg-accent"
                                     />
                                 ) : null}
                                 <span aria-hidden="true">

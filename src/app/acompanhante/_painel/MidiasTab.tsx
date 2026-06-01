@@ -521,7 +521,7 @@ export function MidiasTab({
                                             ? "opacity-40 scale-95"
                                             : "opacity-100",
                                         isOver
-                                            ? "ring-2 ring-[#ec7b5b]/60 ring-offset-1 ring-offset-surface rounded-md"
+                                            ? "ring-2 ring-accent/60 ring-offset-1 ring-offset-surface rounded-md"
                                             : "",
                                     ]
                                         .filter(Boolean)
@@ -638,7 +638,7 @@ export function MidiasTab({
                                                                 Expirado
                                                             </span>
                                                             {inHighlight !== null ? (
-                                                                <span className="rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] px-1.5 py-0.5 text-white">
+                                                                <span className="rounded-full bg-gradient-to-br from-accent to-accent-deep px-1.5 py-0.5 text-white">
                                                                     Em destaque
                                                                 </span>
                                                             ) : null}
@@ -656,7 +656,7 @@ export function MidiasTab({
                                                 </button>
                                                 {inHighlight !== null ? (
                                                     <div className="flex items-center justify-between gap-1 px-1">
-                                                        <span className="truncate text-[0.65rem] font-medium text-[color:var(--accent-deep)]">
+                                                        <span className="truncate text-[0.65rem] font-medium text-accent-deep">
                                                             {inHighlight}
                                                         </span>
                                                         <button
@@ -679,7 +679,7 @@ export function MidiasTab({
                                                                 s.id,
                                                             )
                                                         }
-                                                        className="px-1 text-left text-[0.65rem] text-text-secondary hover:text-[color:var(--accent-deep)] focus:outline-none"
+                                                        className="px-1 text-left text-[0.65rem] text-text-secondary hover:text-accent-deep focus:outline-none"
                                                     >
                                                         + Adicionar a destaque
                                                     </button>
@@ -902,7 +902,7 @@ export function MidiasTab({
                                         void salvarHighlight(t);
                                     }}
                                     disabled={savingHighlight}
-                                    className="rounded-full border border-[#ec7b5b]/30 bg-[#fff0eb] px-3 py-1 text-xs font-medium text-[color:var(--accent-deep)] hover:bg-[#fff0eb]/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:opacity-60"
+                                    className="rounded-full border border-accent/30 bg-accent-soft px-3 py-1 text-xs font-medium text-accent-deep hover:bg-accent-soft/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
                                 >
                                     {t}
                                 </button>
@@ -926,7 +926,7 @@ export function MidiasTab({
                             maxLength={20}
                             placeholder="Ex: Praia, Look do dia..."
                             disabled={savingHighlight}
-                            className="rounded-xl border border-border bg-surface px-3 py-2 text-sm focus:border-[color:var(--accent)] focus:outline-none disabled:opacity-60"
+                            className="rounded-xl border border-border bg-surface px-3 py-2 text-sm focus:border-accent focus:outline-none disabled:opacity-60"
                         />
                         <span className="text-[0.65rem] text-text-disabled">
                             {highlightTitleInput.length}/20

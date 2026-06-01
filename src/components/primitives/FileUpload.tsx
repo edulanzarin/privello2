@@ -78,7 +78,7 @@ export function FileUpload({
     const borderColor = error
         ? "border-danger-400"
         : fileName
-            ? "border-[#ec7b5b]/35"
+            ? "border-accent/35"
             : "border-border border-dashed";
 
     return (
@@ -100,7 +100,7 @@ export function FileUpload({
                 aria-disabled={disabled || undefined}
                 className={[
                     "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 bg-surface px-4 py-7 text-center transition-all duration-150",
-                    "hover:border-[#ec7b5b]/40 hover:bg-[#fff0eb]/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/30",
+                    "hover:border-accent/40 hover:bg-accent-soft/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
                     disabled && "cursor-not-allowed opacity-50",
                     borderColor,
                 ]

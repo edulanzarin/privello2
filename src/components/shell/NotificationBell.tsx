@@ -128,11 +128,11 @@ export function NotificationBell(): React.ReactElement {
                 }
                 aria-haspopup="true"
                 aria-expanded={open}
-                className="relative flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-[#ec7b5b]/10 hover:text-[color:var(--accent-deep)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                className="relative flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-accent/10 hover:text-accent-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
                 <BellIcon size={20} />
                 {naoLidas > 0 ? (
-                    <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white ring-2 ring-white">
+                    <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-accent px-1 text-[0.6rem] font-semibold text-white ring-2 ring-white">
                         {naoLidas > 9 ? "9+" : naoLidas}
                     </span>
                 ) : null}
@@ -141,7 +141,7 @@ export function NotificationBell(): React.ReactElement {
             {open ? (
                 <div
                     role="menu"
-                    className="absolute right-0 top-11 z-40 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-[#ec7b5b]/15 bg-white shadow-[0_16px_48px_-12px_rgba(0,0,0,0.28)]"
+                    className="absolute right-0 top-11 z-40 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-accent/15 bg-white shadow-[0_16px_48px_-12px_rgba(0,0,0,0.28)]"
                 >
                     <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
                         <span className="text-sm font-semibold text-text-primary">
@@ -192,7 +192,7 @@ function NotificacaoLinha({
     const view = describe(notificacao);
 
     const inner = (
-        <div className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-[#fff0eb]/50">
+        <div className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-accent-soft/50">
             <span
                 aria-hidden="true"
                 className={[
@@ -236,7 +236,7 @@ function describe(n: NotificationItem): NotificacaoView {
             return {
                 icon: <ChatIcon size={15} />,
                 iconClasses:
-                    "bg-[#ec7b5b]/12 text-[color:var(--accent-deep)]",
+                    "bg-accent/12 text-accent-deep",
                 texto: (
                     <>
                         <strong className="font-semibold">
@@ -306,7 +306,7 @@ function describe(n: NotificationItem): NotificacaoView {
         case "BUSCA_NOVA_CORRESPONDENCIA":
             return {
                 icon: <SearchIcon size={15} />,
-                iconClasses: "bg-[#ec7b5b]/12 text-[color:var(--accent-deep)]",
+                iconClasses: "bg-accent/12 text-accent-deep",
                 texto: (
                     <>
                         <strong className="font-semibold">
@@ -324,7 +324,7 @@ function describe(n: NotificationItem): NotificacaoView {
         case "RESUMO_SEMANAL":
             return {
                 icon: <TrendingUpIcon size={15} />,
-                iconClasses: "bg-[#ec7b5b]/12 text-[color:var(--accent-deep)]",
+                iconClasses: "bg-accent/12 text-accent-deep",
                 texto: (
                     <>
                         Sua semana:{" "}

@@ -80,7 +80,7 @@ export function EmptyState({
                 <span
                     aria-hidden="true"
                     className={[
-                        "inline-flex flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[#ec7b5b]/15",
+                        "inline-flex flex-none items-center justify-center rounded-full bg-accent-soft text-accent-deep ring-4 ring-accent/15",
                         ICON_SIZE_CLASSES[size],
                     ].join(" ")}
                 >

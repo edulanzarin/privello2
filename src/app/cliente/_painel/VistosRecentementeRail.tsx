@@ -43,7 +43,7 @@ export function VistosRecentementeRail(): React.ReactElement | null {
                     <Link
                         key={p.identificador}
                         href={`/acompanhantes/${p.identificador}`}
-                        className="flex w-20 flex-none flex-col items-center gap-1.5 rounded-2xl p-1 text-center transition-colors hover:bg-[#fff0eb]/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                        className="flex w-20 flex-none flex-col items-center gap-1.5 rounded-2xl p-1 text-center transition-colors hover:bg-accent-soft/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                     >
                         <span className="relative">
                             <Avatar
@@ -54,7 +54,7 @@ export function VistosRecentementeRail(): React.ReactElement | null {
                             {p.verificada ? (
                                 <span
                                     aria-hidden="true"
-                                    className="absolute -bottom-0.5 -right-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-[color:var(--accent-deep)] ring-2 ring-white"
+                                    className="absolute -bottom-0.5 -right-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-accent-deep ring-2 ring-white"
                                 >
                                     <VerifiedBadgeIcon size={14} />
                                 </span>

@@ -171,9 +171,9 @@ export function TabTrigger({
     const panelId = `${ctx.id}-panel-${value}`;
 
     const composed = [
-        "relative inline-flex items-center gap-1.5 whitespace-nowrap px-4 py-3 text-sm font-medium tracking-tight transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+        "relative inline-flex items-center gap-1.5 whitespace-nowrap px-4 py-3 text-sm font-medium tracking-tight transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
         isActive
-            ? "text-[color:var(--accent-deep)]"
+            ? "text-accent-deep"
             : "text-text-secondary hover:text-text-primary",
         className ?? "",
     ]
@@ -195,7 +195,7 @@ export function TabTrigger({
             {isActive ? (
                 <span
                     aria-hidden="true"
-                    className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-[color:var(--accent)]"
+                    className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-accent"
                 />
             ) : null}
         </button>

@@ -42,7 +42,7 @@ export function UpgradeBanner({
     className,
 }: UpgradeBannerProps): React.ReactElement {
     const composed = [
-        "flex flex-col items-stretch gap-3 rounded-3xl border border-[#ec7b5b]/25 bg-gradient-to-br from-[#fff0eb]/70 to-surface p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-4",
+        "flex flex-col items-stretch gap-3 rounded-3xl border border-accent/25 bg-gradient-to-br from-accent-soft/70 to-surface p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-4",
         className ?? "",
     ]
         .filter(Boolean)
@@ -54,7 +54,7 @@ export function UpgradeBanner({
                 {icon != null ? (
                     <span
                         aria-hidden="true"
-                        className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[#ec7b5b]/15"
+                        className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-accent-soft text-accent-deep ring-4 ring-accent/15"
                     >
                         {icon}
                     </span>
@@ -72,7 +72,7 @@ export function UpgradeBanner({
             </div>
             <a
                 href={ctaHref}
-                className="glass-cta inline-flex flex-none items-center justify-center px-4 py-2 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                className="glass-cta inline-flex flex-none items-center justify-center px-4 py-2 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
                 {ctaLabel}
             </a>

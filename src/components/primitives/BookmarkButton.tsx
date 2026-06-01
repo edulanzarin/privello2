@@ -91,15 +91,15 @@ export function BookmarkButton({
         ariaLabel ?? (marked ? "Remover dos salvos" : "Salvar perfil");
 
     const composed = [
-        "inline-flex flex-none items-center justify-center rounded-full transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:opacity-60 disabled:cursor-not-allowed",
+        "inline-flex flex-none items-center justify-center rounded-full transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60 disabled:cursor-not-allowed",
         dims.box,
         tone === "onDark"
             ? marked
-                ? "bg-white/15 text-[color:var(--accent)] ring-1 ring-white/20 backdrop-blur-md"
+                ? "bg-white/15 text-accent ring-1 ring-white/20 backdrop-blur-md"
                 : "bg-white/10 text-white ring-1 ring-white/15 backdrop-blur-md hover:bg-white/20"
             : marked
-                ? "border border-[#ec7b5b]/40 bg-[#fff0eb] text-[color:var(--accent-deep)]"
-                : "border border-border bg-surface text-text-secondary hover:border-[#ec7b5b]/35 hover:text-[color:var(--accent-deep)]",
+                ? "border border-accent/40 bg-accent-soft text-accent-deep"
+                : "border border-border bg-surface text-text-secondary hover:border-accent/35 hover:text-accent-deep",
         className ?? "",
     ]
         .filter(Boolean)

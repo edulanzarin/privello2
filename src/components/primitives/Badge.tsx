@@ -36,10 +36,10 @@ export interface BadgeProps
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
     primary:
-        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-1 ring-[#ec7b5b]/20",
+        "bg-accent-soft text-accent-deep ring-1 ring-accent/20",
     neutral: "bg-surface-muted text-text-secondary border border-border",
     primaryGradient:
-        "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.55)]",
+        "bg-gradient-to-br from-accent to-accent-deep text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.55)]",
 };
 
 /**

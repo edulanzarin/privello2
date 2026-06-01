@@ -61,7 +61,7 @@ export default function EscolhaTipoContaPage(): React.ReactElement {
                     Já tem conta?{" "}
                     <a
                         href="/login"
-                        className="font-medium text-[color:var(--accent-deep)] hover:text-primary-800"
+                        className="font-medium text-accent-deep hover:text-primary-800"
                     >
                         Entrar
                     </a>

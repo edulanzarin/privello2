@@ -96,7 +96,7 @@ function MetricCard({
         <div
             className={[
                 "flex items-center gap-3 rounded-2xl border bg-surface px-4 py-3",
-                alert ? "border-[#ec7b5b]/40 bg-[#fff0eb]/50" : "border-border",
+                alert ? "border-accent/40 bg-accent-soft/50" : "border-border",
             ].join(" ")}
         >
             <span
@@ -104,8 +104,8 @@ function MetricCard({
                 className={[
                     "inline-flex h-10 w-10 flex-none items-center justify-center rounded-full",
                     alert
-                        ? "bg-[color:var(--accent)] text-white"
-                        : "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]",
+                        ? "bg-accent text-white"
+                        : "bg-accent-soft text-accent-deep",
                 ].join(" ")}
             >
                 {icon}

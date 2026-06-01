@@ -124,7 +124,7 @@ export function HomeView({
                     <div className="flex flex-col gap-6">
                         <h1 className="text-4xl font-bold tracking-tight text-text-primary [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl lg:leading-[1.05]">
                             Encontros com{" "}
-                            <span className="text-[color:var(--accent-deep)]">respeito,</span>{" "}
+                            <span className="text-accent-deep">respeito,</span>{" "}
                             <br className="hidden sm:inline" />
                             privacidade e atitude.
                         </h1>
@@ -282,7 +282,7 @@ export function HomeView({
                     <span className="eyebrow">Plataforma confiável</span>
                     <h2 className="max-w-2xl text-3xl font-bold leading-tight tracking-tight text-text-primary sm:text-4xl">
                         Contrate com mais{" "}
-                        <span className="text-[color:var(--accent-deep)]">
+                        <span className="text-accent-deep">
                             segurança e praticidade
                         </span>
                     </h2>
@@ -320,7 +320,7 @@ export function HomeView({
                 <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
                     <div className="flex flex-col gap-5">
                         <h2 className="text-3xl font-bold leading-tight tracking-tight text-text-primary sm:text-4xl">
-                            Privacidade <span className="text-[color:var(--accent-deep)]">de verdade.</span>
+                            Privacidade <span className="text-accent-deep">de verdade.</span>
                             <br />
                             Sem rodeios.
                         </h2>
@@ -332,15 +332,15 @@ export function HomeView({
                         </p>
                         <ul className="flex flex-col gap-2 text-sm text-text-secondary">
                             <li className="inline-flex items-center gap-2">
-                                <CheckIcon size={14} className="text-[color:var(--accent-deep)]" />
+                                <CheckIcon size={14} className="text-accent-deep" />
                                 Marca d&apos;água nas suas mídias.
                             </li>
                             <li className="inline-flex items-center gap-2">
-                                <CheckIcon size={14} className="text-[color:var(--accent-deep)]" />
+                                <CheckIcon size={14} className="text-accent-deep" />
                                 Só clientes pagantes podem avaliar e comentar.
                             </li>
                             <li className="inline-flex items-center gap-2">
-                                <CheckIcon size={14} className="text-[color:var(--accent-deep)]" />
+                                <CheckIcon size={14} className="text-accent-deep" />
                                 Toggle de visibilidade pública a qualquer
                                 momento.
                             </li>
@@ -372,7 +372,7 @@ export function HomeView({
 
             {/* ── CTA final ──────────────────────────────────────── */}
             {isAnonimo ? (
-                <section className="overflow-hidden rounded-3xl border border-[#ec7b5b]/15 bg-gradient-to-br from-primary-50 via-surface to-secondary-50 p-8 sm:p-12">
+                <section className="overflow-hidden rounded-3xl border border-accent/15 bg-gradient-to-br from-primary-50 via-surface to-secondary-50 p-8 sm:p-12">
                     <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex flex-col gap-2">
                             <h2 className="text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">
@@ -530,12 +530,12 @@ function Step({
     return (
         <li className="flex gap-4">
             <div className="flex shrink-0 flex-col items-center gap-2">
-                <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[color:var(--accent-deep)]">
+                <span className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-accent-deep">
                     {n}
                 </span>
                 <span
                     aria-hidden="true"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-[color:var(--accent-deep)]"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-accent-deep"
                 >
                     {icon}
                 </span>
@@ -617,7 +617,7 @@ function CollageTile({
     className?: string;
 }): React.ReactElement {
     const composed = [
-        "relative overflow-hidden bg-gradient-to-br from-[color:var(--accent-soft)] via-[#ffd1bf] to-[color:var(--accent)]",
+        "relative overflow-hidden bg-gradient-to-br from-accent-soft via-[#ffd1bf] to-accent",
         className ?? "",
     ]
         .filter(Boolean)
@@ -653,7 +653,7 @@ function CollageTile({
             {/* Overlay warm sutil pra unificar com o resto do hero */}
             <span
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-[color:var(--accent)]/15 via-transparent to-transparent"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-accent/15 via-transparent to-transparent"
             />
         </div>
     );

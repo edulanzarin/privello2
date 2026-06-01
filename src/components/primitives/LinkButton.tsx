@@ -62,7 +62,7 @@ export interface LinkButtonProps {
 
 const TONE_CLASSES: Record<LinkButtonTone, string> = {
     neutral:
-        "border-border bg-surface text-text-secondary hover:border-[#ec7b5b]/35 hover:text-[color:var(--accent-deep)] focus-visible:ring-[#ec7b5b]/40",
+        "border-border bg-surface text-text-secondary hover:border-accent/35 hover:text-accent-deep focus-visible:ring-accent/40",
     danger:
         "border-border bg-surface text-text-secondary hover:border-danger-300 hover:bg-danger-50 hover:text-danger-700 focus-visible:ring-danger-500/40",
 };

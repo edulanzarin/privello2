@@ -579,9 +579,9 @@ export function MediaCarousel({
                                             : "Ver comentários"
                                     }
                                     className={[
-                                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
                                         comentariosAbertos
-                                            ? "border-[#ec7b5b]/40 bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                            ? "border-accent/40 bg-accent-soft text-accent-deep"
                                             : "border-border bg-surface text-text-secondary hover:text-text-primary",
                                     ].join(" ")}
                                 >

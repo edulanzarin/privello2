@@ -97,7 +97,7 @@ function BuscaSalvaCard({
             <div className="flex items-center gap-3">
                 <span
                     aria-hidden="true"
-                    className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[#ec7b5b]/12 text-[color:var(--accent-deep)]"
+                    className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent/12 text-accent-deep"
                 >
                     <SearchIcon size={16} />
                 </span>

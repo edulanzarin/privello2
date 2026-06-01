@@ -99,7 +99,7 @@ export function OnboardingTour({
     if (visivel !== true) return null;
 
     const composed = [
-        "relative overflow-hidden rounded-3xl border border-[#ec7b5b]/25 bg-gradient-to-br from-[#fff0eb]/80 to-surface p-5",
+        "relative overflow-hidden rounded-3xl border border-accent/25 bg-gradient-to-br from-accent-soft/80 to-surface p-5",
         className ?? "",
     ]
         .filter(Boolean)
@@ -111,7 +111,7 @@ export function OnboardingTour({
                 type="button"
                 onClick={marcarVisto}
                 aria-label="Fechar"
-                className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-white/60 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-white/60 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
                 <XIcon size={15} />
             </button>
@@ -121,7 +121,7 @@ export function OnboardingTour({
                     {icon != null ? (
                         <span
                             aria-hidden="true"
-                            className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_8px_20px_-6px_rgba(197,82,58,0.5)]"
+                            className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-white shadow-[0_8px_20px_-6px_rgba(197,82,58,0.5)]"
                         >
                             {icon}
                         </span>
@@ -148,7 +148,7 @@ export function OnboardingTour({
                                 {item.icon != null ? (
                                     <span
                                         aria-hidden="true"
-                                        className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-full bg-white/70 text-[color:var(--accent-deep)]"
+                                        className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-full bg-white/70 text-accent-deep"
                                     >
                                         {item.icon}
                                     </span>
@@ -163,14 +163,14 @@ export function OnboardingTour({
                     <a
                         href={ctaHref}
                         onClick={marcarVisto}
-                        className="glass-cta inline-flex flex-none items-center justify-center px-4 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                        className="glass-cta inline-flex flex-none items-center justify-center px-4 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                     >
                         {ctaLabel}
                     </a>
                     <button
                         type="button"
                         onClick={marcarVisto}
-                        className="inline-flex flex-none items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                        className="inline-flex flex-none items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                     >
                         {dismissLabel}
                     </button>

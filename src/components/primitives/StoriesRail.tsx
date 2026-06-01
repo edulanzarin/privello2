@@ -128,7 +128,7 @@ function RailButton({
                 {item.unseen > 0 ? (
                     <span
                         aria-hidden="true"
-                        className="absolute -top-0.5 -right-0.5 inline-block h-3 w-3 rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] shadow-[0_2px_8px_-2px_rgba(197,82,58,0.55)] ring-2 ring-surface"
+                        className="absolute -top-0.5 -right-0.5 inline-block h-3 w-3 rounded-full bg-gradient-to-br from-accent to-accent-deep shadow-[0_2px_8px_-2px_rgba(197,82,58,0.55)] ring-2 ring-surface"
                     />
                 ) : null}
             </span>
@@ -139,7 +139,7 @@ function RailButton({
     );
 
     const composed =
-        "group flex w-[6rem] flex-col items-center gap-2 rounded-2xl px-1 py-1 transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40";
+        "group flex w-[6rem] flex-col items-center gap-2 rounded-2xl px-1 py-1 transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40";
 
     if (onItemClick !== undefined) {
         return (

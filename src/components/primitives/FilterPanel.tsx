@@ -140,7 +140,7 @@ export function FilterPanel({
                             {title}
                         </h2>
                         {activeCount > 0 ? (
-                            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] px-1.5 text-[0.65rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(197,82,58,0.45)]">
+                            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-deep px-1.5 text-[0.65rem] font-semibold text-white shadow-[0_2px_8px_-2px_rgba(197,82,58,0.45)]">
                                 {activeCount}
                             </span>
                         ) : null}

@@ -377,8 +377,8 @@ function PerguntaCard({
 
                 {/* Resposta */}
                 {pergunta.answer !== null && pergunta.answeredAt !== null ? (
-                    <div className="ml-11 rounded-2xl border border-[#ec7b5b]/15 bg-[#fff0eb]/50 px-3 py-2">
-                        <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-[color:var(--accent-deep)]">
+                    <div className="ml-11 rounded-2xl border border-accent/15 bg-accent-soft/50 px-3 py-2">
+                        <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-accent-deep">
                             Resposta ·{" "}
                             {formatRelative(pergunta.answeredAt)}
                         </span>
@@ -428,8 +428,8 @@ function FakePerguntasPreview(): React.ReactElement {
                                 </p>
                             </div>
                         </div>
-                        <div className="ml-11 rounded-2xl border border-[#ec7b5b]/15 bg-[#fff0eb]/50 px-3 py-2">
-                            <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-[color:var(--accent-deep)]">
+                        <div className="ml-11 rounded-2xl border border-accent/15 bg-accent-soft/50 px-3 py-2">
+                            <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-accent-deep">
                                 Resposta
                             </span>
                             <p className="mt-1 text-sm text-text-primary">

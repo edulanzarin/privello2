@@ -192,7 +192,7 @@ export function MediaUploadModal({
                                 "block w-full resize-none rounded-md border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-text-disabled",
                                 description.length > maxDescription
                                     ? "border-danger-400 focus-visible:ring-danger-500/30 focus-visible:border-danger-500"
-                                    : "border-border focus-visible:ring-[#ec7b5b]/30 focus-visible:border-[#ec7b5b]/50",
+                                    : "border-border focus-visible:ring-accent/30 focus-visible:border-accent/50",
                             ].join(" ")}
                         />
                     </div>

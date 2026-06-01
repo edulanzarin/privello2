@@ -91,7 +91,7 @@ export default async function BoostPage() {
                     <div className="flex items-center gap-3">
                         <span
                             aria-hidden="true"
-                            className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
+                            className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-accent-soft text-accent-deep"
                         >
                             <FlameIcon size={20} />
                         </span>
@@ -122,7 +122,7 @@ export default async function BoostPage() {
                     <div className="flex items-center gap-3">
                         <span
                             aria-hidden="true"
-                            className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
+                            className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-accent-soft text-accent-deep"
                         >
                             <FlameIcon size={24} />
                         </span>
@@ -144,7 +144,7 @@ export default async function BoostPage() {
                             >
                                 <span
                                     aria-hidden="true"
-                                    className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
+                                    className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-accent-soft text-accent-deep"
                                 >
                                     {benefit.icon}
                                 </span>

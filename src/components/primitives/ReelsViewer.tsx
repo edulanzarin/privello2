@@ -311,7 +311,7 @@ export function ReelsViewer({
             {/* Paywall overlay — cobre tudo quando ativo. */}
             {paywall ? (
                 <div className="pointer-events-auto absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/55 px-6 text-center backdrop-blur-2xl">
-                    <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_12px_28px_-8px_rgba(197,82,58,0.7)] ring-4 ring-white/20">
+                    <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-deep text-white shadow-[0_12px_28px_-8px_rgba(197,82,58,0.7)] ring-4 ring-white/20">
                         <LockIcon size={28} />
                     </span>
                     <h2 className="max-w-xs text-2xl font-bold tracking-tight text-white">

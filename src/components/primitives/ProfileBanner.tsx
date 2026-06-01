@@ -54,7 +54,7 @@ export function ProfileBanner({
     className,
 }: ProfileBannerProps): React.ReactElement {
     const composed = [
-        "relative w-full overflow-hidden bg-gradient-to-br from-[color:var(--accent-soft)] via-[#ffd1bf] to-[color:var(--accent)]",
+        "relative w-full overflow-hidden bg-gradient-to-br from-accent-soft via-[#ffd1bf] to-accent",
         // Aspect ratio: 4:1 em mobile e 5:1 em desktop.
         "aspect-[4/1] sm:aspect-[5/1]",
         className ?? "",

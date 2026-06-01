@@ -116,7 +116,7 @@ export function Paginator<T>({
                         <button
                             type="button"
                             onClick={handleClick}
-                            className="glass-cta inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                            className="glass-cta inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                         >
                             <PlayCircleIcon size={16} />
                             {loadMoreLabel}
@@ -125,7 +125,7 @@ export function Paginator<T>({
                         <button
                             type="button"
                             onClick={handleClick}
-                            className="inline-flex items-center gap-1 text-sm font-semibold text-[color:var(--accent-deep)] transition-colors hover:text-[color:var(--accent)] focus:outline-none focus-visible:underline"
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-accent-deep transition-colors hover:text-accent focus:outline-none focus-visible:underline"
                         >
                             {loadMoreLabel}
                             <ChevronRightIcon size={14} />

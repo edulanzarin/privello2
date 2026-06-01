@@ -136,7 +136,7 @@ export function ShareCityButton({
                 onClick={() => void handleShare()}
                 disabled={sharing}
                 aria-label="Compartilhar cidade"
-                className="inline-flex flex-none items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:opacity-60"
+                className="inline-flex flex-none items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
             >
                 <ShareIcon size={14} />
                 Compartilhar

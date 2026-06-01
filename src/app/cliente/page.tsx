@@ -158,7 +158,7 @@ export default async function ClientePainelPage() {
                         {favoritos.length > 0 ? (
                             <span
                                 aria-label={`${favoritos.length} favoritos`}
-                                className="ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white"
+                                className="ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-accent px-1 text-[0.6rem] font-semibold text-white"
                             >
                                 {favoritos.length}
                             </span>
@@ -171,7 +171,7 @@ export default async function ClientePainelPage() {
                         {buscasSalvas.length > 0 ? (
                             <span
                                 aria-label={`${buscasSalvas.length} buscas salvas`}
-                                className="ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white"
+                                className="ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-accent px-1 text-[0.6rem] font-semibold text-white"
                             >
                                 {buscasSalvas.length}
                             </span>

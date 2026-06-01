@@ -129,10 +129,10 @@ export function BoostCheckoutButton({
                     onClick={() => setModo("agora")}
                     aria-pressed={modo === "agora"}
                     className={[
-                        "rounded-xl border px-3 py-2 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                        "rounded-xl border px-3 py-2 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
                         modo === "agora"
-                            ? "border-[#ec7b5b]/50 bg-[#fff0eb] text-[color:var(--accent-deep)]"
-                            : "border-border bg-surface text-text-secondary hover:border-[#ec7b5b]/30",
+                            ? "border-accent/50 bg-accent-soft text-accent-deep"
+                            : "border-border bg-surface text-text-secondary hover:border-accent/30",
                     ].join(" ")}
                 >
                     Começar agora
@@ -142,10 +142,10 @@ export function BoostCheckoutButton({
                     onClick={() => setModo("programar")}
                     aria-pressed={modo === "programar"}
                     className={[
-                        "rounded-xl border px-3 py-2 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                        "rounded-xl border px-3 py-2 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
                         modo === "programar"
-                            ? "border-[#ec7b5b]/50 bg-[#fff0eb] text-[color:var(--accent-deep)]"
-                            : "border-border bg-surface text-text-secondary hover:border-[#ec7b5b]/30",
+                            ? "border-accent/50 bg-accent-soft text-accent-deep"
+                            : "border-border bg-surface text-text-secondary hover:border-accent/30",
                     ].join(" ")}
                 >
                     Programar
@@ -162,7 +162,7 @@ export function BoostCheckoutButton({
                         value={startAtLocal}
                         min={minDateTime}
                         onChange={(e) => setStartAtLocal(e.target.value)}
-                        className="rounded-xl border border-border bg-surface px-3 py-2 text-sm focus:border-[color:var(--accent)] focus:outline-none"
+                        className="rounded-xl border border-border bg-surface px-3 py-2 text-sm focus:border-accent focus:outline-none"
                     />
                     <span className="text-[0.65rem] text-text-disabled">
                         O boost ativa automaticamente na hora escolhida e

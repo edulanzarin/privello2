@@ -48,7 +48,7 @@ export interface StatCardProps {
 
 const TONE_CLASSES: Record<StatCardTone, string> = {
     primary:
-        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-2 ring-[#ec7b5b]/15",
+        "bg-accent-soft text-accent-deep ring-2 ring-accent/15",
     neutral: "bg-neutral-100 text-text-secondary",
 };
 

@@ -41,7 +41,7 @@ export interface MetricPillProps {
 const TONE_CLASSES: Record<NonNullable<MetricPillProps["tone"]>, string> = {
     neutral: "border-border bg-surface",
     primary:
-        "border-[#ec7b5b]/30 bg-[color:var(--accent-soft)]",
+        "border-accent/30 bg-accent-soft",
 };
 
 const ICON_TONE_CLASSES: Record<
@@ -49,8 +49,8 @@ const ICON_TONE_CLASSES: Record<
     string
 > = {
     neutral:
-        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]",
-    primary: "bg-surface text-[color:var(--accent-deep)]",
+        "bg-accent-soft text-accent-deep",
+    primary: "bg-surface text-accent-deep",
 };
 
 /**

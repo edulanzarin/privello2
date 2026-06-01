@@ -179,7 +179,7 @@ export function ProfileFeedCard({
                 aria-label={`Ver perfil de ${name}`}
                 className={[
                     "group relative block overflow-hidden rounded-3xl border border-border bg-surface",
-                    "transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/30",
+                    "transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
                     className ?? "",
                 ]
                     .filter(Boolean)
@@ -248,7 +248,7 @@ export function ProfileFeedCard({
             aria-label={`Ver perfil de ${name}`}
             className={[
                 "group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-surface lift",
-                "transition-all duration-300 hover:border-[#ec7b5b]/30 hover:shadow-[0_18px_36px_-22px_rgba(26,20,16,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                "transition-all duration-300 hover:border-accent/30 hover:shadow-[0_18px_36px_-22px_rgba(26,20,16,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
                 className ?? "",
             ]
                 .filter(Boolean)
@@ -354,7 +354,7 @@ export function ProfileFeedCard({
                                     {priceCaption}
                                 </span>
                             ) : null}
-                            <span className="text-lg font-semibold tabular-nums text-[color:var(--accent-deep)]">
+                            <span className="text-lg font-semibold tabular-nums text-accent-deep">
                                 {priceLabel}
                             </span>
                         </div>
@@ -373,7 +373,7 @@ function PhotoPlaceholder({ name }: { name: string }): React.ReactElement {
     return (
         <div
             aria-hidden="true"
-            className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[color:var(--accent-soft)] to-[#ffd1bf] text-[color:var(--accent-deep)]"
+            className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent-soft to-[#ffd1bf] text-accent-deep"
         >
             <span className="text-3xl font-semibold tracking-tight">
                 {name.charAt(0).toUpperCase()}

@@ -129,7 +129,7 @@ export function BarChart({
                             ) : null}
                             <span
                                 aria-hidden="true"
-                                className="block w-full rounded-t-lg bg-[#ec7b5b]/30 transition-colors group-hover:bg-[color:var(--accent)]"
+                                className="block w-full rounded-t-lg bg-accent/30 transition-colors group-hover:bg-accent"
                                 style={{
                                     height: `${pct}%`,
                                     minHeight: v > 0 ? "2px" : "0",

@@ -86,7 +86,7 @@ export function InfoRow({
     const composed = [
         "group flex items-center gap-3 px-4 py-3 transition-colors duration-150",
         isInteractive
-            ? "cursor-pointer hover:bg-[#fff0eb]/60 focus-visible:bg-[#fff0eb]/70 focus-visible:outline-none"
+            ? "cursor-pointer hover:bg-accent-soft/60 focus-visible:bg-accent-soft/70 focus-visible:outline-none"
             : "",
         className ?? "",
     ]
@@ -98,7 +98,7 @@ export function InfoRow({
             {icon != null ? (
                 <span
                     aria-hidden="true"
-                    className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
+                    className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-accent-soft text-accent-deep"
                 >
                     {icon}
                 </span>
@@ -135,7 +135,7 @@ export function InfoRow({
             ) : isInteractive ? (
                 <span
                     aria-hidden="true"
-                    className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-full text-text-disabled transition-colors group-hover:bg-[color:var(--accent-soft)] group-hover:text-[color:var(--accent-deep)] group-focus-visible:bg-[color:var(--accent-soft)] group-focus-visible:text-[color:var(--accent-deep)]"
+                    className="inline-flex h-6 w-6 flex-none items-center justify-center rounded-full text-text-disabled transition-colors group-hover:bg-accent-soft group-hover:text-accent-deep group-focus-visible:bg-accent-soft group-focus-visible:text-accent-deep"
                 >
                     <PencilIcon size={12} />
                 </span>

@@ -50,7 +50,7 @@ export function LoadingSpinner({
     label = "Carregando",
     className,
 }: LoadingSpinnerProps): React.ReactElement {
-    const dot = `${SIZE_CLASSES[size]} rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)]`;
+    const dot = `${SIZE_CLASSES[size]} rounded-full bg-gradient-to-br from-accent to-accent-deep`;
     return (
         <span
             role="status"

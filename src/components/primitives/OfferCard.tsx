@@ -123,9 +123,9 @@ export function OfferCard({
                     {benefits.map((b) => {
                         const Icon = b.icon ?? CheckIcon;
                         const tone = b.highlight
-                            ? "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)]"
+                            ? "bg-gradient-to-br from-accent to-accent-deep text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)]"
                             : recommended
-                                ? "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
+                                ? "bg-accent-soft text-accent-deep"
                                 : "bg-neutral-100 text-neutral-700";
                         return (
                             <li

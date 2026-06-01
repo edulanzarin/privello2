@@ -91,7 +91,7 @@ export function InfiniteScrollSentinel({
                 <span className="inline-flex items-center gap-2 text-xs text-text-secondary">
                     <span
                         aria-hidden="true"
-                        className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#ec7b5b]/30 border-t-[color:var(--accent)]"
+                        className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-accent/30 border-t-accent"
                     />
                     {loadingLabel}
                 </span>

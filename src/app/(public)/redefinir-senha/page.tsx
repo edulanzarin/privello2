@@ -33,7 +33,7 @@ function RedefinirFallback(): React.ReactElement {
             <div aria-hidden="true" className="flex flex-col gap-4 opacity-50">
                 <div className="h-10 rounded-2xl bg-neutral-100" />
                 <div className="h-10 rounded-2xl bg-neutral-100" />
-                <div className="h-10 rounded-2xl bg-[color:var(--accent-soft)]" />
+                <div className="h-10 rounded-2xl bg-accent-soft" />
             </div>
         </AuthCard>
     );
@@ -57,7 +57,7 @@ function RedefinirForm(): React.ReactElement {
                 footer={
                     <a
                         href="/recuperar-senha"
-                        className="font-medium text-[color:var(--accent-deep)] hover:text-primary-800"
+                        className="font-medium text-accent-deep hover:text-primary-800"
                     >
                         Solicitar novo link
                     </a>
@@ -138,7 +138,7 @@ function RedefinirForm(): React.ReactElement {
             footer={
                 <a
                     href="/login"
-                    className="font-medium text-[color:var(--accent-deep)] hover:text-primary-800"
+                    className="font-medium text-accent-deep hover:text-primary-800"
                 >
                     Voltar para o login
                 </a>

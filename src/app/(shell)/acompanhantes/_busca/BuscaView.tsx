@@ -699,13 +699,13 @@ export function BuscaView({
                     <button
                         type="button"
                         onClick={limparCidade}
-                        className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#ec7b5b]/25 bg-[color:var(--accent-soft)] px-3 py-1.5 text-sm font-semibold text-[color:var(--accent-deep)] transition-colors hover:bg-[color:var(--accent-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
+                        className="inline-flex max-w-full items-center gap-2 rounded-full border border-accent/25 bg-accent-soft px-3 py-1.5 text-sm font-semibold text-accent-deep transition-colors hover:bg-accent-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
                     >
                         <MapPinIcon size={14} />
                         <span className="truncate">
                             {filtros.cidadeNome}, {filtros.estadoSigla}
                         </span>
-                        <span className="text-xs text-[color:var(--accent-deep)]">
+                        <span className="text-xs text-accent-deep">
                             trocar
                         </span>
                     </button>
@@ -734,7 +734,7 @@ export function BuscaView({
                 >
                     Filtros{" "}
                     {ativosUrl > 0 ? (
-                        <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--accent)] px-1 text-[0.6rem] font-semibold text-white">
+                        <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-accent px-1 text-[0.6rem] font-semibold text-white">
                             {ativosUrl}
                         </span>
                     ) : null}
@@ -756,7 +756,7 @@ export function BuscaView({
                             type="button"
                             onClick={() => void salvarBuscaAtual()}
                             disabled={salvandoBusca}
-                            className="inline-flex flex-none items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:opacity-60"
+                            className="inline-flex flex-none items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
                         >
                             <BookmarkIcon size={14} />
                             Salvar busca
@@ -768,9 +768,9 @@ export function BuscaView({
                             onClick={() => setMapaAberto((v) => !v)}
                             aria-pressed={mapaAberto}
                             className={[
-                                "inline-flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40",
+                                "inline-flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
                                 mapaAberto
-                                    ? "border-[#ec7b5b]/40 bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                    ? "border-accent/40 bg-accent-soft text-accent-deep"
                                     : "border-border bg-surface text-text-secondary hover:text-text-primary",
                             ].join(" ")}
                         >
@@ -785,9 +785,9 @@ export function BuscaView({
                             disabled={localizando}
                             aria-pressed={ordenar === "proximidade"}
                             className={[
-                                "inline-flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:opacity-60",
+                                "inline-flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60",
                                 ordenar === "proximidade"
-                                    ? "border-[#ec7b5b]/40 bg-[#fff0eb] text-[color:var(--accent-deep)]"
+                                    ? "border-accent/40 bg-accent-soft text-accent-deep"
                                     : "border-border bg-surface text-text-secondary hover:text-text-primary",
                             ].join(" ")}
                         >
@@ -1136,7 +1136,7 @@ export function BuscaView({
                             <button
                                 type="button"
                                 onClick={limparBairro}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-[#ec7b5b]/30 bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-deep)] transition-colors hover:bg-[color:var(--accent-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                                className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-deep transition-colors hover:bg-accent-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                             >
                                 <MapPinIcon size={12} />
                                 {filtros.bairroNome}
@@ -1390,8 +1390,8 @@ function ChipsFilter({
                             className={[
                                 "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                                 active
-                                    ? "border-primary-600 bg-[color:var(--accent)] text-white"
-                                    : "border-neutral-200 bg-surface text-text-secondary hover:border-[#ec7b5b]/40 hover:text-text-primary",
+                                    ? "border-primary-600 bg-accent text-white"
+                                    : "border-neutral-200 bg-surface text-text-secondary hover:border-accent/40 hover:text-text-primary",
                             ].join(" ")}
                         >
                             {opt.label}

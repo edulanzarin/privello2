@@ -71,9 +71,9 @@ export function ComboboxOption({
         // ArrowDown), o realce já está aplicado; o `hover:` cobre o
         // caso do mouse sem que o pai precise sincronizar.
         active
-            ? "bg-[color:var(--accent-soft)] text-text-primary"
-            : "text-text-primary hover:bg-[#fff0eb]/60",
-        selected ? "font-medium text-[color:var(--accent-deep)]" : "",
+            ? "bg-accent-soft text-text-primary"
+            : "text-text-primary hover:bg-accent-soft/60",
+        selected ? "font-medium text-accent-deep" : "",
     ]
         .filter(Boolean)
         .join(" ");
@@ -102,7 +102,7 @@ export function ComboboxOption({
                 {selected ? (
                     <span
                         aria-hidden="true"
-                        className="flex h-4 w-4 flex-none items-center justify-center text-[color:var(--accent-deep)]"
+                        className="flex h-4 w-4 flex-none items-center justify-center text-accent-deep"
                     >
                         <CheckIcon size={14} />
                     </span>

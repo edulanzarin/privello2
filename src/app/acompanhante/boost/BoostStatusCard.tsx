@@ -44,7 +44,7 @@ export function BoostStatusCard({
             <div className="flex items-center gap-4">
                 <span
                     aria-hidden="true"
-                    className="inline-flex h-14 w-14 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]"
+                    className="inline-flex h-14 w-14 flex-none items-center justify-center rounded-full bg-accent-soft text-accent-deep"
                 >
                     <FlameIcon size={28} />
                 </span>
@@ -60,7 +60,7 @@ export function BoostStatusCard({
                     {!expired ? (
                         <span
                             aria-live="polite"
-                            className="mt-1 font-mono text-sm font-semibold tabular-nums tracking-tight text-[color:var(--accent-deep)]"
+                            className="mt-1 font-mono text-sm font-semibold tabular-nums tracking-tight text-accent-deep"
                         >
                             {pad(hours)}:{pad(minutes)}:{pad(seconds)}
                         </span>

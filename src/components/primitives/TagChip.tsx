@@ -49,11 +49,11 @@ export interface TagChipProps {
 
 const TONE_CLASSES: Record<TagChipTone, string> = {
     soft:
-        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-1 ring-[#ec7b5b]/15",
+        "bg-accent-soft text-accent-deep ring-1 ring-accent/15",
     neutral: "bg-surface-muted text-text-secondary border border-border",
     outline: "border border-border bg-transparent text-text-primary",
     primary:
-        "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.4)]",
+        "bg-gradient-to-br from-accent to-accent-deep text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.4)]",
 };
 
 const SIZE_CLASSES: Record<TagChipSize, string> = {

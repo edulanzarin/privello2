@@ -45,7 +45,7 @@ export function SectionLink({
     className,
 }: SectionLinkProps): React.ReactElement {
     const composed = [
-        "inline-flex items-center gap-1.5 text-sm font-semibold tracking-tight text-[color:var(--accent-deep)] transition-colors hover:text-[color:var(--accent)] focus:outline-none focus-visible:underline",
+        "inline-flex items-center gap-1.5 text-sm font-semibold tracking-tight text-accent-deep transition-colors hover:text-accent focus:outline-none focus-visible:underline",
         className ?? "",
     ]
         .filter(Boolean)

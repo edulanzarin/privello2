@@ -42,7 +42,7 @@ const TONE_CLASSES: Record<InlineAlertTone, string> = {
     warning:
         "border-warning-200 bg-warning-50/40 text-warning-800",
     info:
-        "border-[#ec7b5b]/25 bg-[#fff0eb]/40 text-[color:var(--accent-deep)]",
+        "border-accent/25 bg-accent-soft/40 text-accent-deep",
     success:
         "border-success-200 bg-success-50/40 text-success-800",
 };

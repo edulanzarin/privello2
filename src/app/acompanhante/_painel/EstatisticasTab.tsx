@@ -404,7 +404,7 @@ function OrigensView({
                                 </div>
                                 <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100">
                                     <div
-                                        className="h-full rounded-full bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-deep)]"
+                                        className="h-full rounded-full bg-gradient-to-r from-accent to-accent-deep"
                                         style={{ width: `${pct}%` }}
                                     />
                                 </div>

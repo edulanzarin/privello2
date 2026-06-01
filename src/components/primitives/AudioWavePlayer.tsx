@@ -201,8 +201,8 @@ export function AudioWavePlayer({
         ? "flex items-center gap-2 rounded-full border border-border bg-surface px-2 py-1.5"
         : "flex items-center gap-3 rounded-full border border-border bg-surface px-3 py-2 shadow-sm";
     const buttonCls = isMini
-        ? "inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
-        : "inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white shadow-[0_8px_20px_-6px_rgba(197,82,58,0.55)] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40";
+        ? "inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-deep text-white shadow-[0_4px_12px_-4px_rgba(197,82,58,0.45)] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        : "inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-deep text-white shadow-[0_8px_20px_-6px_rgba(197,82,58,0.55)] transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40";
     const trackCls = isMini
         ? "flex h-7 min-w-0 flex-1 cursor-pointer items-center gap-[2px] focus:outline-none"
         : "flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-[2px] focus:outline-none";
@@ -280,7 +280,7 @@ export function AudioWavePlayer({
                             className={[
                                 "w-[2px] flex-1 rounded-full transition-colors",
                                 filled
-                                    ? "bg-[color:var(--accent)]"
+                                    ? "bg-accent"
                                     : "bg-neutral-300",
                             ].join(" ")}
                         />

@@ -52,22 +52,22 @@ export function OfferLayout({
         <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16">
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-[#fff0eb]/70 via-white to-[color:var(--accent-soft)]"
+                className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-accent-soft/70 via-white to-accent-soft"
             />
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-40 -left-32 -z-10 h-[28rem] w-[28rem] rounded-full bg-[#ec7b5b]/30 blur-3xl animate-blob-1"
+                className="pointer-events-none absolute -top-40 -left-32 -z-10 h-[28rem] w-[28rem] rounded-full bg-accent/30 blur-3xl animate-blob-1"
             />
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -bottom-40 -right-32 -z-10 h-[32rem] w-[32rem] rounded-full bg-[#c5523a]/25 blur-3xl animate-blob-2"
+                className="pointer-events-none absolute -bottom-40 -right-32 -z-10 h-[32rem] w-[32rem] rounded-full bg-accent-deep/25 blur-3xl animate-blob-2"
             />
 
             <div className="w-full max-w-5xl animate-fade-in">
                 <header className="mb-10 text-center">
                     {eyebrow != null ? (
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-white/60 px-3 py-1 text-[0.7rem] font-medium uppercase tracking-wider text-text-secondary shadow-glass backdrop-blur-md">
-                            <SparklesIcon size={12} className="text-[color:var(--accent-deep)]" />
+                            <SparklesIcon size={12} className="text-accent-deep" />
                             {eyebrow}
                         </span>
                     ) : null}

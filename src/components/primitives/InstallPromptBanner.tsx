@@ -170,7 +170,7 @@ export function InstallPromptBanner({
     if (hidden) return null;
 
     const composed = [
-        "fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-[#ec7b5b]/30 bg-surface-elevated px-4 py-3 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.18)] backdrop-blur-md animate-slide-up",
+        "fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-accent/30 bg-surface-elevated px-4 py-3 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.18)] backdrop-blur-md animate-slide-up",
         className ?? "",
     ]
         .filter(Boolean)
@@ -190,7 +190,7 @@ export function InstallPromptBanner({
                 <button
                     type="button"
                     onClick={onShowInstructions}
-                    className="flex-none rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                    className="flex-none rounded-full bg-gradient-to-br from-accent to-accent-deep px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
                     Como?
                 </button>
@@ -199,7 +199,7 @@ export function InstallPromptBanner({
                     type="button"
                     onClick={handleInstall}
                     disabled={!evt}
-                    className="flex-none rounded-full bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 disabled:opacity-60"
+                    className="flex-none rounded-full bg-gradient-to-br from-accent to-accent-deep px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
                 >
                     Instalar
                 </button>
@@ -208,7 +208,7 @@ export function InstallPromptBanner({
                 type="button"
                 onClick={handleDismiss}
                 aria-label="Dispensar"
-                className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-text-secondary hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-text-secondary hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
                 <XIcon size={14} />
             </button>

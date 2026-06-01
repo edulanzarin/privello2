@@ -102,7 +102,7 @@ export function LikeButton({
             aria-pressed={liked}
             aria-label={ariaLabel ?? (liked ? "Descurtir" : "Curtir")}
             className={[
-                "inline-flex items-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 focus-visible:rounded-full disabled:opacity-60 disabled:cursor-not-allowed",
+                "inline-flex items-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:rounded-full disabled:opacity-60 disabled:cursor-not-allowed",
                 tone === "onDark"
                     ? [
                         "rounded-full bg-black/55 px-3 py-1.5 backdrop-blur-sm",

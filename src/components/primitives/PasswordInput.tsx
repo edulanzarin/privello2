@@ -65,7 +65,7 @@ export function PasswordInput({
                 <button
                     type="button"
                     onClick={() => setVisible((prev) => !prev)}
-                    className="pointer-events-auto -m-1 rounded p-1 text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                    className="pointer-events-auto -m-1 rounded p-1 text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                     aria-label={visible ? hideLabel : showLabel}
                     aria-pressed={visible}
                     tabIndex={disabled ? -1 : 0}

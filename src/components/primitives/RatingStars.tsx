@@ -144,7 +144,7 @@ export function RatingStars({
                                 filled || half
                                     ? "text-warning-500"
                                     : "text-neutral-300",
-                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40 rounded",
+                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded",
                             ].join(" ")}
                         >
                             {half ? (

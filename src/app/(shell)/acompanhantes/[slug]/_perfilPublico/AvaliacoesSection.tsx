@@ -157,7 +157,7 @@ function AvaliacoesHeader({
                 <div className="flex items-center gap-3">
                     <span
                         aria-hidden="true"
-                        className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)] ring-4 ring-[#ec7b5b]/15"
+                        className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-accent-soft text-accent-deep ring-4 ring-accent/15"
                     >
                         <ChatIcon size={18} />
                     </span>
@@ -176,7 +176,7 @@ function AvaliacoesHeader({
                     <button
                         type="button"
                         onClick={onAbrirNotaGeral}
-                        className="inline-flex flex-none items-center gap-1.5 text-sm font-semibold text-[color:var(--accent-deep)] underline-offset-4 transition-colors hover:text-[color:var(--accent)] hover:underline focus:outline-none focus-visible:underline"
+                        className="inline-flex flex-none items-center gap-1.5 text-sm font-semibold text-accent-deep underline-offset-4 transition-colors hover:text-accent hover:underline focus:outline-none focus-visible:underline"
                     >
                         <StarIcon size={14} className="text-warning-500" />
                         Ver nota geral
@@ -189,9 +189,9 @@ function AvaliacoesHeader({
                     {stats.map((s, i) => (
                         <div
                             key={i}
-                            className="flex flex-col items-center gap-0.5 rounded-2xl bg-[#fff0eb]/40 px-2 py-3 text-center"
+                            className="flex flex-col items-center gap-0.5 rounded-2xl bg-accent-soft/40 px-2 py-3 text-center"
                         >
-                            <span aria-hidden="true" className="text-[color:var(--accent-deep)]">
+                            <span aria-hidden="true" className="text-accent-deep">
                                 {s.icon}
                             </span>
                             <span className="text-sm font-semibold text-text-primary">
@@ -320,7 +320,7 @@ function SuaAvaliacao({
             <Card>
                 <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-[color:var(--accent-deep)]">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-accent-deep">
                             Sua avaliação
                         </span>
                         <LinkButton onClick={() => setEditing(true)}>
@@ -547,7 +547,7 @@ function ListaReviews({
             <button
                 type="button"
                 onClick={() => setExpanded(true)}
-                className="group inline-flex items-center gap-2 self-start rounded-2xl border border-[#ec7b5b]/25 bg-[#fff0eb]/40 px-4 py-2.5 text-sm font-medium text-[color:var(--accent-deep)] transition-all hover:bg-[color:var(--accent-soft)] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                className="group inline-flex items-center gap-2 self-start rounded-2xl border border-accent/25 bg-accent-soft/40 px-4 py-2.5 text-sm font-medium text-accent-deep transition-all hover:bg-accent-soft hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
                 <ChatIcon size={14} />
                 Ler {reviews.length}{" "}
@@ -565,7 +565,7 @@ function ListaReviews({
             <button
                 type="button"
                 onClick={() => setExpanded(false)}
-                className="inline-flex items-center gap-1.5 self-start text-xs font-medium text-text-secondary transition-colors hover:text-[color:var(--accent-deep)] focus:outline-none focus-visible:underline"
+                className="inline-flex items-center gap-1.5 self-start text-xs font-medium text-text-secondary transition-colors hover:text-accent-deep focus:outline-none focus-visible:underline"
             >
                 <ChevronRightIcon size={12} className="rotate-90" />
                 Ocultar
@@ -699,9 +699,9 @@ function ReviewCard({
 
                 {/* Resposta da Acompanhante (se houver e não estiver editando) */}
                 {review.replyText !== null && !replying ? (
-                    <div className="ml-3 rounded-2xl border border-[#ec7b5b]/15 bg-[#fff0eb]/50 px-3 py-2">
+                    <div className="ml-3 rounded-2xl border border-accent/15 bg-accent-soft/50 px-3 py-2">
                         <div className="mb-1 flex items-center justify-between gap-2">
-                            <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold uppercase tracking-wider text-[color:var(--accent-deep)]">
+                            <span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold uppercase tracking-wider text-accent-deep">
                                 <SparklesIcon size={11} />
                                 Resposta
                             </span>

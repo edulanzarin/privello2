@@ -85,12 +85,12 @@ export function Switch({
     const showError = Boolean(error) && Boolean(errorMessage);
 
     const cardBase =
-        "flex items-center gap-3 rounded-2xl border bg-surface px-4 py-3 transition-all duration-150 focus-within:ring-2 focus-within:ring-[#ec7b5b]/30 focus-within:border-[#ec7b5b]/50";
+        "flex items-center gap-3 rounded-2xl border bg-surface px-4 py-3 transition-all duration-150 focus-within:ring-2 focus-within:ring-accent/30 focus-within:border-accent/50";
     const cardTone = error
         ? "border-danger-400"
         : value
-            ? "border-[#ec7b5b]/40 bg-[#fff0eb]/40"
-            : "border-border hover:border-[#ec7b5b]/30";
+            ? "border-accent/40 bg-accent-soft/40"
+            : "border-border hover:border-accent/30";
     const cardDisabled = disabled
         ? "cursor-not-allowed opacity-60"
         : "cursor-pointer";
@@ -98,7 +98,7 @@ export function Switch({
     const trackBase =
         "relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-all duration-200";
     const trackTone = value
-        ? "bg-gradient-to-r from-[color:var(--accent)] to-[color:var(--accent-deep)] shadow-[0_4px_12px_-4px_rgba(197,82,58,0.55)]"
+        ? "bg-gradient-to-r from-accent to-accent-deep shadow-[0_4px_12px_-4px_rgba(197,82,58,0.55)]"
         : "bg-neutral-300";
 
     const thumbBase =

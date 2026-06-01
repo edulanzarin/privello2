@@ -133,13 +133,13 @@ export function useToast(): ToastApi {
 const TONE_CLASSES: Record<ToastTone, string> = {
     success: "border-success-200 bg-white text-success-800",
     danger: "border-danger-200 bg-white text-danger-800",
-    info: "border-[#ec7b5b]/30 bg-white text-[color:var(--accent-deep)]",
+    info: "border-accent/30 bg-white text-accent-deep",
 };
 
 const TONE_ICON_CLASSES: Record<ToastTone, string> = {
     success: "bg-success-500 text-white",
     danger: "bg-danger-600 text-white",
-    info: "bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent-deep)] text-white",
+    info: "bg-gradient-to-br from-accent to-accent-deep text-white",
 };
 
 /**
@@ -193,7 +193,7 @@ function Toaster({
                         type="button"
                         onClick={() => onDismiss(t.id)}
                         aria-label="Fechar"
-                        className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-neutral-100 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec7b5b]/40"
+                        className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-neutral-100 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                     >
                         <XIcon size={13} />
                     </button>

@@ -40,7 +40,7 @@ const ICON_TONE_CLASSES: Record<
     string
 > = {
     neutral:
-        "bg-[color:var(--accent-soft)] text-[color:var(--accent-deep)]",
+        "bg-accent-soft text-accent-deep",
     muted: "bg-neutral-100 text-text-disabled",
 };
 
@@ -72,7 +72,7 @@ export function SectionHeader({
                 <span
                     aria-hidden="true"
                     className={[
-                        "inline-flex h-10 w-10 flex-none items-center justify-center rounded-full ring-4 ring-[#ec7b5b]/15",
+                        "inline-flex h-10 w-10 flex-none items-center justify-center rounded-full ring-4 ring-accent/15",
                         ICON_TONE_CLASSES[tone],
                     ].join(" ")}
                 >

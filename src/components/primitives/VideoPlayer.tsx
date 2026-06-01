@@ -220,7 +220,7 @@ export function VideoPlayer({
                     controlsVisible ? "opacity-100" : "opacity-0",
                 ].join(" ")}
             >
-                privello<span className="text-[color:var(--accent)]">.</span>
+                privello<span className="text-accent">.</span>
             </span>
 
             {/* Barra de controles. */}
