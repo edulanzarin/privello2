@@ -314,6 +314,90 @@ export function MediaCarousel({
     const itemComments = comments?.[active.id] ?? [];
     const canComment = onAddComment !== undefined;
 
+    /**
+     * Corpo da seção de comentários (lista + input), reutilizado em
+     * dois lugares: no painel lateral (desktop, `fill=true` → lista
+     * cresce e empurra o input pro fundo) e no bloco recolhível
+     * embaixo da mídia (mobile, `fill=false` → lista com altura
+     * limitada e scroll próprio).
+     */
+    const renderComentariosBody = (fill: boolean): React.ReactNode => {
+        const listWrapClass = fill
+            ? "min-h-0 flex-1 overflow-y-auto"
+            : "max-h-[45vh] overflow-y-auto";
+        return (
+            <>
+                {commentsLocked ? (
+                    <div className={`${listWrapClass} p-4`}>
+                        <LockedContent
+                            blurAmount={8}
+                            title={commentsLocked.title}
+                            description={commentsLocked.description}
+                            action={commentsLocked.action}
+                            className="min-h-[220px]"
+                        >
+                            <div className="flex flex-col gap-4 p-4">
+                                {[1, 2, 3].map((i) => (
+                                    <div
+                                        key={i}
+                                        className="flex items-start gap-3"
+                                    >
+                                        <div className="h-8 w-8 flex-none rounded-full bg-neutral-200" />
+                                        <div className="flex flex-1 flex-col gap-1.5">
+                                            <div className="h-3 w-24 rounded bg-neutral-200" />
+                                            <div className="h-3 w-full rounded bg-neutral-200" />
+                                            <div className="h-3 w-3/4 rounded bg-neutral-200" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </LockedContent>
+                    </div>
+                ) : (
+                    <div className={`${listWrapClass} px-4 py-3`}>
+                        {itemComments.length === 0 ? (
+                            <EmptyState
+                                size="sm"
+                                title="Nenhum comentário ainda"
+                                description={
+                                    canComment
+                                        ? "Seja o primeiro a comentar."
+                                        : undefined
+                                }
+                            />
+                        ) : (
+                            <ul className="flex flex-col gap-4">
+                                {itemComments.map((c) => (
+                                    <li key={c.id}>
+                                        <Comment
+                                            comment={c}
+                                            onReport={onReportComment}
+                                        />
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                )}
+
+                {canComment && !commentsLocked ? (
+                    <div className="border-t border-neutral-200 px-4 py-3">
+                        <CommentInput
+                            value={draft}
+                            onChange={setDraft}
+                            onSubmit={(text) => {
+                                onAddComment?.(active.id, text);
+                                setDraft("");
+                            }}
+                            authorPhotoUrl={currentUserPhotoUrl}
+                            authorName={currentUserName}
+                        />
+                    </div>
+                ) : null}
+            </>
+        );
+    };
+
     if (storyMode) {
         return (
             <Modal
@@ -485,10 +569,15 @@ export function MediaCarousel({
             className="!p-0"
         >
             {/* Container interno com altura fixa — 85% do viewport.
-                Garante que o modal não cresce/encolhe com a mídia e
-                que a seção de comentários (recolhível) tem scroll
-                interno com input fixo no fundo. */}
-            <div className="flex h-full w-full flex-col">
+                Garante que o modal não cresce/encolhe com a mídia.
+                Desktop (lg): vira split horizontal — mídia+toolbar à
+                esquerda, painel de comentários à direita quando
+                aberto. Mobile: stack vertical com comentários
+                recolhíveis embaixo. */}
+            <div className="flex h-full w-full flex-col lg:flex-row">
+                {/* Coluna principal: mídia + toolbar. No desktop ocupa
+                    o resto da largura ao lado do painel. */}
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 {/* Mídia — ocupa todo o espaço disponível; encolhe
                     quando o painel de comentários abre. */}
                 <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black">
@@ -631,90 +720,45 @@ export function MediaCarousel({
                         </div>
                     ) : null}
 
-                    {/* Seção de comentários — recolhível. Só renderiza
-                        quando `comentariosAbertos`. A mídia + descrição
-                        ficam sempre visíveis; os comentários aparecem
-                        sob demanda (botão na toolbar). */}
+                    {/* MOBILE — seção de comentários recolhível abaixo
+                        da mídia. Só renderiza quando aberta e em
+                        telas pequenas (no desktop usamos o painel
+                        lateral). */}
                     {!effectiveHideComments && comentariosAbertos ? (
-                        <div className="flex flex-col border-t border-neutral-200">
-                            {/* Lista de comentários — quando há gate,
-                                exibe LockedContent com placeholders
-                                fake. Altura limitada com scroll próprio
-                                (a mídia acima não some). */}
-                            {commentsLocked ? (
-                                <div className="max-h-[45vh] overflow-y-auto p-4">
-                                    <LockedContent
-                                        blurAmount={8}
-                                        title={commentsLocked.title}
-                                        description={commentsLocked.description}
-                                        action={commentsLocked.action}
-                                        className="min-h-[220px]"
-                                    >
-                                        <div className="flex flex-col gap-4 p-4">
-                                            {[1, 2, 3].map((i) => (
-                                                <div
-                                                    key={i}
-                                                    className="flex items-start gap-3"
-                                                >
-                                                    <div className="h-8 w-8 flex-none rounded-full bg-neutral-200" />
-                                                    <div className="flex flex-1 flex-col gap-1.5">
-                                                        <div className="h-3 w-24 rounded bg-neutral-200" />
-                                                        <div className="h-3 w-full rounded bg-neutral-200" />
-                                                        <div className="h-3 w-3/4 rounded bg-neutral-200" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </LockedContent>
-                                </div>
-                            ) : (
-                                <div className="max-h-[45vh] overflow-y-auto px-4 py-3">
-                                    {itemComments.length === 0 ? (
-                                        <EmptyState
-                                            size="sm"
-                                            title="Nenhum comentário ainda"
-                                            description={
-                                                canComment
-                                                    ? "Seja o primeiro a comentar."
-                                                    : undefined
-                                            }
-                                        />
-                                    ) : (
-                                        <ul className="flex flex-col gap-4">
-                                            {itemComments.map((c) => (
-                                                <li key={c.id}>
-                                                    <Comment
-                                                        comment={c}
-                                                        onReport={
-                                                            onReportComment
-                                                        }
-                                                    />
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Input de comentário (quando habilitado e
-                                sem gate). */}
-                            {canComment && !commentsLocked ? (
-                                <div className="border-t border-neutral-200 px-4 py-3">
-                                    <CommentInput
-                                        value={draft}
-                                        onChange={setDraft}
-                                        onSubmit={(text) => {
-                                            onAddComment?.(active.id, text);
-                                            setDraft("");
-                                        }}
-                                        authorPhotoUrl={currentUserPhotoUrl}
-                                        authorName={currentUserName}
-                                    />
-                                </div>
-                            ) : null}
+                        <div className="flex flex-col border-t border-neutral-200 lg:hidden">
+                            {renderComentariosBody(false)}
                         </div>
                     ) : null}
                 </aside>
+                </div>
+
+                {/* DESKTOP — painel lateral de comentários. Abre ao
+                    lado da mídia (não empurra pra baixo). Largura fixa,
+                    coluna própria com lista rolável + input no fundo. */}
+                {!effectiveHideComments && comentariosAbertos ? (
+                    <aside className="hidden min-h-0 w-[22rem] flex-none flex-col border-l border-neutral-200 bg-surface lg:flex">
+                        <div className="flex flex-none items-center justify-between border-b border-neutral-200 px-4 py-3">
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-primary">
+                                <ChatIcon size={15} />
+                                Comentários
+                                {!commentsLocked && itemComments.length > 0 ? (
+                                    <span className="text-text-secondary">
+                                        {itemComments.length}
+                                    </span>
+                                ) : null}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setComentariosAbertos(false)}
+                                aria-label="Ocultar comentários"
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-neutral-100 hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                            >
+                                <XIcon size={15} />
+                            </button>
+                        </div>
+                        {renderComentariosBody(true)}
+                    </aside>
+                ) : null}
             </div>
         </Modal>
     );
