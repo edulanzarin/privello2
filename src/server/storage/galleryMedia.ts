@@ -170,7 +170,8 @@ export async function publicarMidia(
     const mimeType = input.mimeType as GaleriaMime;
 
     // 2. Marca d'água. Tanto fotos (sharp) quanto vídeos
-    // (FFmpeg) recebem o overlay com o `privello.png`. Erro
+    // (FFmpeg) recebem o selo da marca (logo + "Privello") no
+    // canto inferior direito. Erro
     // silencioso devolve o buffer original.
     const watermarked = await applyGalleryWatermark({
         bytes: input.bytes,

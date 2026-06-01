@@ -1,10 +1,11 @@
 /**
  * Aplicação de marca d'água em mídias da galeria.
  *
- * Compõe sobre a foto **ou vídeo** a palavra "Privello" vazada
- * (`public/privello.png`) centralizada, ocupando ~30% da largura
- * da mídia. Asset PNG cuida da opacidade e do contorno — basta
- * editar `public/privello.png` para ajustar o visual.
+ * Compõe sobre a foto **ou vídeo** um selo da marca (ícone flame de
+ * `public/logo.png` + texto "Privello") no **canto inferior
+ * direito**, igual à identidade da top bar. O selo é gerado
+ * dinamicamente (SVG + sharp) proporcional à largura da mídia, com
+ * sombra suave pra legibilidade em qualquer fundo.
  *
  * Foto_de_Perfil e Capa_de_Perfil **não** recebem marca d'água — só
  * mídias da galeria pública.
@@ -52,31 +53,83 @@ const ffmpegPath: string | null = (() => {
 })();
 
 const PUBLIC_DIR = path.join(process.cwd(), "public");
-const PRIVELLO_TEXT_PATH = path.join(PUBLIC_DIR, "privello.png");
+// Ícone da marca (flame) — mesma imagem do `<Logo>` / top bar.
+const LOGO_PATH = path.join(PUBLIC_DIR, "logo.png");
 
 /**
- * Largura do overlay como fração da largura da mídia. Mantida
- * consistente entre fotos e vídeos para identidade visual única.
+ * Largura do selo da marca como fração da largura da mídia. Selo de
+ * canto — discreto, mas legível. Mantida consistente entre fotos e
+ * vídeos para identidade visual única.
  */
 const OVERLAY_RATIO = 0.3;
 
+/** Margem do selo em relação às bordas, como fração da largura. */
+const MARGIN_RATIO = 0.025;
+
 /**
- * Verifica que o asset de marca d'água existe no disco. É checado
- * uma vez no boot do módulo e o resultado é cacheado; se faltar,
+ * Verifica que o asset da marca existe no disco. É checado uma vez
+ * no boot do módulo e o resultado é cacheado; se faltar,
  * `applyGalleryWatermark` pula a aplicação silenciosamente e loga
  * apenas no primeiro uso.
  */
 let assetsAvailable: boolean | null = null;
 function ensureAssets(): boolean {
     if (assetsAvailable !== null) return assetsAvailable;
-    assetsAvailable = fs.existsSync(PRIVELLO_TEXT_PATH);
+    assetsAvailable = fs.existsSync(LOGO_PATH);
     if (!assetsAvailable) {
         log.warn(
-            "privello.png ausente em /public — marca d'água será pulada",
-            { path: PRIVELLO_TEXT_PATH },
+            "logo.png ausente em /public — marca d'água será pulada",
+            { path: LOGO_PATH },
         );
     }
     return assetsAvailable;
+}
+
+/**
+ * Constrói o selo da marca (ícone flame + "Privello") como PNG RGBA
+ * com largura `badgeWidth`. O ícone vem de `public/logo.png`; o
+ * texto e a sombra são desenhados via SVG. Layout horizontal: logo
+ * à esquerda, texto à direita, alinhados verticalmente.
+ *
+ * Retorna `{ png, width, height }` pra o caller posicionar.
+ */
+async function construirSelo(badgeWidth: number): Promise<{
+    png: Buffer;
+    width: number;
+    height: number;
+}> {
+    // Proporções internas do selo, derivadas da largura.
+    const logoSize = Math.round(badgeWidth * 0.2);
+    const gap = Math.round(badgeWidth * 0.05);
+    const fontSize = Math.round(badgeWidth * 0.17);
+    const height = Math.max(logoSize, Math.round(fontSize * 1.3));
+    const textX = logoSize + gap;
+    // Baseline pra centralizar o texto verticalmente no selo.
+    const textBaseline = Math.round(height / 2 + fontSize * 0.36);
+    const logoTop = Math.round((height - logoSize) / 2);
+
+    const logo = await sharp(LOGO_PATH)
+        .resize(logoSize, logoSize, { fit: "contain" })
+        .png()
+        .toBuffer();
+
+    // SVG com o texto "Privello" branco + leve sombra pra legibilidade
+    // sobre qualquer fundo. O ícone é composto por cima depois.
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${badgeWidth}" height="${height}" viewBox="0 0 ${badgeWidth} ${height}">
+        <defs>
+            <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.55)"/>
+            </filter>
+        </defs>
+        <text x="${textX}" y="${textBaseline}" font-family="sans-serif" font-size="${fontSize}" font-weight="700" fill="#ffffff" filter="url(#ds)">Privello</text>
+    </svg>`;
+
+    const png = await sharp(Buffer.from(svg))
+        .composite([{ input: logo, top: logoTop, left: 0 }])
+        .png()
+        .toBuffer();
+
+    return { png, width: badgeWidth, height };
 }
 
 /**
@@ -137,10 +190,10 @@ export async function applyGalleryWatermark(args: {
  * Compõe a marca d'água em uma foto:
  *
  *  1. Mede a imagem.
- *  2. Define a largura do overlay = 80% da largura da imagem.
- *  3. Redimensiona o `privello.png` proporcionalmente.
- *  4. Centra na imagem e composit.
- *  5. Reserializa no MIME original.
+ *  2. Gera o selo (logo + "Privello") com largura = `OVERLAY_RATIO`
+ *     da largura da imagem.
+ *  3. Posiciona no canto inferior direito, respeitando a margem.
+ *  4. Reserializa no MIME original.
  */
 async function watermarkPhoto(
     buffer: Buffer,
@@ -157,22 +210,16 @@ async function watermarkPhoto(
         return buffer;
     }
 
-    // Largura do overlay = `OVERLAY_RATIO` da largura da imagem.
-    const overlayWidth = Math.round(width * OVERLAY_RATIO);
+    const badgeWidth = Math.round(width * OVERLAY_RATIO);
+    const selo = await construirSelo(badgeWidth);
 
-    const overlay = await sharp(PRIVELLO_TEXT_PATH)
-        .resize({ width: overlayWidth })
-        .png()
-        .toBuffer();
-    const overlayMeta = await sharp(overlay).metadata();
-    const overlayHeight = overlayMeta.height ?? 0;
-
-    const left = Math.round((width - overlayWidth) / 2);
-    const top = Math.round((height - overlayHeight) / 2);
+    const margin = Math.round(width * MARGIN_RATIO);
+    const left = Math.max(0, width - selo.width - margin);
+    const top = Math.max(0, height - selo.height - margin);
 
     const composited = sharp(buffer)
         .rotate()
-        .composite([{ input: overlay, top, left }]);
+        .composite([{ input: selo.png, top, left }]);
 
     if (mimeType === "image/png") {
         return composited.png({ compressionLevel: 9 }).toBuffer();
@@ -329,9 +376,10 @@ function runFfmpeg(args: ReadonlyArray<string>): Promise<void> {
  *     stdin com mais facilidade só em containers específicos; arquivo
  *     evita compatibilidade duvidosa com WebM/MOV em pipe).
  *  2. Chama o `ffmpeg` com:
- *     - `-i input` (vídeo) e `-i privello.png` (overlay).
- *     - filter complex que escala o PNG para `OVERLAY_RATIO` da
- *       largura do vídeo e centraliza com `(W-w)/2:(H-h)/2`.
+ *     - `-i input` (vídeo) e `-i selo.png` (overlay gerado).
+ *     - filter complex que escala o selo da marca pra `OVERLAY_RATIO`
+ *       da largura do vídeo e posiciona no canto inferior direito,
+ *       respeitando a margem.
  *     - re-encoda vídeo com H.264 / preset `veryfast` / CRF 23
  *       (qualidade boa, tamanho razoável). `-movflags +faststart`
  *       deixa o MP4 streamável.
@@ -352,6 +400,7 @@ async function watermarkVideo(
     const ext = videoExt(mimeType);
     const inputPath = path.join(tmpDir, `in-${randomUUID()}.${ext}`);
     const outputPath = path.join(tmpDir, `out-${randomUUID()}.${ext}`);
+    const seloPath = path.join(tmpDir, `wm-${randomUUID()}.png`);
 
     try {
         await fsp.writeFile(inputPath, buffer);
@@ -365,20 +414,22 @@ async function watermarkVideo(
             64,
             Math.round(videoWidth * OVERLAY_RATIO),
         );
+        const margin = Math.max(8, Math.round(videoWidth * MARGIN_RATIO));
 
-        // Filter complex:
-        //   [1:v] escala o PNG para `overlayWidth`px de largura,
-        //         altura proporcional (-1).
-        //   [v]   composit final centralizado.
-        const filter = [
-            `[1:v]scale=${overlayWidth}:-1[wm]`,
-            `[0:v][wm]overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2[v]`,
-        ].join(";");
+        // Gera o selo (logo + "Privello") como PNG e grava em tmp
+        // pra alimentar o FFmpeg como segundo input.
+        const selo = await construirSelo(overlayWidth);
+        await fsp.writeFile(seloPath, selo.png);
+
+        // Filter complex: composit do selo já no tamanho certo no
+        // canto inferior direito, com margem `margin`.
+        const filter =
+            `[0:v][1:v]overlay=main_w-overlay_w-${margin}:main_h-overlay_h-${margin}[v]`;
 
         await runFfmpeg([
             "-y",
             "-i", inputPath,
-            "-i", PRIVELLO_TEXT_PATH,
+            "-i", seloPath,
             "-filter_complex", filter,
             "-map", "[v]",
             "-map", "0:a?", // copia áudio se houver
