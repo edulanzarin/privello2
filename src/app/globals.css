@@ -75,7 +75,7 @@ iframe {
 body {
     background: var(--canvas);
     color: var(--ink-1);
-    font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI",
+    font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI",
         sans-serif;
     font-feature-settings: "ss01", "cv11", "tnum";
     font-variant-ligatures: contextual;
@@ -120,7 +120,7 @@ body {
  * ------------------------------------------------------------------------- */
 
 .display {
-    font-family: var(--font-display, var(--font-inter), serif);
+    font-family: var(--font-display, var(--font-sans), serif);
     font-weight: 600;
     letter-spacing: -0.025em;
     line-height: 1;

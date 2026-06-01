@@ -221,7 +221,7 @@ function construirMarcadorCidade(c: MapaCidade): HTMLElement {
     wrap.style.background = "rgba(255,255,255,0.96)";
     wrap.style.boxShadow = "0 4px 14px -4px rgba(0,0,0,0.3)";
     wrap.style.border = "1px solid rgba(197,82,58,0.25)";
-    wrap.style.fontFamily = "var(--font-inter, sans-serif)";
+    wrap.style.fontFamily = "var(--font-sans, sans-serif)";
     wrap.style.userSelect = "none";
     wrap.style.transition = "transform 0.12s ease";
 

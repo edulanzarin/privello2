@@ -13,13 +13,13 @@ import { PwaBootstrap } from "./_pwa/PwaBootstrap";
  * cobrir hierarquia (display, body, métricas) sem sobrecarregar
  * o bundle.
  *
- * Mantemos o nome de variável `--font-inter` no CSS pra não
- * quebrar consumidores antigos do tailwind config.
+ * Exposta como CSS var `--font-sans`, consumida pelo
+ * `tailwind.config.ts` (fontFamily.sans) e por `globals.css`.
  */
 const poppins = Poppins({
     subsets: ["latin"],
     weight: ["300", "400", "500", "600", "700"],
-    variable: "--font-inter",
+    variable: "--font-sans",
     display: "swap",
 });
 

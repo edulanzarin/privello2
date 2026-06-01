@@ -304,7 +304,7 @@ function construirMarcador(b: MapaBairro, selecionado: boolean): HTMLElement {
     wrap.style.border = selecionado
         ? "1px solid rgba(255,255,255,0.7)"
         : "1px solid rgba(197,82,58,0.25)";
-    wrap.style.fontFamily = "var(--font-inter, sans-serif)";
+    wrap.style.fontFamily = "var(--font-sans, sans-serif)";
     wrap.style.cursor = "default";
     wrap.style.userSelect = "none";
     wrap.style.transition = "transform 0.12s ease";

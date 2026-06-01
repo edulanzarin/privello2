@@ -56,7 +56,7 @@ const config: Config = {
                 },
             },
             fontFamily: {
-                sans: ["var(--font-inter)", ...typography.fontFamily.sans],
+                sans: ["var(--font-sans)", ...typography.fontFamily.sans],
                 mono: [...typography.fontFamily.mono],
             },
             fontSize,

@@ -176,7 +176,7 @@ export const colors = {
 
 const fontFamily = {
     sans: [
-        "Inter",
+        "Poppins",
         "ui-sans-serif",
         "system-ui",
         "-apple-system",

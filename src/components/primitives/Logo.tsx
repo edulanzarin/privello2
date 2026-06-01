@@ -16,8 +16,8 @@ export type LogoVariant = "mark" | "wordmark";
  *
  * Marca da plataforma. O símbolo vem de `public/logo.png` (servido
  * em `/logo.png`) — substituir esse arquivo basta para rebrandar
- * em todos os consumidores. A wordmark é renderizada em texto Inter
- * (mesma família tipográfica do produto) para manter peso visual
+ * em todos os consumidores. A wordmark é renderizada na fonte do
+ * produto (mesma família tipográfica) para manter peso visual
  * homogêneo.
  *
  * Nenhuma prop carrega nomes de entidades de domínio (Property 29).
@@ -35,7 +35,7 @@ export interface LogoProps {
  * Logo da plataforma.
  *
  * Renderiza a imagem `logo.png` opcionalmente acompanhada do
- * wordmark "Privello" em Inter semibold. A imagem é renderizada
+ * wordmark "Privello" em semibold. A imagem é renderizada
  * via `next/image` com `priority` para que apareça sem layout
  * shift no topo do shell.
  */
