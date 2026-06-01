@@ -42,7 +42,7 @@ export function ShareCityButton({
 
     const cardUrl = `/api/acompanhantes/share-city.png?cidade=${encodeURIComponent(
         cidadeNome,
-    )}&uf=${encodeURIComponent(estadoSigla)}`;
+    )}&uf=${encodeURIComponent(estadoSigla)}&v=2`;
 
     const shareText =
         total === 1
@@ -192,8 +192,7 @@ export function ShareCityButton({
             >
                 <div className="flex flex-col gap-4 p-5">
                     <p className="text-sm text-text-secondary">
-                        Baixe a imagem pra postar no Stories ou Status,
-                        compartilhe direto ou copie o link da busca.
+                        Baixe a imagem ou copie o link para compartilhar.
                     </p>
                     <div className="mx-auto overflow-hidden rounded-2xl ring-1 ring-border">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -228,24 +227,6 @@ export function ShareCityButton({
                                 Compartilhar
                             </Button>
                         </div>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="md"
-                            onClick={() => void copiarLink()}
-                        >
-                            {copied ? (
-                                <>
-                                    <CheckIcon size={16} />
-                                    Link copiado
-                                </>
-                            ) : (
-                                <>
-                                    <LinkIcon size={16} />
-                                    Copiar link
-                                </>
-                            )}
-                        </Button>
                     </div>
                 </div>
             </Modal>

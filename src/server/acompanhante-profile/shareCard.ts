@@ -23,11 +23,15 @@
  */
 
 import sharp from "sharp";
-import * as fs from "node:fs";
-import * as path from "node:path";
 
 import { db } from "@/lib/db";
 import { createR2Client, type R2Client } from "@/lib/storage/r2";
+
+import {
+    camadasComWordmark,
+    carregarLogoMarca,
+    wordmarkTextSvg,
+} from "./shareWordmark";
 
 // ---------------------------------------------------------------------------
 // Tipos públicos
@@ -39,15 +43,6 @@ export type ShareCardResult =
 
 const CARD_WIDTH = 1080;
 const CARD_HEIGHT = 1920;
-
-// Wordmark do rodapé: ícone da marca (flame) + "Privello", igual à
-// top bar. O logo é a mesma imagem servida em `/logo.png`.
-const WORDMARK_LOGO_SIZE = 96;
-const WORDMARK_LEFT = 64;
-const WORDMARK_TEXT_BASELINE = 1852;
-const WORDMARK_TEXT_X = WORDMARK_LEFT + WORDMARK_LOGO_SIZE + 22;
-// Topo do logo, alinhado ao centro visual do texto.
-const WORDMARK_LOGO_TOP = WORDMARK_TEXT_BASELINE - 84;
 
 // ---------------------------------------------------------------------------
 // Singleton R2 + test seam
@@ -165,7 +160,7 @@ function construirOverlaySvg(data: CardData): Buffer {
         <text x="64" y="1560" font-family="sans-serif" font-size="92" font-weight="800" fill="#ffffff">${nome}</text>
         <text x="64" y="1640" font-family="sans-serif" font-size="44" font-weight="500" fill="rgba(255,255,255,0.82)">${handle}</text>
         <text x="64" y="1716" font-family="sans-serif" font-size="44" font-weight="500" fill="rgba(255,255,255,0.82)">📍 ${local}</text>
-        <text x="${WORDMARK_TEXT_X}" y="${WORDMARK_TEXT_BASELINE}" font-family="sans-serif" font-size="60" font-weight="700" fill="#ffffff">Privello</text>
+        ${wordmarkTextSvg()}
     </svg>`;
 
     return Buffer.from(svg);
@@ -185,25 +180,6 @@ async function fundoFallback(): Promise<Buffer> {
         <rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="url(#bg)"/>
     </svg>`;
     return sharp(Buffer.from(svg)).png().toBuffer();
-}
-
-/**
- * Carrega o ícone da marca (`public/logo.png`) redimensionado pro
- * tamanho do wordmark do rodapé. Retorna `null` se o arquivo não
- * existir/falhar — nesse caso o card sai só com o texto "Privello"
- * (degradação suave, não derruba a geração).
- */
-async function carregarLogoMarca(): Promise<Buffer | null> {
-    try {
-        const logoPath = path.join(process.cwd(), "public", "logo.png");
-        const bytes = await fs.promises.readFile(logoPath);
-        return await sharp(bytes)
-            .resize(WORDMARK_LOGO_SIZE, WORDMARK_LOGO_SIZE, { fit: "contain" })
-            .png()
-            .toBuffer();
-    } catch {
-        return null;
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -289,18 +265,8 @@ export async function gerarShareCard(slug: string): Promise<ShareCardResult> {
 
     let png: Buffer;
     try {
-        const camadas: sharp.OverlayOptions[] = [
-            { input: overlay, top: 0, left: 0 },
-        ];
-        if (logoMarca) {
-            camadas.push({
-                input: logoMarca,
-                top: WORDMARK_LOGO_TOP,
-                left: WORDMARK_LEFT,
-            });
-        }
         png = await sharp(base)
-            .composite(camadas)
+            .composite(camadasComWordmark(overlay, logoMarca))
             // Achata sobre fundo escuro (o card é sempre opaco) pra
             // remover o canal alpha — reduz bem o tamanho. `palette`
             // quantiza as cores: PNG fica ~10x menor sem perda

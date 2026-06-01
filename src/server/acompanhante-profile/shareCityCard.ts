@@ -13,7 +13,7 @@
  *  2. Monta um fundo: colagem com até 4 fotos de perfil da cidade
  *     (quando houver) ou um gradiente warm sólido de fallback.
  *  3. Compõe um SVG por cima: shade + número grande, "acompanhantes
- *     em Cidade, UF" + wordmark privello.
+ *     em Cidade, UF" + wordmark (logo da marca + "Privello").
  *  4. Exporta PNG.
  *
  * Resultado discriminado — o caller (route handler) mapeia status
@@ -26,6 +26,11 @@ import { db } from "@/lib/db";
 import { createR2Client, type R2Client } from "@/lib/storage/r2";
 
 import { escaparXml } from "./shareCard";
+import {
+    camadasComWordmark,
+    carregarLogoMarca,
+    wordmarkTextSvg,
+} from "./shareWordmark";
 
 export type ShareCityCardResult =
     | { ok: true; png: Buffer; etagSeed: string }
@@ -102,7 +107,7 @@ function construirOverlaySvg(data: {
         <text x="64" y="1380" font-family="sans-serif" font-size="280" font-weight="800" fill="#ffffff">${numero}</text>
         <text x="64" y="1480" font-family="sans-serif" font-size="56" font-weight="500" fill="rgba(255,255,255,0.85)">${frase}</text>
         <text x="64" y="1576" font-family="sans-serif" font-size="84" font-weight="800" fill="#ffffff">📍 ${localCurto}</text>
-        <text x="64" y="1840" font-family="sans-serif" font-size="48" font-weight="800" fill="#ffffff">privello<tspan fill="#ec7b5b">.</tspan></text>
+        ${wordmarkTextSvg()}
     </svg>`;
 
     return Buffer.from(svg);
@@ -243,11 +248,12 @@ export async function gerarShareCityCard(input: {
 
     const base = await construirFundo(storageKeys);
     const overlay = construirOverlaySvg({ total, cidadeNome, estadoSigla });
+    const logoMarca = await carregarLogoMarca();
 
     let png: Buffer;
     try {
         png = await sharp(base)
-            .composite([{ input: overlay, top: 0, left: 0 }])
+            .composite(camadasComWordmark(overlay, logoMarca))
             .flatten({ background: "#140a08" })
             .png({ compressionLevel: 9, palette: true, quality: 90 })
             .toBuffer();
@@ -256,8 +262,9 @@ export async function gerarShareCityCard(input: {
     }
 
     // Seed do ETag: cidade + contagem + as fotos usadas. Muda quando
-    // entra/sai perfil ou troca a foto de capa da colagem.
-    const etagSeed = `${cidadeNome.toLowerCase()}:${estadoSigla}:${total}:${storageKeys.join(",")}`;
+    // entra/sai perfil ou troca a foto de capa da colagem. `v2:`
+    // bumpado quando o layout mudou (rodapé com logo da marca).
+    const etagSeed = `v2:${cidadeNome.toLowerCase()}:${estadoSigla}:${total}:${storageKeys.join(",")}`;
 
     return { ok: true, png, etagSeed };
 }

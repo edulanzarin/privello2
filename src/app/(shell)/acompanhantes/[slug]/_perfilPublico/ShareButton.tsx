@@ -48,7 +48,7 @@ export function ShareButton({
     const [downloading, setDownloading] = React.useState(false);
     const [copied, setCopied] = React.useState(false);
 
-    const cardUrl = `/api/acompanhantes/${encodeURIComponent(slug)}/share-card.png`;
+    const cardUrl = `/api/acompanhantes/${encodeURIComponent(slug)}/share-card.png?v=2`;
     const shareText = `${nome} em ${cidadeNome}, ${estadoSigla} · Privello`;
 
     function profileUrl(): string {
@@ -208,8 +208,7 @@ export function ShareButton({
             >
                 <div className="flex flex-col gap-4 p-5">
                     <p className="text-sm text-text-secondary">
-                        Baixe a imagem pra postar no Stories ou Status,
-                        compartilhe direto ou copie o link do perfil.
+                        Baixe a imagem ou copie o link para compartilhar.
                     </p>
                     <div className="mx-auto overflow-hidden rounded-2xl ring-1 ring-border">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -244,24 +243,6 @@ export function ShareButton({
                                 Compartilhar
                             </Button>
                         </div>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="md"
-                            onClick={() => void copiarLink()}
-                        >
-                            {copied ? (
-                                <>
-                                    <CheckIcon size={16} />
-                                    Link copiado
-                                </>
-                            ) : (
-                                <>
-                                    <LinkIcon size={16} />
-                                    Copiar link
-                                </>
-                            )}
-                        </Button>
                     </div>
                 </div>
             </Modal>
