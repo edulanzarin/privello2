@@ -157,7 +157,7 @@ export function ShareButton({
                 open={modal.isOpen}
                 onClose={modal.close}
                 title="Compartilhar perfil"
-                size="sm"
+                size="md"
             >
                 <div className="flex flex-col gap-4 p-5">
                     <p className="text-sm text-text-secondary">
@@ -169,7 +169,7 @@ export function ShareButton({
                         <img
                             src={cardUrl}
                             alt={`Card de ${nome}`}
-                            className="mx-auto max-h-[46vh] w-auto"
+                            className="mx-auto max-h-[68vh] w-auto"
                         />
                     </div>
                     <Button
