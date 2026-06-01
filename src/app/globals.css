@@ -326,21 +326,6 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
- * Pulse soft — animação dos dots do LoadingSpinner. Cada dot
- * recebe `animation-delay` próprio pra criar o efeito de
- * onda. Mais discreto que o pulse padrão do tailwind (que
- * desaparece e volta a 100%).
- * ------------------------------------------------------------------------- */
-@keyframes pulse-soft {
-    0%, 100% { opacity: 0.35; transform: scale(0.85); }
-    50% { opacity: 1; transform: scale(1.15); }
-}
-
-.animate-pulse-soft {
-    animation: pulse-soft 1.2s ease-in-out infinite;
-}
-
-/* ---------------------------------------------------------------------------
  * Marquee horizontal — usado em rolagens contínuas (cidades,
  * tags, etc). Direção pra esquerda em loop.
  * ------------------------------------------------------------------------- */

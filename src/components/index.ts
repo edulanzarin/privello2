@@ -68,9 +68,6 @@ export type { ProfileBannerProps } from "./primitives/ProfileBanner";
 export { ProfileCoverEditor } from "./primitives/ProfileCoverEditor";
 export type { ProfileCoverEditorProps } from "./primitives/ProfileCoverEditor";
 
-export { StatTile } from "./primitives/StatTile";
-export type { StatTileProps } from "./primitives/StatTile";
-
 export { MetricPill } from "./primitives/MetricPill";
 export type { MetricPillProps } from "./primitives/MetricPill";
 
@@ -82,12 +79,6 @@ export type {
 
 export { StatCard } from "./primitives/StatCard";
 export type { StatCardProps, StatCardTone } from "./primitives/StatCard";
-
-export { PricingTag } from "./primitives/PricingTag";
-export type {
-    PricingTagProps,
-    PricingTagTone,
-} from "./primitives/PricingTag";
 
 export { AttributeTile } from "./primitives/AttributeTile";
 export type { AttributeTileProps } from "./primitives/AttributeTile";
@@ -116,16 +107,6 @@ export type {
 
 export { InstallPromptBanner } from "./primitives/InstallPromptBanner";
 export type { InstallPromptBannerProps } from "./primitives/InstallPromptBanner";
-
-export {
-    LoadingSpinner,
-    PageLoader,
-} from "./primitives/LoadingSpinner";
-export type {
-    LoadingSpinnerProps,
-    LoadingSpinnerSize,
-    PageLoaderProps,
-} from "./primitives/LoadingSpinner";
 
 export { BarChart } from "./primitives/BarChart";
 export type { BarChartPoint, BarChartProps } from "./primitives/BarChart";

@@ -164,8 +164,7 @@ Cada nível tem papel próprio. Sem branco em cima de branco.
 |---|---|---|
 | `InfoRow` | `InfoRow.tsx` | Linha "ícone + rótulo + valor + ação". Estados: read-only, editable (lápis no hover, `editHref`/`onEdit`), `locked` (cadeado + `lockedReason`). |
 | `ActivityFeed` + `ActivityFeedItem` | `ActivityFeed.tsx` | Feed denso estilo timeline. Item tem ícone, título, subtítulo, trailing, opcional `href`. |
-| `MetricPill` | `MetricPill.tsx` | Métrica em pílula horizontal compacta (ícone + valor + rótulo). Substitui StatTiles gigantes. |
-| `StatTile` | `StatTile.tsx` | KPI grande (label uppercase + valor + delta). Use em dashboards quando MetricPill for pouco. |
+| `MetricPill` | `MetricPill.tsx` | Métrica em pílula horizontal compacta (ícone + valor + rótulo). Padrão de KPI em painéis e cabeçalhos. |
 | `Card` | `Card.tsx` | Já listado. Hospeda listas de InfoRow via `<Card padding="none"><ul className="divide-y">...`. Quando a lista é toda de InfoRows, prefira `InfoList` que já vem montado. |
 | `InfoList` | `InfoList.tsx` | Lista densa de InfoRows. Wrappa cada filho em `<li>` automático e aplica `divide-y`. Substitui o padrão `<Card padding="none"><ul divide-y>{InfoRow...}</ul></Card>` repetido nos painéis. |
 
@@ -222,7 +221,7 @@ Cada nível tem papel próprio. Sem branco em cima de branco.
 |---|---|---|
 | `EmptyState` | `EmptyState.tsx` | Bloco padrão "ícone + título + descrição + ação". Tamanhos `sm/md`. |
 | `InlineAlert` | `InlineAlert.tsx` | Mensagem inline com `role="alert"`. Tons `danger/warning/info/success`. Substitui o padrão repetido `<p role="alert" className="rounded-md border border-... bg-.../40 ...">`. |
-| `Badge`/`MetricPill`/`StatTile` | (acima) | Estados positivos. |
+| `Badge`/`MetricPill`/`StatCard` | (acima) | Estados positivos. |
 
 ### Ícones
 
@@ -511,4 +510,4 @@ Mapa de rotas + composições usadas:
 - **`MediaCarouselFullVertical`** — variante de Reels (mídia full-screen,
   swipe vertical). Construir sobre `MediaCarousel` com props extras.
 - **`ReviewCard`** — avaliação de Cliente para Acompanhante. Vai
-  combinar `Avatar`, `StatTile` (estrelas), `Comment`.
+  combinar `Avatar`, `RatingStars`, `Comment`.
