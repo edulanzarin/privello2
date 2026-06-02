@@ -38,30 +38,30 @@ import {
 } from "@/domain/boost/definitions";
 import { db } from "@/lib/db";
 import {
-    MercadoPagoError,
-    createMercadoPagoClient,
-    type MercadoPagoClient,
-} from "@/lib/payments/mercadopago";
+    StripeError,
+    createStripeClient,
+    type StripeClient,
+} from "@/lib/payments/stripe";
 import { criarNotificacao } from "@/server/notifications";
 
 // ---------------------------------------------------------------------------
 // Singleton + test seam
 // ---------------------------------------------------------------------------
 
-let mpClientSingleton: MercadoPagoClient | null = null;
+let stripeClientSingleton: StripeClient | null = null;
 
-function getMpClient(): MercadoPagoClient {
-    if (!mpClientSingleton) {
-        mpClientSingleton = createMercadoPagoClient();
+function getStripeClient(): StripeClient {
+    if (!stripeClientSingleton) {
+        stripeClientSingleton = createStripeClient();
     }
-    return mpClientSingleton;
+    return stripeClientSingleton;
 }
 
-/** Test seam — substitui o client MP usado pelo módulo. */
-export function __setMpClientForBoostTests(
-    client: MercadoPagoClient | null,
+/** Test seam — substitui o client Stripe usado pelo módulo. */
+export function __setStripeClientForBoostTests(
+    client: StripeClient | null,
 ): void {
-    mpClientSingleton = client;
+    stripeClientSingleton = client;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,7 +95,7 @@ export type CriarPagamentoBoostResult =
         ok: false;
         reason:
         | "PERFIL_NAO_ENCONTRADO"
-        | "MP_NAO_CONFIGURADO"
+        | "PAGAMENTO_NAO_CONFIGURADO"
         | "AGENDAMENTO_INVALIDO"
         | "PERSISTENCIA";
     };
@@ -153,13 +153,12 @@ export async function criarPagamentoBoost(
         return { ok: false, reason: "PERFIL_NAO_ENCONTRADO" };
     }
 
-    const mp = getMpClient();
-    if (!mp.isConfigured()) {
-        return { ok: false, reason: "MP_NAO_CONFIGURADO" };
+    const stripe = getStripeClient();
+    if (!stripe.isConfigured()) {
+        return { ok: false, reason: "PAGAMENTO_NAO_CONFIGURADO" };
     }
 
-    // Normaliza o agendamento. `imediato` deixa startAt nulo;
-    // `agendado` grava a data; `invalido` aborta antes de tocar no MP.
+    // Normaliza o agendamento.
     const agendamento = normalizarBoostStartAt(input.startAt ?? null);
     if (agendamento.kind === "invalido") {
         return { ok: false, reason: "AGENDAMENTO_INVALIDO" };
@@ -186,36 +185,29 @@ export async function criarPagamentoBoost(
         return { ok: false, reason: "PERSISTENCIA" };
     }
 
-    // 3. Cria a Preference no MP.
+    // 3. Cria o Checkout Session no Stripe.
     const baseUrl = input.baseUrl.replace(/\/$/, "");
     const successUrl = `${baseUrl}/acompanhante/boost?status=success&ref=${externalReference}`;
-    const pendingUrl = `${baseUrl}/acompanhante/boost?status=pending&ref=${externalReference}`;
-    const failureUrl = `${baseUrl}/acompanhante/boost?status=failure&ref=${externalReference}`;
-    const notificationUrl = `${baseUrl}/api/payments/mp/webhook`;
+    const cancelUrl = `${baseUrl}/acompanhante/boost?status=failure&ref=${externalReference}`;
 
-    let preference;
+    let session;
     try {
-        preference = await mp.createPreference({
+        session = await stripe.createCheckoutSession({
             items: [
                 {
-                    id: "boost-24h",
-                    title: "Boost de 24h — Privello",
+                    name: "Boost de 24h — Privello",
                     description:
                         "Prioridade total em buscas e destaque na home por 24 horas.",
                     quantity: 1,
-                    unitPrice: BOOST_PRICE_CENTS / 100,
-                    currencyId: BOOST_CURRENCY,
+                    unitAmountCents: BOOST_PRICE_CENTS,
+                    currency: BOOST_CURRENCY.toLowerCase(),
                 },
             ],
-            externalReference,
-            backUrls: {
-                success: successUrl,
-                pending: pendingUrl,
-                failure: failureUrl,
-            },
-            notificationUrl,
-            autoReturn: "approved",
-            payerEmail: input.payerEmail,
+            clientReferenceId: externalReference,
+            successUrl,
+            cancelUrl,
+            customerEmail: input.payerEmail,
+            metadata: { userId: input.userId },
         });
     } catch (err) {
         // Marca como rejected pra não ficar PENDING órfão.
@@ -227,33 +219,27 @@ export async function criarPagamentoBoost(
         } catch {
             // best-effort.
         }
-        if (err instanceof MercadoPagoError) {
-            if (err.code === "MP_NOT_CONFIGURED") {
-                return { ok: false, reason: "MP_NAO_CONFIGURADO" };
+        if (err instanceof StripeError) {
+            if (err.code === "STRIPE_NOT_CONFIGURED") {
+                return { ok: false, reason: "PAGAMENTO_NAO_CONFIGURADO" };
             }
         }
         return { ok: false, reason: "PERSISTENCIA" };
     }
 
-    // 4. Atualiza o registro com o preference id.
+    // 4. Atualiza o registro com o Stripe Session ID.
     try {
         await db.boostPayment.update({
             where: { id: payment.id },
-            data: { mpPreferenceId: preference.id },
+            data: { mpPreferenceId: session.id },
         });
     } catch {
-        // best-effort: webhook ainda chega via external_reference.
+        // best-effort: webhook ainda chega via client_reference_id.
     }
-
-    // Em sandbox usamos `sandbox_init_point` quando o env for sandbox.
-    const checkoutUrl =
-        process.env.MP_ENVIRONMENT === "production"
-            ? preference.initPoint
-            : preference.sandboxInitPoint || preference.initPoint;
 
     return {
         ok: true,
-        checkoutUrl,
+        checkoutUrl: session.url,
         paymentId: payment.id,
     };
 }
@@ -267,55 +253,39 @@ export type ProcessarWebhookBoostResult =
     | {
         ok: false;
         reason:
-        | "MP_NAO_CONFIGURADO"
         | "PAGAMENTO_NAO_ENCONTRADO"
         | "PERSISTENCIA";
     };
 
 /**
- * Reconcilia o status de um pagamento via webhook do Mercado Pago.
+ * Reconcilia o status de um pagamento via webhook do Stripe.
  *
- * O webhook do MP entrega um `id` de payment. Esta função:
- *   1. Consulta o payment no MP via `getPayment(id)`.
- *   2. Localiza o `BoostPayment` local pelo `external_reference`
- *      retornado.
- *   3. Idempotência: se o `mp_payment_id` já está marcado e o status
- *      é o mesmo, retorna `applied: false`.
- *   4. Quando o status MP for `approved`:
- *      - Marca o registro como `APPROVED` com `activatesAt`/
- *        `expiresAt`.
- *      - Estende `boostUntil` da Acompanhante em +24h (cumulativo).
- *   5. Quando o status MP for `rejected`/`cancelled`/`refunded`:
- *      - Marca o registro como `REJECTED`/`REFUNDED`.
- *      - Não toca em `boostUntil` (boost concedido por pagamento
- *        anterior continua até expirar naturalmente).
- *
- * Erros do MP retornam `MP_NAO_CONFIGURADO`. Pagamento sem
- * `external_reference` ou sem registro local retorna
- * `PAGAMENTO_NAO_ENCONTRADO`.
+ * Recebe o `SessionDetails` já verificado pelo webhook handler.
+ * Fluxo:
+ *   1. Localiza o `BoostPayment` local pelo `clientReferenceId`
+ *      (= `externalReference`).
+ *   2. Idempotência: se já `APPROVED` com o mesmo `paymentIntentId`,
+ *      retorna `applied: false`.
+ *   3. Quando `paymentStatus === "paid"`:
+ *      - Marca como `APPROVED`, grava `paymentIntentId`.
+ *      - Estende `boostUntil` +24h (ou agenda pro futuro se
+ *        `startAt` é futuro).
+ *   4. Caso contrário: grava o `paymentIntentId` para reconciliação.
  */
 export async function processarWebhookBoost(
-    mpPaymentId: string,
+    session: {
+        clientReferenceId: string | null;
+        paymentStatus: string;
+        paymentIntentId: string | null;
+    },
     options: { now?: Date } = {},
 ): Promise<ProcessarWebhookBoostResult> {
-    const mp = getMpClient();
-    if (!mp.isConfigured()) {
-        return { ok: false, reason: "MP_NAO_CONFIGURADO" };
-    }
-
-    let details;
-    try {
-        details = await mp.getPayment(mpPaymentId);
-    } catch {
-        return { ok: false, reason: "MP_NAO_CONFIGURADO" };
-    }
-
-    if (!details.externalReference) {
+    if (!session.clientReferenceId) {
         return { ok: false, reason: "PAGAMENTO_NAO_ENCONTRADO" };
     }
 
     const local = await db.boostPayment.findUnique({
-        where: { externalReference: details.externalReference },
+        where: { externalReference: session.clientReferenceId },
         select: {
             id: true,
             status: true,
@@ -330,20 +300,16 @@ export async function processarWebhookBoost(
 
     // Idempotência: webhook duplicado.
     if (
-        local.mpPaymentId === details.id &&
+        local.mpPaymentId === session.paymentIntentId &&
         local.status !== "PENDING"
     ) {
         return { ok: true, applied: false };
     }
 
     const now = options.now ?? new Date();
-    const status = details.status.toLowerCase();
 
-    if (status === "approved") {
-        // Boost agendado pro futuro: aprova o pagamento mas NÃO
-        // estende `boostUntil` agora. `activatesAt` fica nulo —
-        // o cron (`ativarBoostsAgendados`) ativa quando `startAt`
-        // chegar. `expiresAt` também fica nulo até a ativação real.
+    if (session.paymentStatus === "paid") {
+        // Boost agendado pro futuro.
         const agendadoPraFuturo =
             local.startAt !== null && local.startAt.getTime() > now.getTime();
 
@@ -353,9 +319,7 @@ export async function processarWebhookBoost(
                     where: { id: local.id },
                     data: {
                         status: "APPROVED",
-                        mpPaymentId: details.id,
-                        // activatesAt/expiresAt continuam null →
-                        // sinaliza "aprovado mas ainda não ativado".
+                        mpPaymentId: session.paymentIntentId,
                     },
                 });
                 return { ok: true, applied: true };
@@ -364,7 +328,7 @@ export async function processarWebhookBoost(
             }
         }
 
-        // Ativação imediata (startAt nulo ou já passou).
+        // Ativação imediata.
         try {
             await db.$transaction(async (tx) => {
                 const profile = await tx.acompanhanteProfile.findUnique({
@@ -380,7 +344,7 @@ export async function processarWebhookBoost(
                     where: { id: local.id },
                     data: {
                         status: "APPROVED",
-                        mpPaymentId: details.id,
+                        mpPaymentId: session.paymentIntentId,
                         activatesAt: now,
                         expiresAt: newBoostUntil,
                     },
@@ -391,8 +355,6 @@ export async function processarWebhookBoost(
                     data: { boostUntil: newBoostUntil },
                 });
 
-                // Notifica boost ativado (imediato) na mesma
-                // transação (V2).
                 await criarNotificacao({
                     userId: local.userId,
                     type: "BOOST_ATIVADO",
@@ -406,36 +368,11 @@ export async function processarWebhookBoost(
         }
     }
 
-    if (
-        status === "rejected" ||
-        status === "cancelled" ||
-        status === "refunded" ||
-        status === "charged_back"
-    ) {
-        const newStatus =
-            status === "refunded" || status === "charged_back"
-                ? "REFUNDED"
-                : "REJECTED";
-        try {
-            await db.boostPayment.update({
-                where: { id: local.id },
-                data: {
-                    status: newStatus,
-                    mpPaymentId: details.id,
-                },
-            });
-            return { ok: true, applied: true };
-        } catch {
-            return { ok: false, reason: "PERSISTENCIA" };
-        }
-    }
-
-    // `pending`, `in_process`, `authorized`, etc. — não aplica nada,
-    // mas grava o `mp_payment_id` pra reconciliação futura.
+    // Session expirada ou não paga — grava o PI pra reconciliação.
     try {
         await db.boostPayment.update({
             where: { id: local.id },
-            data: { mpPaymentId: details.id },
+            data: { mpPaymentId: session.paymentIntentId },
         });
     } catch {
         // best-effort.

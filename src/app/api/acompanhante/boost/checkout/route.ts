@@ -74,7 +74,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (result.reason === "PERFIL_NAO_ENCONTRADO") {
         return NextResponse.json(result, { status: 404 });
     }
-    if (result.reason === "MP_NAO_CONFIGURADO") {
+    if (result.reason === "PAGAMENTO_NAO_CONFIGURADO") {
         return NextResponse.json(result, { status: 503 });
     }
     if (result.reason === "AGENDAMENTO_INVALIDO") {

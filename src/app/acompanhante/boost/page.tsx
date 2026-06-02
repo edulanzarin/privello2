@@ -172,7 +172,7 @@ export default async function BoostPage() {
                     size="sm"
                     icon={<FlameIcon size={20} />}
                     title="Como funciona o pagamento"
-                    description="Você é redirecionado para o Mercado Pago. Após a confirmação, o boost ativa automaticamente. Pode levar alguns segundos."
+                    description="Você é redirecionado para o checkout seguro. Após a confirmação, o boost ativa automaticamente. Pode levar alguns segundos."
                 />
             </Card>
         </PageSurface>

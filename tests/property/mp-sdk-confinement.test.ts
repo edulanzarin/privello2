@@ -104,29 +104,48 @@ function importsMercadoPagoSdk(sourceText: string): boolean {
 const TS_FILES = collectTsFiles(SRC_ROOT);
 
 describe("Property 33: Mercado Pago SDK confinement", () => {
-    it("only src/lib/payments/mercadopago.ts may import the `mercadopago` package", () => {
-        // Sanity check: the walker must have actually found source files. If
-        // this ever returns zero, the property would trivially "pass" while
-        // providing no real coverage — fail loudly instead.
-        expect(TS_FILES.length, "nenhum arquivo .ts/.tsx encontrado em src/").toBeGreaterThan(0);
-
-        // Sanity check: the canonical importer must exist on disk so the
-        // confinement we are asserting is meaningful.
-        const allowedAbsolute = resolve(PROJECT_ROOT, ALLOWED_IMPORTER_POSIX);
-        expect(
-            TS_FILES.includes(allowedAbsolute),
-            `arquivo permitido ${ALLOWED_IMPORTER_POSIX} não foi encontrado em src/`,
-        ).toBe(true);
+    it("no file imports the `mercadopago` package (SDK removed)", () => {
+        // After migration to Stripe, the `mercadopago` package was
+        // uninstalled. This test ensures it doesn't creep back in.
+        expect(TS_FILES.length).toBeGreaterThan(0);
 
         fc.assert(
             fc.property(fc.constantFrom(...TS_FILES), (absolutePath) => {
                 const posixPath = toPosixRelative(absolutePath);
                 const sourceText = readFileSync(absolutePath, "utf8");
                 if (!importsMercadoPagoSdk(sourceText)) return;
-                if (posixPath === ALLOWED_IMPORTER_POSIX) return;
                 throw new Error(
-                    `Violação de confinamento do SDK do Mercado Pago: ${posixPath} ` +
-                    `importa o pacote 'mercadopago'. Apenas ${ALLOWED_IMPORTER_POSIX} ` +
+                    `SDK do Mercado Pago removido, mas ${posixPath} importa 'mercadopago'. ` +
+                    "Remova a dependência (migrado para Stripe).",
+                );
+            }),
+            { numRuns: TS_FILES.length },
+        );
+    });
+
+    it("only src/lib/payments/stripe.ts may import the `stripe` package", () => {
+        const STRIPE_ALLOWED = "src/lib/payments/stripe.ts";
+        const allowedAbsolute = resolve(PROJECT_ROOT, STRIPE_ALLOWED);
+        expect(
+            TS_FILES.includes(allowedAbsolute),
+            `arquivo permitido ${STRIPE_ALLOWED} não foi encontrado em src/`,
+        ).toBe(true);
+
+        function importsStripeSdk(sourceText: string): boolean {
+            const re =
+                /(?:from|import|require)\s*\(?\s*["'`](stripe)(\/[^"'`]*)?["'`]/g;
+            return re.test(sourceText);
+        }
+
+        fc.assert(
+            fc.property(fc.constantFrom(...TS_FILES), (absolutePath) => {
+                const posixPath = toPosixRelative(absolutePath);
+                const sourceText = readFileSync(absolutePath, "utf8");
+                if (!importsStripeSdk(sourceText)) return;
+                if (posixPath === STRIPE_ALLOWED) return;
+                throw new Error(
+                    `Violação de confinamento do SDK do Stripe: ${posixPath} ` +
+                    `importa o pacote 'stripe'. Apenas ${STRIPE_ALLOWED} ` +
                     "tem permissão (Requirement 7.8).",
                 );
             }),

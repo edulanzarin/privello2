@@ -26,8 +26,6 @@ export const ENV_KEYS = [
     "R2_SECRET_ACCESS_KEY",
     "R2_BUCKET",
     "R2_PUBLIC_BASE_URL",
-    "MP_ACCESS_TOKEN",
-    "MP_ENVIRONMENT",
     "IBGE_BASE_URL",
     "IBGE_CACHE_TTL_HOURS",
 ] as const;
@@ -74,13 +72,6 @@ const ttlHoursSchema = z
         },
     );
 
-const mpEnvironmentSchema = z
-    .string({ required_error: "MP_ENVIRONMENT é obrigatório" })
-    .min(1, "MP_ENVIRONMENT não pode ser vazio")
-    .refine((value) => value === "sandbox" || value === "production", {
-        message: 'MP_ENVIRONMENT deve ser "sandbox" ou "production"',
-    });
-
 const urlSchema = (label: string) =>
     z
         .string({ required_error: `${label} é obrigatório` })
@@ -124,8 +115,13 @@ export const ENV_SCHEMA = z.object({
     R2_BUCKET: nonEmpty("R2_BUCKET"),
     R2_PUBLIC_BASE_URL: urlSchema("R2_PUBLIC_BASE_URL"),
 
-    MP_ACCESS_TOKEN: nonEmpty("MP_ACCESS_TOKEN"),
-    MP_ENVIRONMENT: mpEnvironmentSchema,
+    // Mercado Pago — legacy, mantido opcional pra não derrubar o boot.
+    MP_ACCESS_TOKEN: z.string().optional(),
+    MP_ENVIRONMENT: z.string().optional(),
+
+    // Stripe (pagamento ativo).
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
     IBGE_BASE_URL: urlSchema("IBGE_BASE_URL"),
     IBGE_CACHE_TTL_HOURS: ttlHoursSchema,

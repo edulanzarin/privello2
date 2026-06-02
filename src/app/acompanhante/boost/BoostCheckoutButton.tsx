@@ -113,7 +113,7 @@ export function BoostCheckoutButton({
         <div className="flex flex-col gap-3">
             {pendingPaymentId !== null ? (
                 <InlineAlert tone="info">
-                    Você tem um pagamento aguardando confirmação do Mercado Pago.
+                    Você tem um pagamento aguardando confirmação.
                     Se já pagou, aguarde alguns segundos e atualize a página.
                 </InlineAlert>
             ) : null}
@@ -191,7 +191,7 @@ function reasonToMessage(reason: string): string {
     switch (reason) {
         case "PERFIL_NAO_ENCONTRADO":
             return "Perfil não encontrado.";
-        case "MP_NAO_CONFIGURADO":
+        case "PAGAMENTO_NAO_CONFIGURADO":
             return "Pagamentos indisponíveis no momento. Tente novamente mais tarde.";
         case "AGENDAMENTO_INVALIDO":
             return "Data de início inválida. Escolha entre agora e 30 dias à frente.";

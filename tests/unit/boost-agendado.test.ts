@@ -111,9 +111,9 @@ const stores = vi.hoisted(() => ({
     profiles: new Map<string, { userId: string; boostUntil: Date | null }>(),
 }));
 
-vi.mock("@/lib/payments/mercadopago", () => ({
-    MercadoPagoError: class extends Error {},
-    createMercadoPagoClient: () => ({
+vi.mock("@/lib/payments/stripe", () => ({
+    StripeError: class extends Error {},
+    createStripeClient: () => ({
         isConfigured: () => false,
     }),
 }));
