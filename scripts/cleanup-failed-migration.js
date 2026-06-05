@@ -1,25 +1,26 @@
 #!/usr/bin/env node
 /* eslint-disable */
 /**
- * One-shot: limpa entrada órfã da migration `20260202_fan_payments`
- * em `_prisma_migrations` no Postgres.
+ * One-shot: limpa entradas órfãs (failed) de migrations problemáticas
+ * em `_prisma_migrations` no Postgres antes do `migrate deploy`.
  *
  * # Por quê
  *
- * A migration original tinha timestamp `20260202_*` mas dependia do
- * enum `BoostPaymentStatus`, criado pela migration de julho 2026.
- * Em ordenação por timestamp, o `migrate deploy` aplicava `fan_payments`
- * antes do enum existir e abortava, deixando a entrada `failed` em
- * `_prisma_migrations`. A migration foi renomeada pra timestamp
- * `20260735000000_*` (depois do enum existir), mas a entrada falhada
- * antiga ainda bloqueia o `migrate deploy` com P3009.
+ * Algumas migrations da história do projeto falham em bases novas:
  *
- * Este script remove a entrada antiga (idempotente: se não existir,
- * sai 0). Roda no boot do container, antes do `migrate deploy`.
+ *   1. `20260202_fan_payments`: timestamp original (fevereiro) anterior
+ *      à criação do enum `BoostPaymentStatus` (julho). Renomeada para
+ *      `20260735000000_fan_payments`, mas a entrada antiga falhada fica
+ *      em `_prisma_migrations` e bloqueia o `migrate deploy` (P3009).
  *
- * É seguro: a tabela `fan_payments` nunca foi criada (a migration
- * abortou antes), então não há schema corrompido. Apenas limpamos o
- * registro de tentativa falhada.
+ *   2. `20260716000000_fan_planos_com_expiracao`: comparava
+ *      `plano_vigente` com `'FAN_24H'`, label que nunca existiu em
+ *      bases limpas. Reescrita com bloco PL/pgSQL idempotente, mas a
+ *      tentativa anterior também deixa entrada falhada.
+ *
+ * Este script remove essas entradas antes de re-rodar (idempotente).
+ * É seguro: as migrations falham antes de criar/alterar schema (ou
+ * quando alteram, são idempotentes via IF EXISTS / IF NOT EXISTS).
  *
  * Usa o Prisma Client (já presente no standalone) em vez de adicionar
  * `pg` como dependência só pra isso.
@@ -34,7 +35,19 @@
 
 const { PrismaClient } = require("@prisma/client");
 
-const OLD_MIGRATION_NAME = "20260202_fan_payments";
+/**
+ * Migrations cuja entrada órfã (failed) deve ser removida de
+ * `_prisma_migrations` antes de re-rodar. Cada uma tem um motivo
+ * e foi corrigida no fonte; só falta limpar o registro de falha.
+ */
+const FAILED_MIGRATIONS_TO_CLEAN = [
+    // Migration original tinha timestamp 20260202_* mas dependia de enum
+    // criado em julho 2026; renomeada para 20260735000000_fan_payments.
+    "20260202_fan_payments",
+    // UPDATE comparava plano_vigente com 'FAN_24H' (label inexistente
+    // em base limpa); reescrita com bloco DO/PL-pgSQL idempotente.
+    "20260716000000_fan_planos_com_expiracao",
+];
 
 async function main() {
     const prisma = new PrismaClient();
@@ -56,18 +69,18 @@ async function main() {
 
         const removed = await prisma.$executeRawUnsafe(
             `DELETE FROM _prisma_migrations
-             WHERE migration_name = $1
+             WHERE migration_name = ANY($1::text[])
                AND finished_at IS NULL`,
-            OLD_MIGRATION_NAME,
+            FAILED_MIGRATIONS_TO_CLEAN,
         );
 
         if (removed > 0) {
             console.log(
-                `[cleanup-failed-migration] removida entrada órfã de ${OLD_MIGRATION_NAME} (${removed} linha)`,
+                `[cleanup-failed-migration] removidas ${removed} entrada(s) órfã(s)`,
             );
         } else {
             console.log(
-                `[cleanup-failed-migration] nada a remover (entrada órfã não encontrada)`,
+                `[cleanup-failed-migration] nada a remover (sem entradas órfãs)`,
             );
         }
     } finally {
