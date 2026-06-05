@@ -6,7 +6,13 @@
 // PascalCase model names are exposed to the application via Prisma Client.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Targets binários do engine do Prisma:
+  //   - `native`      → o que rodar no host de dev (Linux x64 OpenSSL 3, macOS, etc).
+  //   - `linux-musl-openssl-3.0.x` → para o runtime no container Alpine (Node 20-alpine
+  //     usa OpenSSL 3.x). Sem este target, o `migrate deploy` no Railway falha com
+  //     "Prisma failed to detect the libssl/openssl version".
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {

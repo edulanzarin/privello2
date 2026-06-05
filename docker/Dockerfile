@@ -32,6 +32,10 @@ RUN npm ci
 FROM node:20-alpine AS build
 WORKDIR /app
 
+# OpenSSL é necessário para o `prisma generate` resolver o binary
+# target `linux-musl-openssl-3.0.x` no estágio de build.
+RUN apk add --no-cache openssl libc6-compat
+
 # SKIP_ENV_VALIDATION=1 evita que next.config.ts chame validateEnv() durante
 # o `next build` no Railway, onde as variáveis de runtime ainda não existem.
 ENV NEXT_TELEMETRY_DISABLED=1 \
@@ -60,7 +64,10 @@ ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
 # Install a tiny init so signals are forwarded properly to the Node process.
-RUN apk add --no-cache tini
+# Also install openssl: o engine do Prisma carrega libssl em runtime (`migrate
+# deploy` e queries). Node 20 Alpine não traz openssl por padrão, e sem ele o
+# Prisma falha com "Could not parse schema engine response".
+RUN apk add --no-cache tini openssl libc6-compat
 
 # Standalone Next.js server — auto-gerado pelo `next build` com output:"standalone".
 # Contém server.js + node_modules trimados. Não precisa do src/ em runtime.
