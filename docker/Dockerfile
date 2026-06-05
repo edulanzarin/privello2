@@ -94,4 +94,4 @@ COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 EXPOSE 3000
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["sh", "-c", "node ./scripts/check-env.js && node ./node_modules/prisma/build/index.js migrate deploy && node server.js"]
+CMD ["sh", "-c", "node ./scripts/check-env.js && node ./scripts/cleanup-failed-migration.js && node ./node_modules/prisma/build/index.js migrate deploy && node server.js"]
