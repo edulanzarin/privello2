@@ -225,11 +225,15 @@ export function createStripeClient(
             try {
                 const session = await s.checkout.sessions.create({
                     mode: "payment",
-                    // Aceita cartão e PIX. PIX é assíncrono: a sessão
-                    // completa com `payment_status: unpaid` e a
-                    // confirmação chega depois via
+                    // Sem `payment_method_types`: o Stripe usa a config
+                    // de "Payment methods" do dashboard, mostrando
+                    // automaticamente os métodos habilitados (cartão,
+                    // PIX, boleto, etc.). Pra ativar PIX, basta
+                    // habilitar em Settings → Payment methods no
+                    // dashboard. PIX é assíncrono: a sessão completa
+                    // com `payment_status: unpaid` e a confirmação
+                    // chega depois via
                     // `checkout.session.async_payment_succeeded`.
-                    payment_method_types: ["card", "pix"],
                     client_reference_id: input.clientReferenceId,
                     customer_email: input.customerEmail,
                     success_url: input.successUrl,
@@ -258,9 +262,15 @@ export function createStripeClient(
                 return { id: session.id, url: session.url };
             } catch (err) {
                 if (err instanceof StripeError) throw err;
+                // Inclui a mensagem real do Stripe (ex.: payment method
+                // não habilitado, key inválida, currency não suportado)
+                // pra que o caller possa logar o motivo concreto sem
+                // ter que escarafunchar `cause`.
+                const stripeMessage =
+                    err instanceof Error ? err.message : String(err);
                 throw new StripeError(
                     "STRIPE_REQUEST_FAILED",
-                    "Falha ao criar Checkout Session no Stripe.",
+                    `Falha ao criar Checkout Session no Stripe: ${stripeMessage}`,
                     err,
                 );
             }
