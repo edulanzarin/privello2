@@ -59,6 +59,7 @@ const PROTECTED_PREFIXES = ["/cliente", "/acompanhante"] as const;
 /** Headers internos sob controle exclusivo do middleware. */
 const X_SESSION_ID_HEADER = "x-session-id";
 const X_PATHNAME_HEADER = "x-pathname";
+const X_SEARCH_HEADER = "x-search";
 
 function isProtectedPath(pathname: string): boolean {
     return PROTECTED_PREFIXES.some(
@@ -80,7 +81,12 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const requestHeaders = new Headers(request.headers);
     // Remove qualquer valor enviado pelo cliente para evitar spoofing.
     requestHeaders.delete(X_SESSION_ID_HEADER);
+    requestHeaders.delete(X_SEARCH_HEADER);
     requestHeaders.set(X_PATHNAME_HEADER, pathname);
+    // Expõe a query string pra layouts/Server Components (ex.: o
+    // layout da Acompanhante preserva `?payment=success` ao
+    // redirecionar pra seleção de plano após pagamento PIX pendente).
+    requestHeaders.set(X_SEARCH_HEADER, request.nextUrl.search);
     if (sessionId !== null) {
         requestHeaders.set(X_SESSION_ID_HEADER, sessionId);
     }

@@ -17,8 +17,8 @@
 
 /**
  * Preço do boost em centavos (BRL). Mantido como inteiro para
- * evitar imprecisão de ponto flutuante. Mercado Pago aceita
- * valores em float, mas convertemos só na borda da integração.
+ * evitar imprecisão de ponto flutuante. Stripe aceita
+ * valores em centavos diretamente na API.
  *
  * R$ 9,90 = 990 centavos.
  */

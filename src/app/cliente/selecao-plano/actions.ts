@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
-import { comprarFan, selecionar } from "@/server/planos-cliente";
+import { criarPagamentoFan, selecionar } from "@/server/planos-cliente";
+import type { PlanoClienteDuracao } from "@/domain/plano-cliente/definitions";
 
 /**
  * Sistema_de_Planos_Cliente — server actions de seleção e compra.
@@ -15,11 +16,9 @@ import { comprarFan, selecionar } from "@/server/planos-cliente";
  *   - {@link selecionarPlanoClienteAction}: para opção sem custo
  *     (`GRATIS`). Idempotente; aceita `tipo` cru do formulário.
  *   - {@link comprarFanClienteAction}: para compra de Fan com
- *     duração específica (`FAN_24H`, `FAN_7D`, `FAN_30D`). Quando
- *     o Mercado Pago real estiver plugado, esta ação cria uma
- *     `Preference` e redireciona pro `init_point`. Hoje (sem
- *     credenciais MP), aplica direto `comprarFan(duracao)` —
- *     suficiente para dev/staging.
+ *     duração específica (`FAN_24H`, `FAN_7D`, `FAN_30D`). Cria
+ *     um checkout session do Stripe e redireciona o usuário.
+ *     O webhook do Stripe ativa o plano após pagamento aprovado.
  *
  * Premissa de autenticação: o `layout.tsx` da rota `cliente` já
  * garante sessão válida com `userType=CLIENTE`. Estas actions
@@ -83,9 +82,8 @@ export async function selecionarPlanoClienteAction(
  * Espera no `formData`:
  *   - `duracao`: chave da duração (`FAN_24H` | `FAN_7D` | `FAN_30D`).
  *
- * Hoje aplica direto via `comprarFan` (não há checkout MP real).
- * Quando as credenciais MP entrarem, este path cria `Preference` e
- * redireciona — `comprarFan` então é chamado pelo webhook.
+ * Cria um checkout session do Stripe e redireciona o usuário.
+ * O webhook do Stripe ativa o plano após pagamento aprovado.
  */
 export async function comprarFanClienteAction(
     formData: FormData,
@@ -95,15 +93,46 @@ export async function comprarFanClienteAction(
         return { error: "Opção inválida" };
     }
 
+    if (duracaoRaw !== "FAN_24H" && duracaoRaw !== "FAN_7D" && duracaoRaw !== "FAN_30D") {
+        return { error: "Opção inválida" };
+    }
+
     const userId = await resolverClienteId();
-    const result = await comprarFan(userId, duracaoRaw);
+    
+    // Busca o email do usuário para preencher no checkout.
+    const cookieStore = await cookies();
+    const rawCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const sessionId = await verifySessionCookie(rawCookie);
+    if (sessionId === null) {
+        return { error: "Sessão inválida" };
+    }
+    const session = await resolveSession(sessionId);
+    if (session === null) {
+        return { error: "Sessão inválida" };
+    }
+    
+    // Determina o baseUrl para o checkout.
+    const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        "http://localhost:3000";
+
+    const result = await criarPagamentoFan({
+        userId,
+        duracao: duracaoRaw as PlanoClienteDuracao,
+        baseUrl,
+    });
 
     if (!result.ok) {
-        if (result.reason === "INVALIDO") {
+        if (result.reason === "DURACAO_INVALIDA") {
             return { error: "Opção inválida" };
+        }
+        if (result.reason === "PAGAMENTO_NAO_CONFIGURADO") {
+            return { error: "Pagamento não configurado. Contate o suporte." };
         }
         return { error: "Não foi possível processar agora. Tente novamente." };
     }
 
-    redirect("/cliente");
+    // Redireciona pro checkout do Stripe.
+    redirect(result.checkoutUrl);
 }

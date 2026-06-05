@@ -18,7 +18,7 @@ import { NextResponse } from "next/server";
  * vai estar diferente. Validamos comparando contra o `host` da
  * request — não precisa de tabela de tokens nem extra round-trip.
  *
- * Para webhooks externos (ex.: Mercado Pago) e o próprio
+ * Para webhooks externos (ex.: Stripe) e o próprio
  * `/api/health`, isenções explicitas são feitas dentro do handler
  * antes de invocar o guard.
  *

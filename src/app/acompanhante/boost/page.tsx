@@ -24,9 +24,9 @@ import { BoostCheckoutButton } from "./BoostCheckoutButton";
  * # Fluxo
  *
  * 1. **Sem boost ativo**: mostra a proposta + valor + benefícios e
- *    o botão "Comprar boost" que dispara o checkout do Mercado Pago
+ *    o botão "Comprar boost" que dispara o checkout do Stripe
  *    (POST `/api/acompanhante/boost/checkout` → redirect pra
- *    `init_point` da Preference).
+ *    a checkout session URL).
  * 2. **Com boost ativo**: mostra o card "Em chamas" com o tempo
  *    restante (countdown ao vivo) e a opção de "Estender por mais
  *    24h" — comprar de novo durante a janela ativa adiciona horas

@@ -1,3 +1,6 @@
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
 import { AppShell } from "@/components";
 import { buildNavItems } from "@/components/shell/navItems";
 import { getCurrentSession } from "@/server/auth/currentSession";
@@ -14,24 +17,52 @@ import { getCurrentSession } from "@/server/auth/currentSession";
  *
  * O layout resolve a sessão atual via {@link getCurrentSession} e
  * passa o `userType` (ou `null` para anônimos) para
- * {@link buildNavItems}, que monta os itens da `BottomNav`. A aba
- * "Conta" é renomeada para "Criar Conta" e aponta para `/cadastro`
- * quando o visitante não está autenticado.
+ * {@link buildNavItems}, que monta os itens da `BottomNav`.
  *
- * # Diferença para os layouts `cliente`/`acompanhante`
+ * # Restrição da Acompanhante
  *
- * Este layout **não força redirecionamento** — é a casa de páginas
- * públicas (home, busca, reels) que aceitam visitantes anônimos. As
- * áreas `acompanhante` e `cliente` continuam com seus próprios
- * layouts contendo redirects condicionais (incluindo o redirect
- * baseado em `planoVigente` para Acompanhante, Requirements 5.5/5.10).
+ * Uma Acompanhante autenticada **não** navega nas abas públicas
+ * (home, busca, reels, perfis de outras Acompanhantes). O escopo dela
+ * é o próprio painel (`/acompanhante/*`, que cobre planos/boost) e o
+ * **próprio** perfil público (`/acompanhantes/<seu-identificador>`).
+ * Qualquer outra rota do `(shell)` redireciona para `/acompanhante`.
+ *
+ * Visitantes anônimos e Clientes continuam com acesso livre às páginas
+ * públicas — este grupo é a casa deles.
+ *
+ * O `pathname` vem do header `x-pathname` injetado pelo middleware
+ * (Server Components não recebem o pathname como prop).
  */
+
+const ACOMPANHANTE_HOME = "/acompanhante";
+
 export default async function ShellLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
     const session = await getCurrentSession();
+
+    // Gate da Acompanhante: só pode ver o próprio perfil público.
+    if (session?.userType === "ACOMPANHANTE") {
+        const headerStore = await headers();
+        const rawPath = headerStore.get("x-pathname") ?? "";
+        // Normaliza: tira trailing slash, decodifica e baixa a caixa
+        // (identificador é case-insensitive — Requirement 2.4).
+        const pathname = decodeURIComponent(rawPath)
+            .replace(/\/+$/, "")
+            .toLowerCase();
+        const proprioPerfil =
+            `/acompanhantes/${session.identificador}`.toLowerCase();
+
+        // Permite apenas o próprio perfil público. Qualquer outra
+        // rota pública (home, busca, reels, perfil de terceiros) é
+        // redirecionada para o painel dela.
+        if (pathname !== proprioPerfil) {
+            redirect(ACOMPANHANTE_HOME);
+        }
+    }
+
     const navItems = buildNavItems({
         userType: session?.userType ?? null,
         identificador: session?.identificador,

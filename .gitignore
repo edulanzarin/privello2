@@ -39,6 +39,7 @@ next-env.d.ts.bak
 # editors
 .idea/
 .vscode/
+.claude/
 
 # OS
 Thumbs.db

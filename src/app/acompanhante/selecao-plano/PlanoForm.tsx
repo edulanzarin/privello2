@@ -6,39 +6,17 @@ import { useActionState } from "react";
 import { ArrowRightIcon, Button, type ButtonVariant } from "@/components";
 
 import {
-    selecionarPlanoAction,
-    type SelecionarPlanoActionError,
+    comprarPlanoAcompanhanteAction,
+    type ComprarPlanoActionError,
 } from "./actions";
 
-/**
- * Estado renderizado pelo formulário da Selecao_de_Plano.
- *
- * Pode ser:
- * - `null`: estado inicial, sem mensagem.
- * - `SelecionarPlanoActionError`: erro retornado por
- *   {@link selecionarPlanoAction} (`INVALIDO` → "Opção inválida";
- *   `PERSISTENCIA` → "Não foi possível salvar. Tente novamente.").
- */
-type FormState = SelecionarPlanoActionError | null;
+type FormState = ComprarPlanoActionError | null;
 
-/**
- * Wrapper de `useActionState` para a Selecao_de_Plano.
- *
- * O contrato `(formData) => Promise<void | { error }>` da action não é
- * compatível com o tipo de `<form action={...}>`, que exige
- * `(formData) => void | Promise<void>`. Este componente client traduz
- * essa diferença via `useActionState`, expondo a mensagem de erro à
- * página sem precisar transformar o `<form>` em estado controlado.
- *
- * Em sucesso, a action chama `redirect("/acompanhante")` e o estado
- * permanece `null` — a navegação ocorre antes que qualquer re-render
- * volte ao componente.
- */
 async function reducer(
     _prev: FormState,
     formData: FormData,
 ): Promise<FormState> {
-    const result = await selecionarPlanoAction(formData);
+    const result = await comprarPlanoAcompanhanteAction(formData);
     return result ?? null;
 }
 

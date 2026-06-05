@@ -2,7 +2,19 @@
  * Sistema_de_Planos_Cliente — serviço de seleção e renovação de
  * plano de Cliente.
  *
- * O plano `FAN` agora tem duração comprável (24h, 7 dias, 30 dias).
+ * O plano `FAN` agora tem duração comprável (24h, 7 dias, 30 dias)
+ * via checkout do Stripe. O fluxo:
+ *
+ * 1. **Criar checkout** — `criarPagamentoFan(userId, duracao)`:
+ *    cria um `FanPayment` em `PENDING`, gera um `external_reference`
+ *    único, cria a Checkout Session no Stripe e devolve a URL de
+ *    redirect.
+ *
+ * 2. **Webhook do Stripe** — `processarWebhookFan(session)`:
+ *    recebe o `SessionDetails` via webhook do Stripe, reconcilia
+ *    com o `FanPayment` local pelo `client_reference_id`, e quando
+ *    aprovado aplica `comprarFan` (estende `planoExpiraEm`).
+ *
  * O `selecionar` aceita a chave de duração e calcula
  * `planoExpiraEm = now + duracaoMs`. Se o Cliente já tem `FAN`
  * ativo, comprar nova duração **estende** a janela existente
@@ -22,6 +34,8 @@
  * (`planoVigente: GRATIS`) é feito por GC noturno (não bloqueante).
  */
 
+import { randomUUID } from "node:crypto";
+
 import {
     PLANO_CLIENTE_DEFINITIONS,
     PLANO_CLIENTE_DURACOES,
@@ -32,6 +46,10 @@ import {
     type PlanoClienteTipo,
 } from "@/domain/plano-cliente/definitions";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
+
+/** Cliente Prisma dentro de uma transação (`$transaction`). */
+type PrismaTransactionClient = Prisma.TransactionClient;
 
 // ---------------------------------------------------------------------------
 // Tipos públicos
@@ -164,7 +182,7 @@ export async function selecionar(
 export async function comprarFan(
     clienteId: string,
     duracaoChave: string,
-    opts: SelecionarPlanoClienteOptions = {},
+    opts: SelecionarPlanoClienteOptions & { client?: PrismaTransactionClient } = {},
 ): Promise<ComprarFanResult> {
     if (
         duracaoChave !== "FAN_24H" &&
@@ -175,10 +193,11 @@ export async function comprarFan(
     }
 
     const now = opts.now ?? new Date();
+    const client = opts.client ?? db;
     const duracao = PLANO_CLIENTE_DURACOES[duracaoChave as PlanoClienteDuracao];
 
     try {
-        const current = await db.clientProfile.findUnique({
+        const current = await client.clientProfile.findUnique({
             where: { userId: clienteId },
             select: { planoVigente: true, planoExpiraEm: true },
         });
@@ -195,7 +214,7 @@ export async function comprarFan(
         );
         const expiraEm = new Date(baseMs + duracao.duracaoMs);
 
-        await db.clientProfile.update({
+        await client.clientProfile.update({
             where: { userId: clienteId },
             data: {
                 planoVigente: "FAN",
@@ -244,4 +263,255 @@ export async function obterVigente(
     }
 
     return PLANO_CLIENTE_DEFINITIONS[profile.planoVigente];
+}
+
+
+// ---------------------------------------------------------------------------
+// Checkout do plano Fan (Stripe)
+// ---------------------------------------------------------------------------
+
+import {
+    StripeError,
+    createStripeClient,
+    type StripeClient,
+} from "@/lib/payments/stripe";
+
+let stripeClientSingleton: StripeClient | null = null;
+
+function getStripeClient(): StripeClient {
+    if (!stripeClientSingleton) {
+        stripeClientSingleton = createStripeClient();
+    }
+    return stripeClientSingleton;
+}
+
+export type CriarPagamentoFanInput = {
+    /** Cliente autenticado. */
+    userId: string;
+    /** Duração comprada: FAN_24H, FAN_7D ou FAN_30D. */
+    duracao: PlanoClienteDuracao;
+    /**
+     * URL base do app (ex.: `https://www.privello.com.br`). Usada
+     * para construir as URLs de sucesso/cancelamento enviadas ao
+     * Stripe.
+     */
+    baseUrl: string;
+    /** Email do pagador (preenche automático no checkout). */
+    payerEmail?: string;
+};
+
+export type CriarPagamentoFanResult =
+    | { ok: true; checkoutUrl: string; paymentId: string }
+    | {
+        ok: false;
+        reason:
+            | "PERFIL_NAO_ENCONTRADO"
+            | "PAGAMENTO_NAO_CONFIGURADO"
+            | "DURACAO_INVALIDA"
+            | "PERSISTENCIA";
+    };
+
+/**
+ * Cria um novo `FanPayment` em estado `PENDING`, gera a
+ * checkout session no Stripe e devolve a URL de checkout.
+ */
+export async function criarPagamentoFan(
+    input: CriarPagamentoFanInput,
+): Promise<CriarPagamentoFanResult> {
+    // 1. Verifica que existe Cliente para este userId.
+    const profile = await db.clientProfile.findUnique({
+        where: { userId: input.userId },
+        select: { userId: true },
+    });
+    if (!profile) {
+        return { ok: false, reason: "PERFIL_NAO_ENCONTRADO" };
+    }
+
+    const stripe = getStripeClient();
+    if (!stripe.isConfigured()) {
+        return { ok: false, reason: "PAGAMENTO_NAO_CONFIGURADO" };
+    }
+
+    const definicao = PLANO_CLIENTE_DURACOES[input.duracao];
+    if (!definicao) {
+        return { ok: false, reason: "DURACAO_INVALIDA" };
+    }
+
+    // 2. Cria o registro local primeiro.
+    const externalReference = `fan_${randomUUID()}`;
+    let payment;
+    try {
+        payment = await db.fanPayment.create({
+            data: {
+                userId: input.userId,
+                amountCents: definicao.precoCents,
+                currency: "BRL",
+                duracao: input.duracao,
+                status: "PENDING",
+                externalReference,
+            },
+            select: { id: true },
+        });
+    } catch {
+        return { ok: false, reason: "PERSISTENCIA" };
+    }
+
+    // 3. Cria o Checkout Session no Stripe.
+    const baseUrl = input.baseUrl.replace(/\/$/, "");
+    const successUrl = `${baseUrl}/cliente?payment=success&ref=${externalReference}`;
+    const cancelUrl = `${baseUrl}/cliente/selecao-plano?payment=cancel&ref=${externalReference}`;
+
+    let session;
+    try {
+        session = await stripe.createCheckoutSession({
+            items: [
+                {
+                    name: `Plano Fan · ${definicao.label}`,
+                    description: `Acesso total aos perfis por ${definicao.label.toLowerCase()}`,
+                    quantity: 1,
+                    unitAmountCents: definicao.precoCents,
+                    currency: "brl",
+                },
+            ],
+            clientReferenceId: externalReference,
+            successUrl,
+            cancelUrl,
+            customerEmail: input.payerEmail,
+            metadata: { userId: input.userId, duracao: input.duracao },
+        });
+    } catch (err) {
+        // Marca como rejected pra não ficar PENDING órfão.
+        try {
+            await db.fanPayment.update({
+                where: { id: payment.id },
+                data: { status: "REJECTED" },
+            });
+        } catch {
+            // best-effort.
+        }
+        if (err instanceof StripeError) {
+            if (err.code === "STRIPE_NOT_CONFIGURED") {
+                return { ok: false, reason: "PAGAMENTO_NAO_CONFIGURADO" };
+            }
+        }
+        return { ok: false, reason: "PERSISTENCIA" };
+    }
+
+    // 4. Atualiza o registro com o Stripe Session ID.
+    try {
+        await db.fanPayment.update({
+            where: { id: payment.id },
+            data: { stripeSessionId: session.id },
+        });
+    } catch {
+        // best-effort: webhook ainda chega via client_reference_id.
+    }
+
+    return {
+        ok: true,
+        checkoutUrl: session.url,
+        paymentId: payment.id,
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Processar webhook do Fan
+// ---------------------------------------------------------------------------
+
+export type ProcessarWebhookFanResult =
+    | { ok: true; applied: boolean }
+    | {
+        ok: false;
+        reason: "PAGAMENTO_NAO_ENCONTRADO" | "PERSISTENCIA";
+    };
+
+/**
+ * Reconcilia o status de um pagamento via webhook do Stripe.
+ *
+ * Recebe o `SessionDetails` já verificado pelo webhook handler.
+ * Fluxo:
+ *   1. Localiza o `FanPayment` local pelo `clientReferenceId`
+ *      (= `externalReference`).
+ *   2. Idempotência: se já `APPROVED` com o mesmo `paymentIntentId`,
+ *      retorna `applied: false`.
+ *   3. Quando `paymentStatus === "paid"`:
+ *      - Marca como `APPROVED`, grava `paymentIntentId`.
+ *      - Chama `comprarFan` pra estender `planoExpiraEm`.
+ *   4. Caso contrário: grava o `paymentIntentId` para reconciliação.
+ */
+export async function processarWebhookFan(
+    session: {
+        clientReferenceId: string | null;
+        paymentStatus: string;
+        paymentIntentId: string | null;
+    },
+    options: { now?: Date } = {},
+): Promise<ProcessarWebhookFanResult> {
+    if (!session.clientReferenceId) {
+        return { ok: false, reason: "PAGAMENTO_NAO_ENCONTRADO" };
+    }
+
+    const local = await db.fanPayment.findUnique({
+        where: { externalReference: session.clientReferenceId },
+        select: {
+            id: true,
+            status: true,
+            stripePaymentIntentId: true,
+            userId: true,
+            duracao: true,
+        },
+    });
+    if (!local) {
+        return { ok: false, reason: "PAGAMENTO_NAO_ENCONTRADO" };
+    }
+
+    // Idempotência: webhook duplicado.
+    if (
+        local.stripePaymentIntentId === session.paymentIntentId &&
+        local.status !== "PENDING"
+    ) {
+        return { ok: true, applied: false };
+    }
+
+    const now = options.now ?? new Date();
+
+    if (session.paymentStatus === "paid") {
+        try {
+            await db.$transaction(async (tx) => {
+                // Aplica a duração via comprarFan.
+                const result = await comprarFan(
+                    local.userId,
+                    local.duracao,
+                    { now, client: tx },
+                );
+                if (!result.ok) {
+                    throw new Error(`comprarFan failed: ${result.reason}`);
+                }
+
+                // Marca como aprovado.
+                await tx.fanPayment.update({
+                    where: { id: local.id },
+                    data: {
+                        status: "APPROVED",
+                        stripePaymentIntentId: session.paymentIntentId,
+                        appliedAt: now,
+                    },
+                });
+            });
+            return { ok: true, applied: true };
+        } catch {
+            return { ok: false, reason: "PERSISTENCIA" };
+        }
+    }
+
+    // Session expirada ou não paga — grava o PI pra reconciliação.
+    try {
+        await db.fanPayment.update({
+            where: { id: local.id },
+            data: { stripePaymentIntentId: session.paymentIntentId },
+        });
+    } catch {
+        // best-effort.
+    }
+    return { ok: true, applied: false };
 }

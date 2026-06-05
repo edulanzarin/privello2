@@ -15,7 +15,7 @@ import { formatarPrecoBoost } from "@/domain/boost/definitions";
  *
  * Dispara `POST /api/acompanhante/boost/checkout` e, em sucesso,
  * redireciona o navegador (`window.location.href`) para a URL do
- * Checkout Pro do Mercado Pago retornada pelo servidor.
+ * Checkout do Stripe retornada pelo servidor.
  *
  * Estados:
  *  - `ativo === false`: rótulo "Comprar boost (R$ 9,90)".
@@ -93,7 +93,7 @@ export function BoostCheckoutButton({
                 toast.danger(reasonToMessage(payload?.reason ?? "DESCONHECIDO"));
                 return;
             }
-            // Redireciona pro checkout do Mercado Pago.
+            // Redireciona pro checkout do Stripe.
             window.location.href = payload.checkoutUrl;
         } catch {
             toast.danger("Falha de rede. Tente novamente.");

@@ -8,6 +8,7 @@ import {
     MetricPill,
     MicIcon,
     PageSurface,
+    PaymentResultBanner,
     PlayCircleIcon,
     ProfileCoverEditor,
     ProfilePhotoEditor,
@@ -85,7 +86,11 @@ import { obterStatusVerificacao } from "@/server/verification";
  *    `src/app/acompanhante/_painel/`.
  */
 
-export default async function AcompanhantePainelPage() {
+export default async function AcompanhantePainelPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ payment?: string; status?: string }>;
+}) {
     const session = await getCurrentSession();
     // Layout garante presença de sessão; assert estrutural defensivo:
     if (!session) {
@@ -94,6 +99,9 @@ export default async function AcompanhantePainelPage() {
         // não-nulo abaixo sem complicar a UI com guarda extra.
         throw new Error("Painel acessado sem sessão resolvida.");
     }
+
+    const sp = await searchParams;
+    const paymentStatus = sp.payment ?? sp.status;
 
     const [perfil, planoVigente] = await Promise.all([
         obterPerfilAcompanhante(session.userId),
@@ -194,6 +202,7 @@ export default async function AcompanhantePainelPage() {
         <PageSurface
             banner={<ProfileCoverEditor coverUrl={perfil.coverUrl} />}
         >
+            <PaymentResultBanner status={paymentStatus} />
             <ProfilePhotoEditor
                 photoUrl={perfil.fotoUrl}
                 name={perfil.nome}

@@ -1,116 +1,150 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 
 import { processarWebhookBoost } from "@/server/boost";
+import { processarWebhookFan } from "@/server/planos-cliente";
+import { processarWebhookPlano } from "@/server/planos";
 import { createStripeClient } from "@/lib/payments/stripe";
-import { logger } from "@/lib/observability/logger";
-
-export const runtime = "nodejs";
-
-const log = logger("stripe/webhook");
 
 /**
- * Webhook do Stripe.
- *
- * O Stripe envia POST para esta URL quando o checkout session é
- * completado. O evento é verificado via assinatura HMAC
- * (`STRIPE_WEBHOOK_SECRET`). Quando o secret não está configurado
- * (dev sem domínio), aceita o payload sem verificação — NÃO USAR
- * em produção sem o secret.
+ * Webhook do Stripe para eventos de Checkout Session.
  *
  * Eventos tratados:
- * - `checkout.session.completed` — pagamento aprovado.
- * - `checkout.session.expired` — sessão expirou sem pagar.
+ * - `checkout.session.completed` — cartão aprovado (síncrono) ou
+ *   início de PIX (assíncrono, status `unpaid`).
+ * - `checkout.session.async_payment_succeeded` — PIX confirmado.
+ * - `checkout.session.async_payment_failed` — PIX falhou/expirou.
+ * - `checkout.session.expired` — checkout não concluído no prazo.
  *
- * Sempre retorna 200 para evitar retries desnecessários. Erros são
- * logados.
+ * Roteia para os serviços apropriados baseado no `client_reference_id`:
+ * - `boost_*` → {@link processarWebhookBoost}
+ * - `fan_*` → {@link processarWebhookFan}
+ * - `plano_*` → {@link processarWebhookPlano}
+ *
+ * CSRF exempt: webhooks externos não têm cookie de sessão. A
+ * autenticidade é garantida pela assinatura HMAC do Stripe
+ * (verificada via `stripe.webhooks.constructEvent`).
  */
 export async function POST(request: Request): Promise<NextResponse> {
     const stripe = createStripeClient();
-
-    const body = await request.text();
-    const signature = request.headers.get("stripe-signature") ?? "";
-
-    // Tenta verificar a assinatura. Se o webhook secret não está
-    // configurado (dev), parseia o JSON diretamente como fallback
-    // inseguro — aceito APENAS em dev/staging.
-    let event: {
-        type: string;
-        data: {
-            object: {
-                client_reference_id?: string | null;
-                payment_status?: string;
-                payment_intent?: string | null;
-            };
-        };
-    } | null = null;
-
-    const verified = stripe.constructWebhookEvent(body, signature);
-    if (verified) {
-        event = {
-            type: verified.type,
-            data: {
-                object: {
-                    client_reference_id:
-                        verified.data.object.clientReferenceId,
-                    payment_status: verified.data.object.paymentStatus,
-                    payment_intent: verified.data.object.paymentIntentId,
-                },
-            },
-        };
-    } else if (
-        process.env.NODE_ENV !== "production" &&
-        !process.env.STRIPE_WEBHOOK_SECRET
-    ) {
-        // Dev fallback — aceita sem verificação.
-        try {
-            const raw = JSON.parse(body) as {
-                type?: string;
-                data?: { object?: Record<string, unknown> };
-            };
-            if (raw.type && raw.data?.object) {
-                const obj = raw.data.object;
-                event = {
-                    type: raw.type,
-                    data: {
-                        object: {
-                            client_reference_id:
-                                (obj.client_reference_id as string) ?? null,
-                            payment_status:
-                                (obj.payment_status as string) ?? "unpaid",
-                            payment_intent:
-                                typeof obj.payment_intent === "string"
-                                    ? obj.payment_intent
-                                    : null,
-                        },
-                    },
-                };
-            }
-        } catch {
-            // JSON inválido — ignora.
-        }
+    if (!stripe.isConfigured()) {
+        return NextResponse.json(
+            { error: "Stripe not configured" },
+            { status: 503 },
+        );
     }
 
-    if (!event) {
-        log.warn("webhook com assinatura inválida ou payload mal-formado");
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
         return NextResponse.json(
-            { ok: false, reason: "INVALID_SIGNATURE" },
+            { error: "Webhook secret not configured" },
+            { status: 503 },
+        );
+    }
+
+    const body = await request.text();
+    const headersList = await headers();
+    const signature = headersList.get("stripe-signature");
+
+    if (!signature) {
+        return NextResponse.json(
+            { error: "Missing signature" },
             { status: 400 },
         );
     }
 
-    // Só processa checkout.session.completed (pagamento feito).
-    if (event.type === "checkout.session.completed") {
-        const obj = event.data.object;
-        try {
-            await processarWebhookBoost({
-                clientReferenceId: obj.client_reference_id ?? null,
-                paymentStatus: obj.payment_status ?? "unpaid",
-                paymentIntentId: obj.payment_intent ?? null,
-            });
-        } catch (err) {
-            log.error("falha ao processar webhook stripe", err);
+    try {
+        const event = stripe.constructWebhookEvent(body, signature);
+        
+        if (!event) {
+            return NextResponse.json(
+                { error: "Invalid signature" },
+                { status: 400 },
+            );
         }
-    }
 
-    return NextResponse.json({ ok: true }, { status: 200 });
+        // Processa eventos de checkout session relevantes:
+        // - completed: cartão (síncrono, vem `paid`) ou início de PIX
+        //   (vem `unpaid`, confirmação chega no async_payment_succeeded).
+        // - async_payment_succeeded: PIX confirmado pelo cliente.
+        // - async_payment_failed: PIX expirou/falhou.
+        // - expired: checkout não concluído no prazo.
+        if (
+            event.type !== "checkout.session.completed" &&
+            event.type !== "checkout.session.async_payment_succeeded" &&
+            event.type !== "checkout.session.async_payment_failed" &&
+            event.type !== "checkout.session.expired"
+        ) {
+            return NextResponse.json({ received: true });
+        }
+
+        const session = event.data.object;
+        const clientReferenceId = session.clientReferenceId;
+
+        if (!clientReferenceId) {
+            // Sem referência, não sabemos rotear — ignora.
+            return NextResponse.json({ received: true });
+        }
+
+        // Para PIX, a confirmação real vem no async_payment_succeeded.
+        // Normalizamos o status: o evento de sucesso assíncrono sempre
+        // significa pago, independente do payment_status da sessão.
+        const paymentStatus =
+            event.type === "checkout.session.async_payment_succeeded"
+                ? "paid"
+                : session.paymentStatus;
+
+        const sessionDetails = {
+            clientReferenceId,
+            paymentStatus,
+            paymentIntentId: session.paymentIntentId,
+        };
+
+        // Roteamento baseado no prefixo do client_reference_id.
+        if (clientReferenceId.startsWith("boost_")) {
+            const result = await processarWebhookBoost(sessionDetails);
+            if (!result.ok) {
+                console.error(
+                    `[webhook] boost failed: ${result.reason}`,
+                    sessionDetails,
+                );
+            }
+            return NextResponse.json({ received: true });
+        }
+
+        if (clientReferenceId.startsWith("fan_")) {
+            const result = await processarWebhookFan(sessionDetails);
+            if (!result.ok) {
+                console.error(
+                    `[webhook] fan failed: ${result.reason}`,
+                    sessionDetails,
+                );
+            }
+            return NextResponse.json({ received: true });
+        }
+
+        if (clientReferenceId.startsWith("plano_")) {
+            const result = await processarWebhookPlano(sessionDetails);
+            if (!result.ok) {
+                console.error(
+                    `[webhook] plano failed: ${result.reason}`,
+                    sessionDetails,
+                );
+            }
+            return NextResponse.json({ received: true });
+        }
+
+        // Prefixo desconhecido — ignora.
+        console.warn(
+            `[webhook] unknown client_reference_id prefix: ${clientReferenceId}`,
+        );
+        return NextResponse.json({ received: true });
+    } catch (err) {
+        console.error("[webhook] error processing webhook", err);
+        return NextResponse.json(
+            { error: "Webhook processing failed" },
+            { status: 500 },
+        );
+    }
 }
+

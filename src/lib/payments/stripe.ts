@@ -225,6 +225,11 @@ export function createStripeClient(
             try {
                 const session = await s.checkout.sessions.create({
                     mode: "payment",
+                    // Aceita cartão e PIX. PIX é assíncrono: a sessão
+                    // completa com `payment_status: unpaid` e a
+                    // confirmação chega depois via
+                    // `checkout.session.async_payment_succeeded`.
+                    payment_method_types: ["card", "pix"],
                     client_reference_id: input.clientReferenceId,
                     customer_email: input.customerEmail,
                     success_url: input.successUrl,

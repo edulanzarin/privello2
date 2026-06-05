@@ -257,7 +257,9 @@ model User {
   medias        Media[]
   loginAttempts LoginAttempt[]
   passwordResetTokens PasswordResetToken[]
-  boostPayments BoostPayment[]
+  boostPayments   BoostPayment[]
+  fanPayments     FanPayment[]
+  planoPayments   PlanoAcompanhantePayment[]
   reviewsReceived AcompanhanteReview[] @relation("ReviewTarget")
   reviewsAuthored AcompanhanteReview[] @relation("ReviewAuthor")
   questionsReceived AcompanhanteQuestion[] @relation("QuestionTarget")
@@ -328,6 +330,10 @@ model AcompanhanteProfile {
   videoApresentacao  Media?     @relation("VideoDeApresentacao", fields: [videoApresentacaoId], references: [id])
   planoVigente       PlanoTipo? @map("plano_vigente")
   planoSelecionadoEm DateTime?  @map("plano_selecionado_em")
+  /// Expiração do plano vigente. Quando `now() > planoExpiraEm`, o perfil
+  /// é tratado como sem plano (downgrade lazy). Setado pelo webhook do Stripe
+  /// via `processarWebhookPlano`. Compras adicionais ESTENDEM a janela.
+  planoExpiraEm      DateTime?  @map("plano_expira_em")
 
   // Características físicas e perfil — todos opcionais. Coletados de
   // forma enxuta no Onboarding_Acompanhante (step "Aparência") e
@@ -364,7 +370,7 @@ model AcompanhanteProfile {
 
   // Janela ativa do Boost (promoção paga de 24h que dá prioridade
   // total em buscas e destaque na home). `NULL` ou no passado =
-  // sem boost. Setado pelo webhook do Mercado Pago via
+  // sem boost. Setado pelo webhook do Stripe via
   // `processarWebhookBoost`.
   boostUntil         DateTime?      @map("boost_until")
 
@@ -719,14 +725,14 @@ model IbgeCacheEntry {
 ///
 /// Boost é uma promoção de 24h que dá prioridade total em buscas e
 /// destaque na home. Cada compra cria um `BoostPayment` em `PENDING`
-/// e uma `Preference` correspondente no Mercado Pago. O webhook do
-/// MP confirma a aprovação via `processarWebhookBoost`, que atualiza
+/// e uma Checkout Session correspondente no Stripe. O webhook do
+/// Stripe confirma a aprovação via `processarWebhookBoost`, que atualiza
 /// `status` para `APPROVED` e estende `AcompanhanteProfile.boostUntil`
 /// em +24h.
 ///
-/// Idempotência: `externalReference` é único e enviado ao MP como
-/// `external_reference` da preference. Webhooks duplicados são
-/// detectados comparando `mp_payment_id` antes de aplicar a janela.
+/// Idempotência: `externalReference` é único e enviado ao Stripe como
+/// `client_reference_id` da checkout session. Webhooks duplicados são
+/// detectados comparando `stripe_payment_intent_id` antes de aplicar a janela.
 model BoostPayment {
   id                 String             @id @default(uuid()) @db.Uuid
   userId             String             @map("user_id") @db.Uuid
@@ -735,8 +741,8 @@ model BoostPayment {
   currency           String             @default("BRL") @db.VarChar(3)
   status             BoostPaymentStatus @default(PENDING)
   externalReference  String             @unique @map("external_reference") @db.VarChar(80)
-  mpPreferenceId     String?            @unique @map("mp_preference_id") @db.VarChar(120)
-  mpPaymentId        String?            @map("mp_payment_id") @db.VarChar(120)
+  stripeSessionId    String?            @unique @map("stripe_session_id") @db.VarChar(120)
+  stripePaymentIntentId String?         @map("stripe_payment_intent_id") @db.VarChar(120)
   /// Momento em que o boost deve COMEÇAR. `NULL` = imediato (ativa
   /// assim que o pagamento é aprovado). Quando preenchido e no
   /// futuro, o webhook aprova o pagamento mas NÃO estende
@@ -752,6 +758,70 @@ model BoostPayment {
   @@index([userId, status, createdAt(sort: Desc)])
   @@index([status, activatesAt, startAt])
   @@map("boost_payments")
+}
+
+/// Registro de uma compra de plano Fan do Cliente.
+///
+/// Fan é um plano pago com durações variadas (24h, 7d, 30d) que
+/// libera acesso total aos perfis (reels ilimitados, Q&A, etc).
+/// Cada compra cria um `FanPayment` em `PENDING` e uma Checkout
+/// Session correspondente no Stripe. O webhook do Stripe confirma
+/// a aprovação via `processarWebhookFan`, que atualiza `status`
+/// para `APPROVED` e estende `ClientProfile.planoExpiraEm`.
+///
+/// Idempotência: `externalReference` é único e enviado ao Stripe
+/// como `client_reference_id`. Webhooks duplicados são detectados
+/// comparando `stripe_payment_intent_id` antes de aplicar a duração.
+model FanPayment {
+  id                    String             @id @default(uuid()) @db.Uuid
+  userId                String             @map("user_id") @db.Uuid
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountCents           Int                @map("amount_cents")
+  currency              String             @default("BRL") @db.VarChar(3)
+  /// Duração comprada: FAN_24H, FAN_7D ou FAN_30D.
+  duracao               String             @db.VarChar(20)
+  status                BoostPaymentStatus @default(PENDING)
+  externalReference     String             @unique @map("external_reference") @db.VarChar(80)
+  stripeSessionId       String?            @unique @map("stripe_session_id") @db.VarChar(120)
+  stripePaymentIntentId String?            @map("stripe_payment_intent_id") @db.VarChar(120)
+  /// Quando o pagamento é aprovado e a duração aplicada.
+  appliedAt             DateTime?          @map("applied_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  @@index([userId, status, createdAt(sort: Desc)])
+  @@map("fan_payments")
+}
+
+/// Registro de uma compra de plano (Básico ou Premium) da Acompanhante.
+///
+/// Cada compra cria um `PlanoAcompanhantePayment` em `PENDING` e uma
+/// Checkout Session correspondente no Stripe. O webhook do Stripe confirma
+/// via `processarWebhookPlano`, que atualiza `status` para `APPROVED` e
+/// estende `AcompanhanteProfile.planoExpiraEm` em +30 dias.
+///
+/// Idempotência: `externalReference` é único e enviado ao Stripe como
+/// `client_reference_id`. Webhooks duplicados são detectados comparando
+/// `stripe_payment_intent_id` antes de aplicar a duração.
+model PlanoAcompanhantePayment {
+  id                    String             @id @default(uuid()) @db.Uuid
+  userId                String             @map("user_id") @db.Uuid
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountCents           Int                @map("amount_cents")
+  currency              String             @default("BRL") @db.VarChar(3)
+  /// Plano comprado: BASICO ou PREMIUM.
+  plano                 PlanoTipo          @map("plano")
+  status                BoostPaymentStatus @default(PENDING)
+  externalReference     String             @unique @map("external_reference") @db.VarChar(80)
+  stripeSessionId       String?            @unique @map("stripe_session_id") @db.VarChar(120)
+  stripePaymentIntentId String?            @map("stripe_payment_intent_id") @db.VarChar(120)
+  /// Quando o pagamento é aprovado e o plano aplicado.
+  appliedAt             DateTime?          @map("applied_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  @@index([userId, status, createdAt(sort: Desc)])
+  @@map("plano_acompanhante_payments")
 }
 
 /// Avaliação pública deixada por um Cliente em um perfil de

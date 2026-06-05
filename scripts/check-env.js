@@ -17,6 +17,7 @@
 
 "use strict";
 
+// Deve ficar em sincronia com ENV_KEYS em src/lib/env.ts
 const REQUIRED_ENV_KEYS = [
     "DATABASE_URL",
     "SESSION_SECRET",
@@ -26,10 +27,14 @@ const REQUIRED_ENV_KEYS = [
     "R2_SECRET_ACCESS_KEY",
     "R2_BUCKET",
     "R2_PUBLIC_BASE_URL",
-    "MP_ACCESS_TOKEN",
-    "MP_ENVIRONMENT",
     "IBGE_BASE_URL",
     "IBGE_CACHE_TTL_HOURS",
+];
+
+// Stripe é obrigatório em produção mas opcional em dev — aviso sem abortar.
+const STRIPE_KEYS = [
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
 ];
 
 function findMissing(source) {
@@ -46,23 +51,32 @@ function findMissing(source) {
 function main() {
     const missing = findMissing(process.env);
 
-    if (missing.length === 0) {
-        // Sucesso silencioso: comportamento amigável para uso em CMD do Docker.
-        process.exit(0);
+    if (missing.length > 0) {
+        const header =
+            "[privello] Falha na validação de variáveis de ambiente. Variáveis ausentes:";
+        process.stderr.write(header + "\n");
+        for (const key of missing) {
+            process.stderr.write(`  - ${key}\n`);
+        }
+        process.stderr.write(
+            `[privello] Total de variáveis ausentes: ${missing.length}. ` +
+            "Defina-as antes de iniciar o servidor.\n",
+        );
+        process.exit(1);
     }
 
-    const header =
-        "[privello] Falha na validação de variáveis de ambiente. Variáveis ausentes:";
-    process.stderr.write(header + "\n");
-    for (const key of missing) {
-        process.stderr.write(`  - ${key}\n`);
-    }
-    process.stderr.write(
-        `[privello] Total de variáveis ausentes: ${missing.length}. ` +
-        "Defina-as antes de iniciar o servidor.\n",
+    // Aviso (não fatal) para chaves Stripe ausentes — pagamentos ficam desabilitados.
+    const missingStripe = STRIPE_KEYS.filter(
+        (k) => !process.env[k] || process.env[k] === "",
     );
+    if (missingStripe.length > 0) {
+        process.stderr.write(
+            `[privello] AVISO: Chaves Stripe ausentes (${missingStripe.join(", ")}). ` +
+            "Pagamentos estarão desabilitados.\n",
+        );
+    }
 
-    process.exit(1);
+    process.exit(0);
 }
 
 main();

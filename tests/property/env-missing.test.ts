@@ -42,8 +42,6 @@ const PLACEHOLDERS: Record<(typeof ENV_KEYS)[number], string> = {
     R2_SECRET_ACCESS_KEY: "secret-access-key",
     R2_BUCKET: "bucket",
     R2_PUBLIC_BASE_URL: "https://example.com",
-    MP_ACCESS_TOKEN: "mp-token",
-    MP_ENVIRONMENT: "sandbox",
     IBGE_BASE_URL: "https://servicodados.ibge.gov.br/api",
     IBGE_CACHE_TTL_HOURS: "72",
 };

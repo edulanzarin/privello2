@@ -115,12 +115,9 @@ export const ENV_SCHEMA = z.object({
     R2_BUCKET: nonEmpty("R2_BUCKET"),
     R2_PUBLIC_BASE_URL: urlSchema("R2_PUBLIC_BASE_URL"),
 
-    // Mercado Pago — legacy, mantido opcional pra não derrubar o boot.
-    MP_ACCESS_TOKEN: z.string().optional(),
-    MP_ENVIRONMENT: z.string().optional(),
-
-    // Stripe (pagamento ativo).
+    // Stripe — processamento de pagamentos (opcional para dev, obrigatório em prod).
     STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_PUBLISHABLE_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
 
     IBGE_BASE_URL: urlSchema("IBGE_BASE_URL"),

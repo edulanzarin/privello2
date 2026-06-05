@@ -5,6 +5,7 @@ import {
     HeartIcon,
     OfferCard,
     OfferLayout,
+    PaymentResultBanner,
     SparklesIcon,
     type OfferBenefit,
 } from "@/components";
@@ -78,11 +79,18 @@ function expiraEmTexto(expiraEm: Date | null, now: Date): string | null {
     return `Expira em ${dias} ${dias === 1 ? "dia" : "dias"}`;
 }
 
-export default async function SelecaoPlanoClientePage() {
+export default async function SelecaoPlanoClientePage({
+    searchParams,
+}: {
+    searchParams: Promise<{ payment?: string; status?: string }>;
+}) {
     const session = await getCurrentSession();
     if (!session) {
         throw new Error("Selecao_de_Plano sem sessão resolvida.");
     }
+
+    const sp = await searchParams;
+    const paymentStatus = sp.payment ?? sp.status;
 
     const planoAtual = await obterVigente(session.userId);
     const perfil = await obterPerfilCliente(session.userId);
@@ -95,7 +103,9 @@ export default async function SelecaoPlanoClientePage() {
     const isPrimeiraEscolha = planoAtual === null;
 
     return (
-        <OfferLayout
+        <>
+            <PaymentResultBanner status={paymentStatus} />
+            <OfferLayout
             eyebrow={isPrimeiraEscolha ? "Bem-vindo à Privello" : "Plano Fan"}
             title={
                 isPrimeiraEscolha
@@ -176,5 +186,6 @@ export default async function SelecaoPlanoClientePage() {
                 );
             })}
         </OfferLayout>
+        </>
     );
 }

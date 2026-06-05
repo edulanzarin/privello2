@@ -107,14 +107,19 @@ const nextConfig: NextConfig = {
             "style-src 'self' 'unsafe-inline'",
             // 'unsafe-inline' em script-src também — Next.js usa
             // inline pra hidratação. 'unsafe-eval' só em dev pro HMR.
+            // Stripe.js é carregado de js.stripe.com (necessário pra
+            // Payment Element / redirect ao Checkout hospedado).
             isProd
-                ? "script-src 'self' 'unsafe-inline'"
-                : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+                ? "script-src 'self' 'unsafe-inline' https://js.stripe.com"
+                : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
             // Maplibre GL roda render num Web Worker carregado de
             // blob: — `worker-src` precisa permitir blob: senão o
             // mapa não inicializa.
             "worker-src 'self' blob:",
-            `connect-src 'self' https://servicodados.ibge.gov.br https://overpass-api.de https://nominatim.openstreetmap.org ${osmTiles.join(" ")}`,
+            `connect-src 'self' https://api.stripe.com https://servicodados.ibge.gov.br https://overpass-api.de https://nominatim.openstreetmap.org ${osmTiles.join(" ")}`,
+            // Stripe injeta iframes (js.stripe.com / hooks.stripe.com)
+            // pra 3D Secure e elementos de pagamento embarcados.
+            "frame-src https://js.stripe.com https://hooks.stripe.com",
             "frame-ancestors 'none'",
             "base-uri 'self'",
             "form-action 'self'",
@@ -130,7 +135,7 @@ const nextConfig: NextConfig = {
             },
             {
                 key: "Permissions-Policy",
-                value: "geolocation=(), camera=(), microphone=(self), payment=()",
+                value: "geolocation=(), camera=(), microphone=(self), payment=(self)",
             },
         ];
 

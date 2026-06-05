@@ -115,8 +115,8 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
  * Catálogo imutável de durações vendáveis do plano `FAN`.
  *
  * Os preços iniciais são placeholders editáveis pelo time de
- * produto. Quando o Mercado Pago real for plugado, as durações
- * apontam pra IDs distintos no MP (ou usam `external_reference`
+ * produto. Quando o Stripe real for plugado, as durações
+ * apontam pra produtos distintos no Stripe (ou usam `client_reference_id`
  * com prefixo).
  */
 export const PLANO_CLIENTE_DURACOES = Object.freeze({

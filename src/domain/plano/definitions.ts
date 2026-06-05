@@ -47,6 +47,10 @@ export type PlanoDefinition = {
      * Premium (sem teto prático).
      */
     limiteReels: number;
+    /** Preço mensal em centavos (BRL). */
+    precoCents: number;
+    /** Duração da assinatura em milissegundos (30 dias). */
+    duracaoMs: number;
 };
 
 /**
@@ -59,6 +63,8 @@ export type PlanoDefinition = {
  * - `PREMIUM` (tier 1): até 50 mídias, com Stories, prioridade em
  *   busca e áudio ("Ouça minha voz").
  */
+const PLANO_DURACAO_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias
+
 export const PLANO_DEFINITIONS = Object.freeze({
     BASICO: Object.freeze({
         tipo: "BASICO",
@@ -69,6 +75,8 @@ export const PLANO_DEFINITIONS = Object.freeze({
         permiteAudio: false,
         permiteReels: true,
         limiteReels: 20,
+        precoCents: 4990,
+        duracaoMs: PLANO_DURACAO_MS,
     }),
     PREMIUM: Object.freeze({
         tipo: "PREMIUM",
@@ -79,6 +87,8 @@ export const PLANO_DEFINITIONS = Object.freeze({
         permiteAudio: true,
         permiteReels: true,
         limiteReels: Number.POSITIVE_INFINITY,
+        precoCents: 9990,
+        duracaoMs: PLANO_DURACAO_MS,
     }),
 } as const) satisfies Readonly<Record<PlanoTipo, PlanoDefinition>>;
 

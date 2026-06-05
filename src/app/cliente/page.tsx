@@ -6,6 +6,7 @@ import {
     LogoutButton,
     MetricPill,
     PageSurface,
+    PaymentResultBanner,
     PlayCircleIcon,
     ProfilePhotoEditor,
     SearchIcon,
@@ -71,13 +72,20 @@ import { PerfilTab } from "./_painel/PerfilTab";
  * adicionado junto com a feature de cada tipo de interação.
  */
 
-export default async function ClientePainelPage() {
+export default async function ClientePainelPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ payment?: string; status?: string }>;
+}) {
     const session = await getCurrentSession();
     if (!session) {
         // Inalcançável em produção (layout protege) — defesa estática
         // para o type-checker.
         throw new Error("Painel acessado sem sessão resolvida.");
     }
+
+    const sp = await searchParams;
+    const paymentStatus = sp.payment ?? sp.status;
 
     const perfil = await obterPerfilCliente(session.userId);
     if (!perfil) {
@@ -101,6 +109,7 @@ export default async function ClientePainelPage() {
 
     return (
         <PageSurface>
+            <PaymentResultBanner status={paymentStatus} />
             <ProfilePhotoEditor
                 photoUrl={perfil.fotoUrl}
                 name={perfil.nome}

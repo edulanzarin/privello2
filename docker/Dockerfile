@@ -32,7 +32,10 @@ RUN npm ci
 FROM node:20-alpine AS build
 WORKDIR /app
 
-ENV NEXT_TELEMETRY_DISABLED=1
+# SKIP_ENV_VALIDATION=1 evita que next.config.ts chame validateEnv() durante
+# o `next build` no Railway, onde as variáveis de runtime ainda não existem.
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    SKIP_ENV_VALIDATION=1
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -41,8 +44,7 @@ COPY . .
 # even if a developer hasn't populated them yet.
 RUN mkdir -p public prisma scripts
 
-# Generate Prisma client (no-op if prisma/schema.prisma is absent during
-# very early bootstrap) and build the Next.js application.
+# Generate Prisma client and build the Next.js application.
 RUN if [ -f prisma/schema.prisma ]; then npx prisma generate; fi \
  && npm run build
 
@@ -60,17 +62,26 @@ ENV NODE_ENV=production \
 # Install a tiny init so signals are forwarded properly to the Node process.
 RUN apk add --no-cache tini
 
-# Copy build artifacts and runtime files.
-COPY --from=build /app/.next ./.next
+# Standalone Next.js server — auto-gerado pelo `next build` com output:"standalone".
+# Contém server.js + node_modules trimados. Não precisa do src/ em runtime.
+COPY --from=build /app/.next/standalone ./
+
+# Assets estáticos e pasta public (o server.js os serve de caminhos relativos).
+COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/package-lock.json ./package-lock.json
-COPY --from=build /app/next.config.ts ./next.config.ts
+
+# Schema + migrations do Prisma (necessários para `prisma migrate deploy`).
 COPY --from=build /app/prisma ./prisma
+
+# Script de validação de env que roda antes do servidor subir.
 COPY --from=build /app/scripts ./scripts
+
+# CLI do Prisma (devDependency — não está no standalone node_modules).
+COPY --from=build /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=build /app/node_modules/prisma ./node_modules/prisma
+COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 
 EXPOSE 3000
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["sh", "-c", "node ./scripts/check-env.js && npx prisma migrate deploy && npm run start -- -p ${PORT:-3000} -H ${HOSTNAME:-0.0.0.0}"]
+CMD ["sh", "-c", "node ./scripts/check-env.js && node ./node_modules/.bin/prisma migrate deploy && node server.js"]

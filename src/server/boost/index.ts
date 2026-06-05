@@ -4,26 +4,26 @@
  * Boost é uma promoção paga de 24h que dá prioridade total nas
  * buscas e destaque na home. Implementação:
  *
- * 1. **Criar preferência** — `criarPagamentoBoost(userId, baseUrl)`:
+ * 1. **Criar checkout session** — `criarPagamentoBoost(userId, baseUrl)`:
  *    cria um `BoostPayment` em `PENDING`, gera um
- *    `external_reference` único, cria a Preference no Mercado Pago
- *    e devolve a URL de redirect (`init_point`).
+ *    `external_reference` único, cria a Checkout Session no Stripe
+ *    e devolve a URL de redirect.
  *
- * 2. **Webhook do MP** — `processarWebhookBoost(paymentId)`:
- *    recebe o `id` do payment via webhook do MP, consulta o status
- *    via `getPayment`, reconcilia com o `BoostPayment` local pelo
- *    `external_reference`, e quando aprovado:
+ * 2. **Webhook do Stripe** — `processarWebhookBoost(session)`:
+ *    recebe o `SessionDetails` via webhook do Stripe, reconcilia
+ *    com o `BoostPayment` local pelo `client_reference_id`, e
+ *    quando aprovado:
  *      - estende `AcompanhanteProfile.boostUntil` em +24h
  *        (cumulativo se já houver janela ativa);
  *      - marca o pagamento como `APPROVED` com `activatesAt`/
  *        `expiresAt` preenchidos.
- *    Idempotente via `mp_payment_id`: webhook duplicado não
- *    aplica duas janelas.
+ *    Idempotente via `stripe_payment_intent_id`: webhook duplicado
+ *    não aplica duas janelas.
  *
  * 3. **Status** — `obterStatusBoost(userId)`: lê o estado vigente
  *    para o painel/UI.
  *
- * Falhas do Mercado Pago são contidas e mapeadas em códigos de
+ * Falhas do Stripe são contidas e mapeadas em códigos de
  * resultado discriminados — nada da SDK escapa daqui.
  */
 
@@ -72,9 +72,9 @@ export type CriarPagamentoBoostInput = {
     /** Acompanhante autenticada. */
     userId: string;
     /**
-     * URL base do app (ex.: `https://privello.com`). Usada para
-     * construir as `back_urls` e a `notification_url` enviadas ao
-     * Mercado Pago. Os endpoints internos têm caminhos fixos.
+     * URL base do app (ex.: `https://www.privello.com.br`). Usada
+     * para construir as URLs de sucesso/cancelamento enviadas ao
+     * Stripe. Os endpoints internos têm caminhos fixos.
      */
     baseUrl: string;
     /** Email do pagador (preenche automático no checkout). */
@@ -126,19 +126,19 @@ export type StatusBoost = {
 
 /**
  * Cria um novo `BoostPayment` em estado `PENDING`, gera a
- * preference no Mercado Pago e devolve a URL de checkout.
+ * checkout session no Stripe e devolve a URL de checkout.
  *
  * Fluxo:
  *   1. Garante que o `userId` corresponde a uma Acompanhante.
  *   2. Cria o registro local (`BoostPayment`) com
  *      `external_reference` único — se a transação local falhar,
- *      nada chama o MP.
- *   3. Pede a Preference ao MP (Checkout Pro). Em sucesso, atualiza
- *      o registro com o `mp_preference_id`.
+ *      nada chama o Stripe.
+ *   3. Cria a Checkout Session no Stripe. Em sucesso, atualiza
+ *      o registro com o `stripe_session_id`.
  *   4. Devolve a URL pra qual o front redireciona o usuário.
  *
- * Em caso de falha no MP após o registro local, o `BoostPayment`
- * fica em `PENDING` sem `mp_preference_id` — pode ser limpo por
+ * Em caso de falha no Stripe após o registro local, o `BoostPayment`
+ * fica em `PENDING` sem `stripe_session_id` — pode ser limpo por
  * varredura periódica futura. Não derruba a request por isso.
  */
 export async function criarPagamentoBoost(
@@ -231,7 +231,7 @@ export async function criarPagamentoBoost(
     try {
         await db.boostPayment.update({
             where: { id: payment.id },
-            data: { mpPreferenceId: session.id },
+            data: { stripeSessionId: session.id },
         });
     } catch {
         // best-effort: webhook ainda chega via client_reference_id.
@@ -289,7 +289,7 @@ export async function processarWebhookBoost(
         select: {
             id: true,
             status: true,
-            mpPaymentId: true,
+            stripePaymentIntentId: true,
             userId: true,
             startAt: true,
         },
@@ -300,7 +300,7 @@ export async function processarWebhookBoost(
 
     // Idempotência: webhook duplicado.
     if (
-        local.mpPaymentId === session.paymentIntentId &&
+        local.stripePaymentIntentId === session.paymentIntentId &&
         local.status !== "PENDING"
     ) {
         return { ok: true, applied: false };
@@ -319,7 +319,7 @@ export async function processarWebhookBoost(
                     where: { id: local.id },
                     data: {
                         status: "APPROVED",
-                        mpPaymentId: session.paymentIntentId,
+                        stripePaymentIntentId: session.paymentIntentId,
                     },
                 });
                 return { ok: true, applied: true };
@@ -344,7 +344,7 @@ export async function processarWebhookBoost(
                     where: { id: local.id },
                     data: {
                         status: "APPROVED",
-                        mpPaymentId: session.paymentIntentId,
+                        stripePaymentIntentId: session.paymentIntentId,
                         activatesAt: now,
                         expiresAt: newBoostUntil,
                     },
@@ -372,7 +372,7 @@ export async function processarWebhookBoost(
     try {
         await db.boostPayment.update({
             where: { id: local.id },
-            data: { mpPaymentId: session.paymentIntentId },
+            data: { stripePaymentIntentId: session.paymentIntentId },
         });
     } catch {
         // best-effort.

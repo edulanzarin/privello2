@@ -56,6 +56,7 @@ export default async function AcompanhanteLayout({
     const headerStore = await headers();
     const headerSessionId = headerStore.get("x-session-id");
     const pathname = headerStore.get("x-pathname") ?? "";
+    const search = headerStore.get("x-search") ?? "";
 
     let sessionId: string | null = headerSessionId;
     if (!sessionId) {
@@ -78,8 +79,15 @@ export default async function AcompanhanteLayout({
     const isOnSelecaoPlano = pathname === SELECAO_PLANO_PATH;
 
     if (planoVigente === null && !isOnSelecaoPlano) {
-        // Sem plano: só pode estar na página de seleção.
-        redirect(SELECAO_PLANO_PATH);
+        // Sem plano: só pode estar na página de seleção. Preserva o
+        // `?payment=...` pra que, após um PIX pendente, a página de
+        // seleção mostre o aviso "pagamento recebido, aguarde".
+        const params = new URLSearchParams(search);
+        const payment = params.get("payment") ?? params.get("status");
+        const destino = payment
+            ? `${SELECAO_PLANO_PATH}?payment=${encodeURIComponent(payment)}`
+            : SELECAO_PLANO_PATH;
+        redirect(destino);
     }
     if (planoVigente !== null && isOnSelecaoPlano) {
         // Com plano: só permite acessar a página de seleção quando

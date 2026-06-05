@@ -9,6 +9,9 @@
  * Requirements: 6.1, 6.2.
  */
 
+export { PaymentResultBanner } from "./PaymentResultBanner";
+export type { PaymentResultBannerProps } from "./PaymentResultBanner";
+
 export { Button } from "./primitives/Button";
 export type {
     ButtonProps,

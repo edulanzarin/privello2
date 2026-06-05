@@ -1,4 +1,4 @@
-import { MicIcon, OfferCard, OfferLayout, PlanComparison } from "@/components";
+import { MicIcon, OfferCard, OfferLayout, PaymentResultBanner, PlanComparison } from "@/components";
 import {
     PLANO_DEFINITIONS,
     podeAlterarPlano,
@@ -117,13 +117,20 @@ function linhasComparativo() {
     ];
 }
 
-export default async function SelecaoPlanoPage() {
+export default async function SelecaoPlanoPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ payment?: string; status?: string }>;
+}) {
     const session = await getCurrentSession();
     if (!session) {
         // Layout protege esta rota; aqui é defensivo para satisfazer
         // o tipo do `obterVigente`.
         throw new Error("Selecao_de_Plano sem sessão resolvida.");
     }
+
+    const sp = await searchParams;
+    const paymentStatus = sp.payment ?? sp.status;
 
     const planoAtual = await obterVigente(session.userId);
     const planos = listar();
@@ -132,6 +139,7 @@ export default async function SelecaoPlanoPage() {
 
     return (
         <>
+            <PaymentResultBanner status={paymentStatus} />
             <OfferLayout
             eyebrow={isPrimeiraEscolha ? "Sua jornada começa aqui" : "Trocar plano"}
             title={isPrimeiraEscolha ? "Escolha seu plano" : "Faça upgrade"}
