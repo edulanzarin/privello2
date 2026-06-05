@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import {
@@ -55,12 +56,12 @@ function RedefinirForm(): React.ReactElement {
                 title="Link inválido"
                 subtitle="O link de redefinição está incompleto. Solicite um novo."
                 footer={
-                    <a
+                    <Link
                         href="/recuperar-senha"
                         className="font-medium text-accent-deep hover:text-primary-800"
                     >
                         Solicitar novo link
-                    </a>
+                    </Link>
                 }
             >
                 <InlineAlert tone="danger">
@@ -136,12 +137,12 @@ function RedefinirForm(): React.ReactElement {
             title="Redefinir senha"
             subtitle="Crie uma senha nova com pelo menos 8 caracteres."
             footer={
-                <a
+                <Link
                     href="/login"
                     className="font-medium text-accent-deep hover:text-primary-800"
                 >
                     Voltar para o login
-                </a>
+                </Link>
             }
         >
             <form

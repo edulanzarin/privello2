@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
     AuthCard,
     OptionCard,
@@ -59,12 +61,12 @@ export default function EscolhaTipoContaPage(): React.ReactElement {
             footer={
                 <>
                     Já tem conta?{" "}
-                    <a
+                    <Link
                         href="/login"
                         className="font-medium text-accent-deep hover:text-primary-800"
                     >
                         Entrar
-                    </a>
+                    </Link>
                 </>
             }
         >

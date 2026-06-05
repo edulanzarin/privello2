@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 
 import {
     AuthCard,
@@ -80,12 +81,12 @@ export default function RecuperarSenhaPage(): React.ReactElement {
                 title="Verifique seu email"
                 subtitle="Se houver uma conta com esse email, enviamos um link para redefinir a senha. O link expira em 1 hora."
                 footer={
-                    <a
+                    <Link
                         href="/login"
                         className="font-medium text-accent-deep hover:text-primary-800"
                     >
                         Voltar para o login
-                    </a>
+                    </Link>
                 }
             >
                 {devToken !== null ? (
@@ -93,12 +94,12 @@ export default function RecuperarSenhaPage(): React.ReactElement {
                         <span className="block text-xs">
                             <strong>Modo dev:</strong> link de redefinição
                         </span>
-                        <a
+                        <Link
                             href={`/redefinir-senha?token=${devToken}`}
                             className="mt-1 inline-block break-all text-xs text-accent-deep underline"
                         >
                             /redefinir-senha?token={devToken.slice(0, 16)}…
-                        </a>
+                        </Link>
                     </InlineAlert>
                 ) : null}
             </AuthCard>
@@ -110,12 +111,12 @@ export default function RecuperarSenhaPage(): React.ReactElement {
             title="Recuperar senha"
             subtitle="Informe seu email. Enviamos um link de redefinição válido por 1 hora."
             footer={
-                <a
+                <Link
                     href="/login"
                     className="font-medium text-accent-deep hover:text-primary-800"
                 >
                     Voltar para o login
-                </a>
+                </Link>
             }
         >
             <form

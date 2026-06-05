@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import {
@@ -179,19 +180,19 @@ function LoginForm(): React.ReactElement {
                 <div className="flex flex-col items-center gap-1.5">
                     <span>
                         Sem conta ainda?{" "}
-                        <a
+                        <Link
                             href={buildAuthUrl("/cadastro", safeNext)}
                             className="font-medium text-accent-deep hover:text-primary-800"
                         >
                             Criar conta
-                        </a>
+                        </Link>
                     </span>
-                    <a
+                    <Link
                         href="/recuperar-senha"
                         className="text-xs text-text-secondary hover:text-text-primary"
                     >
                         Esqueci minha senha
-                    </a>
+                    </Link>
                 </div>
             }
         >
