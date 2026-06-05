@@ -77,11 +77,14 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/scripts ./scripts
 
 # CLI do Prisma (devDependency — não está no standalone node_modules).
-COPY --from=build /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+# Não copiamos o symlink em .bin/ porque o Docker o dereferencia,
+# fazendo com que `__dirname` do JS aponte pro caminho errado e o
+# Prisma não encontre o `prisma_schema_build_bg.wasm`. Em vez disso,
+# copiamos as pastas e chamamos o JS de origem direto no CMD.
 COPY --from=build /app/node_modules/prisma ./node_modules/prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 
 EXPOSE 3000
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["sh", "-c", "node ./scripts/check-env.js && node ./node_modules/.bin/prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "node ./scripts/check-env.js && node ./node_modules/prisma/build/index.js migrate deploy && node server.js"]
