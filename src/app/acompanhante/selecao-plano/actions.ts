@@ -51,6 +51,13 @@ export async function comprarPlanoAcompanhanteAction(
     });
 
     if (!result.ok) {
+        // Log no servidor pra investigação (a UI mostra mensagem
+        // genérica). `reason` é o código discriminado da action.
+        console.error("[comprarPlanoAcompanhante] falhou", {
+            userId,
+            plano: tipoRaw,
+            reason: result.reason,
+        });
         if (result.reason === "PAGAMENTO_NAO_CONFIGURADO") {
             return { error: "Pagamento não configurado. Contate o suporte." };
         }

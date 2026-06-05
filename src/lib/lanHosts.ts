@@ -1,21 +1,26 @@
 /**
- * Descoberta de hosts da rede local (LAN) pra acesso multi-dispositivo.
+ * Origens permitidas pelas Server Actions e pelo aviso cross-origin do
+ * dev server.
  *
- * Quando o app roda em `npm run dev` / `next start` numa máquina e você
- * abre de outro aparelho da mesma rede (celular, tablet) via
- * `http://192.168.x.y:3000`, o Next precisa reconhecer essa origem como
- * confiável — tanto pro aviso de cross-origin do dev quanto pra
- * validação de Server Actions (que checam `Origin` vs `Host`).
+ * Cobre 3 cenários:
  *
- * Este módulo monta a lista de hosts permitidos a partir de:
- *   1. IPs IPv4 não-internos das interfaces de rede (auto).
- *   2. `localhost` / `127.0.0.1`.
- *   3. Override manual via env `DEV_ALLOWED_HOSTS` (CSV) — útil quando
- *      há proxy/DNS local (ex.: `meupc.local`).
+ *   1. **Dev local + LAN**: descoberta automática dos IPv4 não-internos
+ *      pra acessar o `next dev` de outros aparelhos da rede
+ *      (`http://192.168.x.y:PORT`).
  *
- * Roda só no servidor (usa `node:os`). Em produção atrás de domínio
- * real isto é inócuo — o domínio entra via `DEV_ALLOWED_HOSTS` ou o
- * proxy já normaliza o Host.
+ *   2. **Override manual**: env `DEV_ALLOWED_HOSTS` (CSV) — útil pra
+ *      proxies/DNS locais (ex.: `meupc.local`).
+ *
+ *   3. **Produção**: domínios públicos do site são adicionados
+ *      automaticamente:
+ *        - `NEXT_PUBLIC_SITE_URL` (ex.: `https://www.privello.com.br`)
+ *        - `RAILWAY_PUBLIC_DOMAIN` injetado pelo Railway (subdomínio
+ *          gerado tipo `privello2-production-xxxx.up.railway.app`)
+ *      Sem isso o Next 15 rejeita Server Actions atrás do proxy do
+ *      Railway com mismatch de Origin/Host (a action falha silenciosa
+ *      ou retorna erro genérico).
+ *
+ * Roda só no servidor (usa `node:os`).
  */
 
 import os from "node:os";
@@ -70,12 +75,47 @@ function hostsManuais(): string[] {
 }
 
 /**
- * Monta a lista completa de origens de dev confiáveis: cada IP/host
- * em `host` e `host:porta`. Sem duplicatas.
+ * Extrai o host (sem protocolo, sem path) de uma URL. `null` quando a
+ * entrada é inválida ou vazia.
+ */
+function hostFromUrl(value: string | undefined): string | null {
+    if (!value) return null;
+    try {
+        const u = new URL(value);
+        return u.host;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Hosts de produção descobertos por env: domínio público configurado
+ * (`NEXT_PUBLIC_SITE_URL`) e o subdomínio do Railway
+ * (`RAILWAY_PUBLIC_DOMAIN`). Ambos são opcionais; sem eles, dev local
+ * funciona normalmente.
+ */
+function hostsDeProducao(): string[] {
+    const out: string[] = [];
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const siteHost = hostFromUrl(siteUrl);
+    if (siteHost) out.push(siteHost);
+
+    // Railway injeta automaticamente em runtime e build (com plano
+    // pago) — é o domínio gerado tipo `xxx.up.railway.app`.
+    const railway = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+    if (railway && railway.length > 0) out.push(railway);
+
+    return out;
+}
+
+/**
+ * Monta a lista completa de origens confiáveis: cada IP/host em
+ * `host` e `host:porta`. Sem duplicatas.
  *
  * Usada tanto em `allowedDevOrigins` (aviso de cross-origin do Next
  * dev) quanto em `serverActions.allowedOrigins` (validação de
- * Server Actions).
+ * Server Actions, dev e prod).
  */
 export function devAllowedOrigins(): string[] {
     const p = porta();
@@ -85,6 +125,7 @@ export function devAllowedOrigins(): string[] {
     bases.add("127.0.0.1");
     for (const ip of lanIpv4Addresses()) bases.add(ip);
     for (const h of hostsManuais()) bases.add(h);
+    for (const h of hostsDeProducao()) bases.add(h);
 
     const out = new Set<string>();
     for (const b of bases) {

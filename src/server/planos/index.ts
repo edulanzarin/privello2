@@ -268,7 +268,15 @@ export async function criarPagamentoPlano(
             },
             select: { id: true },
         });
-    } catch {
+    } catch (err) {
+        console.error(
+            "[criarPagamentoPlano] falha ao criar PlanoAcompanhantePayment",
+            {
+                userId: input.userId,
+                plano: input.plano,
+                message: err instanceof Error ? err.message : String(err),
+            },
+        );
         return { ok: false, reason: "PERSISTENCIA" };
     }
 
@@ -299,6 +307,7 @@ export async function criarPagamentoPlano(
             metadata: { userId: input.userId, plano: input.plano },
         });
     } catch (err) {
+        // Marca como rejected pra não ficar PENDING órfão.
         try {
             await db.planoAcompanhantePayment.update({
                 where: { id: payment.id },
@@ -307,6 +316,18 @@ export async function criarPagamentoPlano(
         } catch {
             // best-effort.
         }
+        // Log do erro real pra debug — sem isso o caller só vê o
+        // `reason` discriminado e a causa (Stripe, rede, etc.) some.
+        console.error(
+            "[criarPagamentoPlano] falha no Stripe.createCheckoutSession",
+            {
+                userId: input.userId,
+                plano: input.plano,
+                code:
+                    err instanceof StripeError ? err.code : undefined,
+                message: err instanceof Error ? err.message : String(err),
+            },
+        );
         if (err instanceof StripeError && err.code === "STRIPE_NOT_CONFIGURED") {
             return { ok: false, reason: "PAGAMENTO_NAO_CONFIGURADO" };
         }
