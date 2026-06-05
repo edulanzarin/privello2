@@ -1,33 +1,41 @@
--- Topic Audios — áudios curtos respondendo perguntas comuns.
+-- Topic Audios — parte 1 de 2: cria os tipos.
 --
 -- Recurso pra Acompanhante gravar respostas em áudio (≤30s) pra
 -- perguntas frequentes: "Preço", "Atende casal?", "Disponibilidade"
 -- etc. Aparecem como FAQ sonora no perfil público.
 --
--- Reusa `Media` com novo role `TOPIC_AUDIO` + nova coluna
--- `topic_kind` enum. Cada User pode ter no máximo 1 áudio por
--- `topic_kind` (unique parcial) — gravar de novo substitui o
--- existente.
+-- # Por que dividida em 2 migrations
+--
+-- Postgres exige que valores novos de um enum só sejam usados em
+-- uma transação **diferente** da que os adicionou (erro 55P04:
+-- "unsafe use of new value of enum type"). O Prisma roda cada
+-- migration numa transação. Por isso:
+--
+--   - Esta migration apenas CRIA o enum `TopicAudioKind` e ADICIONA
+--     o valor `TOPIC_AUDIO` ao enum existente `MediaRole`.
+--   - A migration adjacente `20260726000100_topic_audios_part2` usa
+--     o novo valor (coluna + índice unique parcial).
+--
+-- # Idempotência
+--
+-- `CREATE TYPE` e `ALTER TYPE ADD VALUE` são auto-commit no Postgres
+-- e podem ter persistido em uma execução anterior que falhou nas
+-- etapas seguintes. Usamos guards pra que rerunning não quebre.
 
-CREATE TYPE "TopicAudioKind" AS ENUM (
-    'PRECO',
-    'CASAL',
-    'DISPONIBILIDADE',
-    'LOCAL',
-    'PRATICAS',
-    'PAGAMENTO'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type WHERE typname = 'TopicAudioKind'
+    ) THEN
+        CREATE TYPE "TopicAudioKind" AS ENUM (
+            'PRECO',
+            'CASAL',
+            'DISPONIBILIDADE',
+            'LOCAL',
+            'PRATICAS',
+            'PAGAMENTO'
+        );
+    END IF;
+END$$;
 
 ALTER TYPE "MediaRole" ADD VALUE IF NOT EXISTS 'TOPIC_AUDIO';
-
-ALTER TABLE "medias"
-    ADD COLUMN "topic_kind" "TopicAudioKind" NULL;
-
--- Unique parcial: 1 TOPIC_AUDIO ativo por (owner, topic_kind).
--- Filtra status=COMMITTED + role=TOPIC_AUDIO pra que substituições
--- (que marcam o anterior como DELETED) não quebrem o constraint.
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_medias_topic_unique"
-    ON "medias" ("owner_id", "topic_kind")
-    WHERE "role" = 'TOPIC_AUDIO'
-        AND "status" = 'COMMITTED'
-        AND "topic_kind" IS NOT NULL;

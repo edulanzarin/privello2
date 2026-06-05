@@ -47,6 +47,10 @@ const FAILED_MIGRATIONS_TO_CLEAN = [
     // UPDATE comparava plano_vigente com 'FAN_24H' (label inexistente
     // em base limpa); reescrita com bloco DO/PL-pgSQL idempotente.
     "20260716000000_fan_planos_com_expiracao",
+    // Adicionava 'TOPIC_AUDIO' ao enum MediaRole e usava o valor no
+    // mesmo arquivo (Postgres exige transações separadas). Dividida
+    // em part1 (cria tipos) e part2 (usa).
+    "20260726000000_topic_audios",
 ];
 
 async function main() {
