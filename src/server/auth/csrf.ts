@@ -46,7 +46,13 @@ export function isSameOriginRequest(request: Request): boolean {
         return true;
     }
 
-    const requestHost = request.headers.get("host");
+    // Atrás de proxy reverso (Railway, Cloudflare etc.) o `Host`
+    // recebido pelo container costuma vir reescrito; o domínio público
+    // chega em `X-Forwarded-Host`. Preferimos esse header quando
+    // existe, caindo pra `Host` em ambientes diretos (dev local).
+    const requestHost =
+        request.headers.get("x-forwarded-host") ??
+        request.headers.get("host");
     if (!requestHost) {
         return false;
     }

@@ -37,15 +37,18 @@ import {
 /** Caminho do primeiro passo do fluxo de onboarding. */
 const PRIMEIRO_PASSO_PATH = "/cadastro/acompanhante/1";
 
-export async function GET(request: Request): Promise<Response> {
+export async function GET(): Promise<Response> {
     const { onboardingId } = await iniciar();
 
-    const location = new URL(PRIMEIRO_PASSO_PATH, request.url);
-
+    // Location relativo: o browser resolve usando o Host da request
+    // atual. Evita o bug de URL absoluta com `request.url` quando o
+    // app roda atrás de proxy (Railway, Cloudflare etc.), em que
+    // `request.url` é o endereço interno (`http://0.0.0.0:8080/...`),
+    // não o domínio público.
     return new Response(null, {
         status: 303,
         headers: {
-            Location: location.toString(),
+            Location: PRIMEIRO_PASSO_PATH,
             "Set-Cookie": serializeOnboardingCookie(onboardingId),
             // Evita que o navegador/CDN cache uma resposta que cria um
             // recurso novo a cada hit.

@@ -74,7 +74,15 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const sessionId = await verifySessionCookie(rawCookie);
 
     if (sessionId === null && isProtectedPath(pathname)) {
-        const loginUrl = new URL("/login", request.url);
+        // Usa nextUrl.clone() em vez de `new URL("/login", request.url)`
+        // pra que o redirect respeite o domínio público do proxy
+        // (Railway/Cloudflare). `nextUrl` é populado pelo Next a partir
+        // dos forwarded headers; `request.url` cru pode trazer o
+        // endereço interno (`http://0.0.0.0:8080/...`) em alguns
+        // setups.
+        const loginUrl = request.nextUrl.clone();
+        loginUrl.pathname = "/login";
+        loginUrl.search = "";
         return NextResponse.redirect(loginUrl);
     }
 

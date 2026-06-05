@@ -83,7 +83,14 @@ export async function POST(
     } catch {
         // body ausente é OK — vira DIRECT.
     }
-    const siteHost = new URL(request.url).host;
+    // Atrás de proxy reverso (Railway, Cloudflare), `request.url`
+    // pode trazer o endereço interno (`0.0.0.0:8080`). Preferimos
+    // `X-Forwarded-Host` quando disponível pra que a comparação com
+    // o referer reflita o domínio público real.
+    const siteHost =
+        request.headers.get("x-forwarded-host") ??
+        request.headers.get("host") ??
+        new URL(request.url).host;
     const origin = classificarOrigem(referrer, siteHost);
 
     const result = await incrementarVisualizacao(
