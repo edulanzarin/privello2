@@ -45,6 +45,18 @@ export interface OfferCardProps {
     name: React.ReactNode;
     /** Frase curta sob o nome. */
     description: React.ReactNode;
+    /**
+     * Preço da oferta (opcional). Quando presente, renderiza um
+     * destaque visual com o valor + sufixo (ex.: "/mês", "/24h"),
+     * abaixo da descrição. Aceita conteúdo livre pra incluir
+     * formatações específicas (R$, badges de desconto, etc.).
+     */
+    price?: React.ReactNode;
+    /**
+     * Sufixo do preço (opcional). Renderizado em tom secundário ao
+     * lado do `price` (ex.: `/mês`, `por 24h`).
+     */
+    priceSuffix?: React.ReactNode;
     /** Itens de benefício renderizados em lista vertical com pílulas. */
     benefits: ReadonlyArray<OfferBenefit>;
     /**
@@ -82,6 +94,8 @@ export interface OfferCardProps {
 export function OfferCard({
     name,
     description,
+    price,
+    priceSuffix,
     benefits,
     recommended = false,
     badge,
@@ -116,6 +130,25 @@ export function OfferCard({
                     </h2>
                     <p className="text-sm text-text-secondary">{description}</p>
                 </div>
+
+                {price !== undefined ? (
+                    <div className="flex items-baseline gap-1.5">
+                        <span
+                            className={`text-3xl font-bold tracking-tight ${
+                                recommended
+                                    ? "text-accent-deep"
+                                    : "text-text-primary"
+                            }`}
+                        >
+                            {price}
+                        </span>
+                        {priceSuffix !== undefined ? (
+                            <span className="text-sm text-text-secondary">
+                                {priceSuffix}
+                            </span>
+                        ) : null}
+                    </div>
+                ) : null}
 
                 <div className="h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent" />
 

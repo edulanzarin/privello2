@@ -48,6 +48,13 @@ function descricaoPlano(tipo: PlanoDefinition["tipo"]): string {
 }
 
 /**
+ * Formata o preço mensal do plano em BRL (`"R$ 99,90"`).
+ */
+function formatarPrecoMensal(cents: number): string {
+    return `R$ ${(cents / 100).toFixed(2).replace(".", ",")}`;
+}
+
+/**
  * Traduz os atributos canônicos do {@link PlanoDefinition} em itens
  * visuais para o {@link OfferCard}. Em vez de exibir o número absoluto
  * de mídias permitidas, comunicamos a diferença qualitativa entre os
@@ -163,6 +170,8 @@ export default async function SelecaoPlanoPage({
                         key={plano.tipo}
                         name={rotularPlano(plano.tipo)}
                         description={descricaoPlano(plano.tipo)}
+                        price={formatarPrecoMensal(plano.precoCents)}
+                        priceSuffix="/mês"
                         benefits={beneficios(plano)}
                         recommended={isPremium && !isAtual}
                         animationDelayMs={120 + index * 80}

@@ -125,6 +125,8 @@ export default async function SelecaoPlanoClientePage({
             <OfferCard
                 name="Grátis"
                 description="Veja perfis e Stories. Boa pra explorar antes de virar Fan."
+                price="R$ 0"
+                priceSuffix="grátis para sempre"
                 benefits={GRATIS_BENEFITS}
                 animationDelayMs={120}
             >
@@ -150,14 +152,15 @@ export default async function SelecaoPlanoClientePage({
                         key={chave}
                         name={duracao.label}
                         description={duracao.descricaoCurta}
-                        benefits={[
-                            {
-                                label: formatarPreco(duracao.precoCents),
-                                icon: DiamondIcon,
-                                highlight: true,
-                            },
-                            ...FAN_BENEFITS,
-                        ]}
+                        price={formatarPreco(duracao.precoCents)}
+                        priceSuffix={
+                            chave === "FAN_24H"
+                                ? "/24h"
+                                : chave === "FAN_7D"
+                                    ? "/7 dias"
+                                    : "/30 dias"
+                        }
+                        benefits={FAN_BENEFITS}
                         recommended={recomendado}
                         badge={
                             recomendado ? (
