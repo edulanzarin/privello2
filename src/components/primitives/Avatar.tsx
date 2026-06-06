@@ -173,9 +173,12 @@ export function Avatar({
     const discInner = (
         <>
             {showImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                     src={src as string}
                     alt={name ?? ""}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                     onError={() => setErrored(true)}
                 />

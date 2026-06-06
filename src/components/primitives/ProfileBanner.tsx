@@ -1,4 +1,5 @@
 import * as React from "react";
+import Image from "next/image";
 
 /**
  * Props do {@link ProfileBanner}.
@@ -65,11 +66,13 @@ export function ProfileBanner({
     return (
         <div className={composed}>
             {photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                     src={photoUrl}
                     alt={alt}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="100vw"
+                    priority
+                    className="object-cover"
                 />
             ) : null}
 

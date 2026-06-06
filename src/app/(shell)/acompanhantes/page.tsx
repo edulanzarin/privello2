@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { PageSurface } from "@/components";
+import { JsonLdScript, PageSurface } from "@/components";
 import { rotularGeneroPlural, isGenero } from "@/domain/genero";
 import {
     buscar,
@@ -15,6 +15,9 @@ import {
 } from "@/server/storage/storyMedia";
 
 import { BuscaView } from "./_busca/BuscaView";
+
+const SITE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 interface SearchParamsRaw {
     q?: string;
@@ -280,8 +283,28 @@ export default async function AcompanhantesPage({
     const sessaoAtual = await getCurrentSession();
     const podeSalvarBusca = sessaoAtual?.userType === "CLIENTE";
 
+    const breadcrumb = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Início",
+                item: `${SITE_URL}/`,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "Acompanhantes",
+                item: `${SITE_URL}/acompanhantes`,
+            },
+        ],
+    };
+
     return (
         <PageSurface width="lg">
+            <JsonLdScript data={breadcrumb} />
             <BuscaView
                 filtros={filtros}
                 ordenar={ordenar}

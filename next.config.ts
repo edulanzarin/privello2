@@ -36,6 +36,28 @@ const nextConfig: NextConfig = {
     // `node_modules` direto. O Next em standalone copia o que é
     // necessário automaticamente.
     serverExternalPackages: ["sharp", "ffmpeg-static"],
+    /**
+     * Imagens otimizadas pelo Next/Image.
+     *
+     * `remotePatterns` lista os hostnames remotos permitidos. O R2
+     * público (`pub-*.r2.dev`) é a fonte principal das mídias dos
+     * perfis. `picsum.photos` é usado pelo seed em dev.
+     *
+     * Mantemos os formatos modernos (`avif`, `webp`) pra reduzir
+     * peso — o navegador escolhe o melhor que suporta.
+     */
+    images: {
+        formats: ["image/avif", "image/webp"],
+        remotePatterns: [
+            { protocol: "https", hostname: "pub-*.r2.dev" },
+            { protocol: "https", hostname: "*.r2.dev" },
+            // Custom domain pra mídia (quando configurado).
+            { protocol: "https", hostname: "media.privello.com.br" },
+            // Seed/dev placeholders.
+            { protocol: "https", hostname: "picsum.photos" },
+            { protocol: "https", hostname: "fastly.picsum.photos" },
+        ],
+    },
     experimental: {
         serverActions: {
             bodySizeLimit: "64mb",

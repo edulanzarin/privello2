@@ -138,6 +138,7 @@ export function AvatarUpload({
                     .join(" ")}
             >
                 {preview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                         src={preview}
                         alt="Preview da foto de perfil"
