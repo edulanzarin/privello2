@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components";
+import { AppShell, SiteFooter } from "@/components";
 import { buildNavItems } from "@/components/shell/navItems";
 import { getCurrentSession } from "@/server/auth/currentSession";
 
@@ -68,5 +68,5 @@ export default async function ShellLayout({
         identificador: session?.identificador,
     });
 
-    return <AppShell navItems={navItems}>{children}</AppShell>;
+    return <AppShell navItems={navItems} belowMain={<SiteFooter />}>{children}</AppShell>;
 }

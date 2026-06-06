@@ -21,6 +21,13 @@ export interface AppShellProps {
     topLeading?: React.ReactNode;
     /** Slot opcional alinhado à direita na {@link TopBar}. */
     topTrailing?: React.ReactNode;
+    /**
+     * Conteúdo opcional renderizado entre o `<main>` e a
+     * {@link BottomNav}. Tipicamente um rodapé com links
+     * institucionais. Sem nomes de domínio nas props (Property 29);
+     * o consumidor passa o componente real.
+     */
+    belowMain?: React.ReactNode;
     /** Conteúdo principal renderizado entre TopBar e BottomNav. */
     children: React.ReactNode;
 }
@@ -38,6 +45,7 @@ export function AppShell({
     navItems,
     topLeading,
     topTrailing,
+    belowMain,
     children,
 }: AppShellProps): React.ReactElement {
     return (
@@ -46,6 +54,7 @@ export function AppShell({
             <main className="w-full max-w-full flex-1 overflow-x-clip">
                 {children}
             </main>
+            {belowMain}
             <BottomNav items={navItems} />
         </div>
     );

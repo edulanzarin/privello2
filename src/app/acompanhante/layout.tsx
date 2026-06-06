@@ -1,13 +1,22 @@
 import { cookies, headers } from "next/headers";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components";
+import { AppShell, SiteFooter } from "@/components";
 import { buildNavItems } from "@/components/shell/navItems";
 import { NotificationBell } from "@/components/shell/NotificationBell";
 import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
 import { obterVigente } from "@/server/planos";
 import { db } from "@/lib/db";
+
+/**
+ * Painel privado da Acompanhante — `noindex` por defesa em profundidade.
+ */
+export const metadata: Metadata = {
+    title: "Conta · Privello",
+    robots: { index: false, follow: false },
+};
 
 /**
  * Layout do route group `(acompanhante)`.
@@ -112,7 +121,11 @@ export default async function AcompanhanteLayout({
         identificador: user?.identificador,
     });
     return (
-        <AppShell navItems={navItems} topTrailing={<NotificationBell />}>
+        <AppShell
+            navItems={navItems}
+            topTrailing={<NotificationBell />}
+            belowMain={<SiteFooter />}
+        >
             {children}
         </AppShell>
     );

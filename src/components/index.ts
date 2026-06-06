@@ -12,6 +12,8 @@
 export { PaymentResultBanner } from "./PaymentResultBanner";
 export type { PaymentResultBannerProps } from "./PaymentResultBanner";
 
+export { SiteFooter } from "./SiteFooter";
+
 export { Button } from "./primitives/Button";
 export type {
     ButtonProps,

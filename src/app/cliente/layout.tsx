@@ -1,11 +1,23 @@
 import { cookies, headers } from "next/headers";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components";
+import { AppShell, SiteFooter } from "@/components";
 import { buildNavItems } from "@/components/shell/navItems";
 import { NotificationBell } from "@/components/shell/NotificationBell";
 import { SESSION_COOKIE_NAME } from "@/server/auth/sessionCookieName";
 import { resolveSession, verifySessionCookie } from "@/server/auth/sessions";
+
+/**
+ * Painel privado do Cliente — `noindex` para nunca aparecer no SERP.
+ * Defesa em profundidade: o layout já redireciona não-clientes pra
+ * `/login`, mas marcar explicitamente garante que qualquer cache de
+ * SERP / referrer não vaze.
+ */
+export const metadata: Metadata = {
+    title: "Conta · Privello",
+    robots: { index: false, follow: false },
+};
 
 /**
  * Layout do route group `(cliente)`.
@@ -61,7 +73,11 @@ export default async function ClienteLayout({
 
     const navItems = buildNavItems("CLIENTE");
     return (
-        <AppShell navItems={navItems} topTrailing={<NotificationBell />}>
+        <AppShell
+            navItems={navItems}
+            topTrailing={<NotificationBell />}
+            belowMain={<SiteFooter />}
+        >
             {children}
         </AppShell>
     );

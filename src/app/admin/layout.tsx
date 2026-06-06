@@ -1,8 +1,21 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { db } from "@/lib/db";
 import { getCurrentSession } from "@/server/auth/currentSession";
+
+/**
+ * Metadata do painel admin.
+ *
+ * `noindex` previne que qualquer URL de admin apareça no SERP, mesmo
+ * que algum bot consiga descobrir o caminho. O acesso continua
+ * gateado pela flag `User.isAdmin` — esta é defesa em profundidade.
+ */
+export const metadata: Metadata = {
+    title: "Admin · Privello",
+    robots: { index: false, follow: false },
+};
 
 /**
  * Layout do painel admin.

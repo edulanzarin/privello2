@@ -28,6 +28,8 @@ export default function robots(): MetadataRoute.Robots {
                 allow: "/",
                 disallow: [
                     "/api/",
+                    "/admin",
+                    "/admin/",
                     "/cliente",
                     "/cliente/",
                     "/acompanhante",

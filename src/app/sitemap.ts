@@ -39,6 +39,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.9,
         },
         {
+            url: `${SITE_URL}/reels`,
+            lastModified: now,
+            changeFrequency: "hourly",
+            priority: 0.8,
+        },
+        {
             url: `${SITE_URL}/login`,
             lastModified: now,
             changeFrequency: "monthly",
@@ -49,6 +55,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             lastModified: now,
             changeFrequency: "monthly",
             priority: 0.5,
+        },
+        // Páginas institucionais — importantes pra Stripe/SEO/LGPD.
+        {
+            url: `${SITE_URL}/sobre`,
+            lastModified: now,
+            changeFrequency: "monthly",
+            priority: 0.4,
+        },
+        {
+            url: `${SITE_URL}/termos`,
+            lastModified: now,
+            changeFrequency: "yearly",
+            priority: 0.3,
+        },
+        {
+            url: `${SITE_URL}/privacidade`,
+            lastModified: now,
+            changeFrequency: "yearly",
+            priority: 0.3,
         },
     ];
 
