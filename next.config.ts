@@ -83,10 +83,13 @@ const nextConfig: NextConfig = {
      *   `Content-Type` declarado.
      * - **Referrer-Policy: strict-origin-when-cross-origin**:
      *   não vaza paths do site para outros domínios.
-     * - **Permissions-Policy**: bloqueia geolocation, camera, mic,
-     *   payment etc. por padrão. A Acompanhante grava áudio via
-     *   `getUserMedia(audio)` — então `microphone=(self)` é
-     *   permitido.
+     * - **Permissions-Policy**: política de uso de APIs poderosas.
+     *   `geolocation=(self)` permite que a busca peça GPS pra
+     *   ordenar por proximidade. `microphone=(self)` permite o
+     *   `getUserMedia(audio)` da gravação de Áudio_de_Apresentação.
+     *   `payment=(self)` libera Payment Request API (cartão salvo).
+     *   `camera=()` permanece bloqueado — verificação de identidade
+     *   usa upload de arquivo, não captura ao vivo.
      * - **Strict-Transport-Security**: só faz sentido em produção
      *   (HTTPS). Adicionado condicional.
      */
@@ -157,7 +160,7 @@ const nextConfig: NextConfig = {
             },
             {
                 key: "Permissions-Policy",
-                value: "geolocation=(), camera=(), microphone=(self), payment=(self)",
+                value: "geolocation=(self), camera=(), microphone=(self), payment=(self)",
             },
         ];
 
