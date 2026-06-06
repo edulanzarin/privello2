@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { PageSurface } from "@/components";
+import { JsonLdScript, PageSurface } from "@/components";
 
 export const metadata: Metadata = {
     title: "Política de Privacidade",
@@ -10,11 +10,34 @@ export const metadata: Metadata = {
     alternates: { canonical: "/privacidade" },
 };
 
+const SITE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 const ULTIMA_REVISAO = "5 de junho de 2026";
 
 export default function PrivacidadePage() {
+    const breadcrumb = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Início",
+                item: `${SITE_URL}/`,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "Política de Privacidade",
+                item: `${SITE_URL}/privacidade`,
+            },
+        ],
+    };
+
     return (
         <PageSurface>
+            <JsonLdScript data={breadcrumb} />
             <article className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
                 <header className="mb-8">
                     <p className="mb-2 text-xs font-medium uppercase tracking-wider text-accent-deep">

@@ -118,6 +118,25 @@ export const metadata: Metadata = {
             "max-video-preview": -1,
         },
     },
+    /**
+     * Verificação de propriedade nos webmaster tools.
+     *
+     * Cada plataforma fornece um código que pode ser inserido como
+     * meta tag (alternativa ao registro DNS TXT). Preenchemos via
+     * env vars pra não vazar códigos no repo público.
+     *
+     * - `GOOGLE_SITE_VERIFICATION`: code do Google Search Console.
+     * - `BING_SITE_VERIFICATION`: code do Bing Webmaster Tools.
+     * - `YANDEX_VERIFICATION`: opcional, pra mercados russos (~0%).
+     *
+     * Sem env definida, o campo correspondente é omitido.
+     */
+    verification: {
+        google: process.env.GOOGLE_SITE_VERIFICATION,
+        other: process.env.BING_SITE_VERIFICATION
+            ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION }
+            : undefined,
+    },
     category: "lifestyle",
 };
 

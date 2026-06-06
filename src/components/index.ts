@@ -14,6 +14,9 @@ export type { PaymentResultBannerProps } from "./PaymentResultBanner";
 
 export { SiteFooter } from "./SiteFooter";
 
+export { JsonLdScript } from "./JsonLdScript";
+export type { JsonLdScriptProps } from "./JsonLdScript";
+
 export { Button } from "./primitives/Button";
 export type {
     ButtonProps,

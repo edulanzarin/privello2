@@ -126,6 +126,11 @@ export default async function CidadeLandingPage({
 
     return (
         <PageSurface width="lg">
+            <CidadeJsonLd
+                cidadeNome={cidade.cidadeNome}
+                estadoSigla={cidade.estadoSigla}
+                total={resultado.total}
+            />
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
                     Acompanhantes em {cidade.cidadeNome}, {cidade.estadoSigla}
@@ -166,5 +171,104 @@ export default async function CidadeLandingPage({
                 </div>
             ) : null}
         </PageSurface>
+    );
+}
+
+/**
+ * JSON-LD de página de cidade.
+ *
+ * - **CollectionPage** com `mainEntity` apontando pra
+ *   `LocalBusiness` (a marca atendendo aquela cidade) — sinaliza
+ *   pro Google que esta é a "página oficial" da Privello pra
+ *   aquela região.
+ * - **BreadcrumbList** — habilita breadcrumbs visuais no SERP
+ *   (Início › Acompanhantes › São Paulo, SP).
+ *
+ * Mantemos o nome da `LocalBusiness` parametrizado por cidade pra
+ * dar o sinal local sem mentir (não fingimos ter endereço físico).
+ */
+function CidadeJsonLd({
+    cidadeNome,
+    estadoSigla,
+    total,
+}: {
+    cidadeNome: string;
+    estadoSigla: string;
+    total: number;
+}): React.ReactElement {
+    const url = `${SITE_URL}${cidadeLandingPath(cidadeNome, estadoSigla)}`;
+
+    const collectionPage = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: `Acompanhantes em ${cidadeNome}, ${estadoSigla} · Privello`,
+        url,
+        description: `${total} ${
+            total === 1 ? "acompanhante" : "acompanhantes"
+        } verificadas em ${cidadeNome}, ${estadoSigla}.`,
+        inLanguage: "pt-BR",
+        isPartOf: {
+            "@type": "WebSite",
+            name: "Privello",
+            url: SITE_URL,
+        },
+        about: {
+            "@type": "LocalBusiness",
+            name: `Privello — ${cidadeNome}, ${estadoSigla}`,
+            url,
+            areaServed: {
+                "@type": "City",
+                name: cidadeNome,
+                containedInPlace: {
+                    "@type": "AdministrativeArea",
+                    name: estadoSigla,
+                    addressCountry: "BR",
+                },
+            },
+        },
+    };
+
+    const breadcrumb = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Início",
+                item: `${SITE_URL}/`,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "Acompanhantes",
+                item: `${SITE_URL}/acompanhantes`,
+            },
+            {
+                "@type": "ListItem",
+                position: 3,
+                name: `${cidadeNome}, ${estadoSigla}`,
+                item: url,
+            },
+        ],
+    };
+
+    return (
+        <>
+            <script
+                type="application/ld+json"
+                // eslint-disable-next-line react/no-danger
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(collectionPage),
+                }}
+            />
+            <script
+                type="application/ld+json"
+                // eslint-disable-next-line react/no-danger
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(breadcrumb),
+                }}
+            />
+        </>
     );
 }

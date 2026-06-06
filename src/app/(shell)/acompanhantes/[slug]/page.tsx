@@ -243,6 +243,7 @@ export default async function PerfilPublicoPage({
                 estadoSigla={result.perfil.estadoSigla}
                 descricao={result.perfil.descricao}
                 fotoUrl={result.perfil.fotoUrl}
+                reviews={reviewsAll}
             />
             <ViewTracker slug={slug} />
             <PerfilPublicoView
@@ -389,6 +390,7 @@ function ProfileJsonLd({
     estadoSigla,
     descricao,
     fotoUrl,
+    reviews,
 }: {
     slug: string;
     nome: string;
@@ -396,6 +398,18 @@ function ProfileJsonLd({
     estadoSigla: string;
     descricao: string;
     fotoUrl: string | null;
+    /**
+     * Reviews públicas pra emitir como `Review` Schema.org. Pegamos
+     * até 3 mais recentes pra não inflar o HTML — o Google só
+     * mostra ~3 reviews no SERP de qualquer jeito.
+     */
+    reviews: ReadonlyArray<{
+        id: string;
+        comment: string;
+        rating: number | null;
+        createdAt: Date;
+        authorNome: string;
+    }>;
 }): React.ReactElement {
     const siteUrl =
         process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -406,7 +420,46 @@ function ProfileJsonLd({
             : `${siteUrl}${fotoUrl}`
         : undefined;
 
-    const person = {
+    // Agrega ratings numéricos pra `aggregateRating` (rich snippet de
+    // estrelas no SERP). Ignora reviews sem nota.
+    const ratings = reviews
+        .map((r) => r.rating)
+        .filter((r): r is number => typeof r === "number");
+    const aggregateRating =
+        ratings.length > 0
+            ? {
+                  "@type": "AggregateRating",
+                  ratingValue: (
+                      ratings.reduce((a, b) => a + b, 0) / ratings.length
+                  ).toFixed(1),
+                  reviewCount: ratings.length,
+                  bestRating: 5,
+                  worstRating: 1,
+              }
+            : undefined;
+
+    // Top 3 reviews pra `review` (exige texto real, não sumário).
+    const reviewSchema = reviews.slice(0, 3).map((r) => ({
+        "@type": "Review",
+        reviewBody: r.comment.slice(0, 500),
+        datePublished: r.createdAt.toISOString(),
+        author: {
+            "@type": "Person",
+            name: r.authorNome,
+        },
+        ...(typeof r.rating === "number"
+            ? {
+                  reviewRating: {
+                      "@type": "Rating",
+                      ratingValue: r.rating,
+                      bestRating: 5,
+                      worstRating: 1,
+                  },
+              }
+            : {}),
+    }));
+
+    const person: Record<string, unknown> = {
         "@context": "https://schema.org",
         "@type": "Person",
         name: nome,
@@ -419,12 +472,9 @@ function ProfileJsonLd({
             addressRegion: estadoSigla,
             addressCountry: "BR",
         },
-        // Sem `aggregateRating` (removemos nota numérica do produto)
-        // e sem `review` artificial — Schema.org `review` exige um
-        // texto real de uma única avaliação, não um sumário. Quando
-        // o produto tiver reviews textuais reais com autor, podemos
-        // emitir até 3 mais relevantes aqui. Por ora, omitimos.
     };
+    if (aggregateRating) person.aggregateRating = aggregateRating;
+    if (reviewSchema.length > 0) person.review = reviewSchema;
 
     const breadcrumb = {
         "@context": "https://schema.org",
