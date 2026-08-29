@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins } from "next/font/google";
+import { Bodoni_Moda, Inter } from "next/font/google";
 import "./globals.css";
 
 import { ToastProvider } from "@/components";
@@ -7,18 +7,25 @@ import { ToastProvider } from "@/components";
 import { PwaBootstrap } from "./_pwa/PwaBootstrap";
 
 /**
- * Poppins — fonte sans-serif geométrica humanista. Redondinha,
- * com proporções modernas, ótima pra UI moderna estilo
- * fashion/lifestyle. Carregada com pesos 300/400/500/600/700 pra
- * cobrir hierarquia (display, body, métricas) sem sobrecarregar
- * o bundle.
+ * Duas famílias, dois papéis, e o contraste entre elas É a identidade.
  *
- * Exposta como CSS var `--font-sans`, consumida pelo
- * `tailwind.config.ts` (fontFamily.sans) e por `globals.css`.
+ * `Bodoni Moda` no display: serifada de altíssimo contraste, o registro de
+ * capa de revista de moda. É ela que faz a tela ler como sensual sem precisar
+ * de nenhum ornamento.
+ *
+ * `Inter` no corpo: grótesca neutra, some do caminho e deixa o título e a foto
+ * falarem. A saída da Poppins foi deliberada: bojo perfeitamente circular
+ * desenhado para parecer amigável, que é o oposto do que este site quer dizer.
  */
-const poppins = Poppins({
+const display = Bodoni_Moda({
     subsets: ["latin"],
-    weight: ["300", "400", "500", "600", "700"],
+    weight: ["400", "500", "600", "700"],
+    variable: "--font-display",
+    display: "swap",
+});
+
+const corpo = Inter({
+    subsets: ["latin"],
     variable: "--font-sans",
     display: "swap",
 });
@@ -160,7 +167,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="pt-BR" className={poppins.variable}>
+        <html lang="pt-BR" className={`${corpo.variable} ${display.variable}`}>
             <body className="min-h-screen font-sans">
                 <OrganizationJsonLd />
                 <ToastProvider>{children}</ToastProvider>

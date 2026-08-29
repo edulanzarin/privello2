@@ -46,3 +46,4 @@ Thumbs.db
 
 # Local R2 storage (dev only)
 .storage/
+docker-compose.override.yml

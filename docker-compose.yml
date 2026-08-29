@@ -1,0 +1,53 @@
+# Mesmo compose em dev e em produção. O que muda entre as duas máquinas é o
+# .env, nunca este arquivo.
+#
+# O slug do projeto governa o nome de tudo: privello2-app, privello2-db,
+# privello2-net, privello2-db-data. O par de portas reservado é 4076 (app) e
+# 5076 (banco), registrado no mapa de portas.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: privello2-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-privello}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-privello}
+    volumes:
+      - privello2-db-data:/var/lib/postgresql/data
+    networks: [privello2-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-privello} -d ${POSTGRES_DB:-privello}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: privello2-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    # Porta interna é constante (3000); a publicada é configuração.
+    ports:
+      - "${APP_PORT:-4076}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      # Dentro da rede do compose os serviços falam por nome de serviço e porta
+      # interna, nunca pela porta publicada no host.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-privello}:${POSTGRES_PASSWORD}@privello2-db:5432/${POSTGRES_DB:-privello}
+    networks: [privello2-net]
+
+volumes:
+  privello2-db-data:
+
+networks:
+  privello2-net:
+    name: privello2-net

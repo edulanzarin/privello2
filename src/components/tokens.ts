@@ -254,19 +254,26 @@ export const spacing = {
 } as const;
 
 // -----------------------------------------------------------------------------
-// Raios — escala editorial: cantos arredondados generosos. `2xl/3xl`
-// são o sweet spot pra cards grandes.
+// Raios — escala SECA.
+//
+// A escala anterior ia até 32px e os cards usavam 24px. Canto grande é o que
+// mais rápido faz uma tela parecer app amigável, e este site quer o oposto:
+// aresta, foto grande e respiro. Os nomes continuam os mesmos de propósito,
+// então nenhuma tela precisa ser reescrita para o corte chegar nela.
+//
+// `full` sobrevive porque pílula ainda é a forma certa de chip e de avatar:
+// ali o raio não decora, ele diz "isto é um alvo, não uma caixa".
 // -----------------------------------------------------------------------------
 
 export const radius = {
     none: "0rem",
-    sm: "0.25rem",   // 4px
-    md: "0.5rem",    // 8px
-    lg: "0.75rem",   // 12px
-    xl: "1rem",      // 16px
-    "2xl": "1.25rem", // 20px
-    "3xl": "1.5rem",  // 24px
-    "4xl": "2rem",   // 32px
+    sm: "0.125rem",  // 2px
+    md: "0.25rem",   // 4px
+    lg: "0.25rem",   // 4px
+    xl: "0.375rem",  // 6px
+    "2xl": "0.375rem", // 6px
+    "3xl": "0.5rem",  // 8px
+    "4xl": "0.5rem", // 8px
     full: "9999px",
 } as const;
 
